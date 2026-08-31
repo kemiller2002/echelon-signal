@@ -1,0 +1,862 @@
+Echelon Survey Scoring Architecture
+
+Precompiled Scorers + Typed Expression Trees for F# WebAssembly
+
+Status: Design approach for preservation and later implementation
+Scope: Scoring architecture only. This document does not prescribe an
+immediate rewrite of the existing survey JSON.
+
+1. Purpose
+
+Echelon surveys need to support different scoring models while allowing
+the scoring rules to travel with the survey definition. The runtime will
+be an F# WebAssembly application.
+
+The proposed architecture is deliberately hybrid:
+
+1.  Common scoring models are implemented as precompiled F# functions.
+2.  Common models may accept declarative parameters from the survey.
+3.  Truly survey-specific scoring is represented as a small, typed
+    expression tree stored as data with the survey and interpreted by
+    precompiled F# code.
+4.  Arbitrary executable code is never stored in a survey.
+
+This provides flexibility without making every survey a program.
+
+2. Evidence from the Current Surveys
+
+The current files already show at least two distinct scoring shapes.
+
+-   The Agile assessment files contain 28 sections and 403 entries each.
+    Their questions use yesNoInProgress, while entries carry intrinsic
+    scores such as -1, 1, 2, and 3.
+-   The UX assessment uses the same yesNoInProgress response type but
+    includes entry scores from -1 through 3, including 0.
+-   The Scrum Master 360 contains 9 sections and 19 entries. It uses a
+    five-point Likert response (likert5), while the entry score fields
+    are all 0.
+
+This is enough to justify separating the response selector from the
+scoring algorithm. A selector describes what a respondent can answer. A
+scorer describes how those answers become a result.
+
+It is not yet enough to infer the exact aggregation algorithm for every
+existing survey. That should be verified against the current scoring
+implementation before changing the data.
+
+3. Core Design Principle
+
+The survey should declare what scoring behavior it requires, not how the
+F# runtime implements that behavior.
+
+Conceptually:
+
+    Survey Definition
+          |
+          +-- Questions / Sections
+          +-- Answer Selectors
+          +-- Scoring Specification
+                    |
+                    +-- Standard scorer
+                    |      -> precompiled F# function
+                    |
+                    +-- Custom expression
+                           -> typed scoring AST
+                           -> precompiled F# interpreter
+
+The persisted format should not contain F# function names, CLR type
+names, .NET expression-tree serialization, or executable source code.
+
+For example, a future survey might declare:
+
+    scoring:
+      type: weighted-progress
+      version: 1
+
+The F# runtime owns the mapping from weighted-progress:v1 to the actual
+implementation.
+
+This preserves implementation freedom. A scorer can be refactored
+internally without changing the survey format, provided its declared
+semantics remain stable.
+
+4. Three Levels of Scoring
+
+The design should have three levels rather than only “hardcoded” and
+“custom.”
+
+Level 1 - Precompiled Standard Scorers
+
+These are ordinary F# functions compiled into the WASM application.
+
+Potential examples:
+
+-   Sum
+-   Average
+-   Percentage
+-   Likert sum
+-   Likert average
+-   Weighted Likert
+-   Weighted progress
+-   Count of selected conditions
+-   Highest / lowest
+-   Section aggregation
+
+A conceptual F# model:
+
+    type StandardScoring =
+        | Sum
+        | Average
+        | Percentage
+        | LikertSum
+        | LikertAverage
+        | WeightedLikert
+        | WeightedProgress
+
+These should be the default path whenever a scoring method is common
+enough to have stable semantics and a useful name.
+
+Level 2 - Parameterized Standard Scorers
+
+A standard scorer should not require a new compiled implementation for
+every minor variation.
+
+For example, a Likert scorer might be configured with:
+
+-   scale values
+-   aggregation method
+-   missing-answer policy
+-   normalization target
+-   section weighting
+-   rounding behavior
+
+The behavior remains constrained to a known, tested scorer; the survey
+supplies safe configuration data.
+
+This level is important because it should cover most variation without
+invoking the custom expression system.
+
+Level 3 - Custom Typed Scoring Expressions
+
+When a survey requires behavior that cannot be represented faithfully by
+a standard scorer plus parameters, it can carry a custom scoring
+expression.
+
+The expression is data, not executable F#.
+
+The runtime deserializes and validates it into a typed expression tree
+and evaluates it with a small interpreter.
+
+Custom expressions are therefore an escape hatch, not the default
+scoring mechanism.
+
+5. Why Not Use System.Linq.Expressions Directly?
+
+.NET expression trees inspired the approach, but System.Linq.Expressions
+should probably not be the persisted survey language.
+
+There are several reasons:
+
+1.  The application is F# WASM, where runtime code generation is not the
+    architecture we want to depend on.
+2.  General .NET expression trees expose far more capability than survey
+    scoring requires.
+3.  Serializing CLR-oriented expression structures couples the survey
+    format to implementation details.
+4.  A domain-specific AST is easier to validate, version, audit, test,
+    and secure.
+5.  F# discriminated unions provide a natural representation of the
+    legal scoring operations.
+
+The useful idea from expression trees is therefore retained:
+
+  Represent a computation as data, validate it, and evaluate it later.
+
+But the representation should belong to the survey domain.
+
+6. Typed Expression Model
+
+A first conceptual scoring AST might look like:
+
+    type ScoreExpr =
+        | Constant of decimal
+        | AnswerValue of QuestionId
+        | QuestionWeight of QuestionId
+        | SectionScore of SectionId
+
+        | Add of ScoreExpr * ScoreExpr
+        | Subtract of ScoreExpr * ScoreExpr
+        | Multiply of ScoreExpr * ScoreExpr
+        | Divide of ScoreExpr * ScoreExpr
+
+        | Sum of ScoreExpr list
+        | Average of ScoreExpr list
+        | Minimum of ScoreExpr list
+        | Maximum of ScoreExpr list
+
+        | If of Condition * ScoreExpr * ScoreExpr
+
+    and Condition =
+        | Equals of ValueExpr * ValueExpr
+        | GreaterThan of ValueExpr * ValueExpr
+        | LessThan of ValueExpr * ValueExpr
+        | And of Condition * Condition
+        | Or of Condition * Condition
+        | Not of Condition
+
+This is illustrative rather than final. Operations should only be added
+when a real scoring requirement needs them.
+
+That restraint matters. The goal is not to accidentally create a
+general-purpose programming language.
+
+7. Separate Numeric, Boolean, and Answer Types
+
+The first sketch above can be improved further by making invalid
+expression combinations difficult to represent.
+
+For example, a condition should not accidentally be usable where a
+numeric score is required. Likewise, a textual answer should not
+silently participate in arithmetic.
+
+A stronger model could distinguish:
+
+-   numeric expressions
+-   boolean conditions
+-   answer values
+-   question identifiers
+-   section identifiers
+
+The exact DU design can be refined during implementation, but the
+principle is important: use the F# type system to constrain the scoring
+language before evaluation occurs.
+
+This is particularly valuable in WASM because malformed custom rules can
+be rejected during survey loading rather than failing deep inside
+scoring.
+
+8. Evaluation Context
+
+Expressions should not receive arbitrary access to the application.
+
+They should evaluate against a deliberately constrained context such as:
+
+    type ScoringContext = {
+        Survey: SurveyDefinition
+        Answers: AnswerMap
+        SectionResults: SectionResultMap
+    }
+
+The evaluator exposes only domain-approved operations.
+
+A scoring expression should have no direct access to:
+
+-   browser APIs
+-   network calls
+-   filesystem operations
+-   reflection
+-   arbitrary .NET methods
+-   current time unless explicitly modeled
+-   mutable application state
+
+This keeps scoring deterministic and portable.
+
+9. Pure Evaluation
+
+Scoring should ideally be a pure computation:
+
+    SurveyDefinition
+        + SurveyResponse
+        -> SurveyScore
+
+The same survey and same answers should produce the same score.
+
+Benefits include:
+
+-   reproducible results
+-   straightforward unit tests
+-   easy regression testing
+-   deterministic browser/server parity
+-   easier auditing
+-   no hidden external dependencies
+
+If a future survey genuinely requires external data, that should be
+resolved before scoring and supplied explicitly as input rather than
+allowing the scoring expression to perform effects.
+
+10. Validation Before Evaluation
+
+Custom scoring rules should go through a validation phase when the
+survey is loaded.
+
+Validation should catch problems such as:
+
+-   unknown question IDs
+-   unknown section IDs
+-   unsupported expression operations
+-   incompatible operand types
+-   division by a literal zero
+-   invalid or empty aggregations where prohibited
+-   references to unavailable answer values
+-   unsupported scoring-language versions
+-   circular section dependencies if section scores may reference one
+    another
+-   expressions exceeding complexity limits
+
+This creates a useful lifecycle:
+
+    JSON
+      -> deserialize
+      -> validate
+      -> typed scoring definition
+      -> evaluate responses
+
+A malformed survey should fail as an invalid survey definition, not as
+an unpredictable scoring failure.
+
+11. Complexity Limits
+
+Because custom expressions come from data, the engine should impose
+explicit resource limits.
+
+Possible limits include:
+
+-   maximum expression depth
+-   maximum node count
+-   maximum number of referenced questions
+-   maximum nesting of conditional expressions
+-   maximum aggregation size
+
+These are useful even if surveys are trusted. They prevent accidental
+pathological rules and make runtime cost more predictable in WASM.
+
+12. Standard Scorer Registry
+
+The runtime needs a stable way to resolve named scorers.
+
+Conceptually:
+
+    weighted-progress:v1 -> scoreWeightedProgressV1
+    likert-average:v1    -> scoreLikertAverageV1
+    percentage:v1        -> scorePercentageV1
+
+This can be implemented with ordinary F# pattern matching rather than
+reflection.
+
+For example:
+
+    type ScoringModel =
+        | Standard of StandardScoring
+        | Custom of CustomScoringDefinition
+
+    let score model context =
+        match model with
+        | Standard WeightedProgress ->
+            scoreWeightedProgress context
+
+        | Standard LikertAverage ->
+            scoreLikertAverage context
+
+        | Custom definition ->
+            evaluateCustom definition context
+
+The compiler can then identify non-exhaustive handling as the set of
+standard scoring models evolves.
+
+13. Version Scoring Semantics
+
+Scoring is part of the meaning of a completed survey result. Therefore
+scoring semantics should be versioned.
+
+For example:
+
+    weighted-progress:v1
+
+should remain stable even if a future:
+
+    weighted-progress:v2
+
+changes treatment of incomplete answers or normalization.
+
+This is especially important when old survey responses may be re-opened
+or recalculated later.
+
+The result should be traceable to:
+
+-   survey/template version
+-   scoring model
+-   scoring model version
+
+The exact persistence format can be decided later.
+
+14. Missing and Invalid Answers Must Be Explicit
+
+A scoring system needs an explicit policy for unanswered, unavailable,
+or invalid answers.
+
+Possible semantics include:
+
+-   ignore unanswered questions
+-   treat them as zero
+-   prohibit scoring until complete
+-   calculate a provisional score
+-   use a survey-specific default
+
+This should not be an accidental consequence of implementation.
+
+A standard scorer may have a defined default policy, while parameterized
+scorers can expose safe alternatives.
+
+Custom expressions should receive an explicit representation of missing
+answers rather than silently coercing them to a number.
+
+15. Section Scoring and Overall Scoring
+
+The architecture should allow scoring at more than one level.
+
+A survey may need:
+
+-   question contribution
+-   section score
+-   overall score
+-   normalized score
+-   derived dimensions or subscales
+
+These should be modeled deliberately rather than assuming every survey
+produces one scalar total.
+
+A useful future result type may resemble:
+
+    type SurveyScore = {
+        Overall: decimal option
+        Sections: Map<SectionId, decimal>
+        Dimensions: Map<DimensionId, decimal>
+    }
+
+This is only a conceptual shape. The important point is that the scoring
+engine should not unnecessarily constrain future assessments to a single
+number.
+
+16. Separate Scoring From Interpretation
+
+Calculating a score and interpreting a score are different concerns.
+
+For example:
+
+    raw score = 47
+
+may later be interpreted as:
+
+    0-20  -> At Risk
+    21-40 -> Developing
+    41-60 -> Established
+    61-80 -> Advanced
+    81+   -> Optimized
+
+Changing those labels or thresholds should not necessarily change the
+underlying scoring algorithm.
+
+The architecture should therefore consider separate concepts for:
+
+1.  scoring - deriving numeric or dimensional results
+2.  interpretation - converting those results into bands, labels,
+    messages, or classifications
+
+Range interpretation itself is a good candidate for a precompiled
+standard capability.
+
+17. Separate Answer Selectors From Scoring
+
+The current surveys reinforce another important distinction.
+
+yesNoInProgress and likert5 describe how answers are represented and
+displayed. They do not, by themselves, define the entire scoring
+algorithm.
+
+A selector should answer questions such as:
+
+-   what choices exist?
+-   what value is stored?
+-   how is it rendered?
+
+A scorer should answer:
+
+-   how does the stored response contribute to a result?
+-   how are question contributions aggregated?
+-   how are sections weighted?
+-   how are missing answers handled?
+
+Keeping these concerns separate prevents UI vocabulary from becoming
+scoring logic.
+
+18. Custom Rule Example
+
+A future custom survey might require:
+
+-   Q1 = Yes adds 10.
+-   Q2 and Q3 = Always adds 15.
+-   Q7 = No caps the result at 50.
+-   Q9 only contributes if Q8 = Yes.
+
+That could be represented as a typed tree roughly equivalent to:
+
+    Minimum(
+        If(Q7 = No, 50, unlimited),
+        Add(
+            If(Q1 = Yes, 10, 0),
+            If(Q2 = Always AND Q3 = Always, 15, 0),
+            If(Q8 = Yes, QuestionScore(Q9), 0)
+        )
+    )
+
+The persisted JSON representation can be designed later. The domain AST
+should be designed first.
+
+19. Why the Domain AST Should Come Before the JSON
+
+The JSON is a serialization format, not the domain model.
+
+Designing the JSON first risks letting convenient JSON shapes dictate
+the semantics of the scoring language.
+
+A better sequence is:
+
+1.  Identify required scoring capabilities.
+2.  Design the F# domain types.
+3.  Define validation rules and semantics.
+4.  Define the evaluator.
+5.  Create the JSON representation that maps cleanly into those types.
+
+This is also why the current survey files should not be rearranged yet.
+
+20. Migration Strategy for Existing Surveys
+
+Do not immediately rewrite the four current survey files.
+
+First:
+
+1.  Locate and document the current scoring implementation.
+2.  Build characterization tests using existing survey definitions and
+    known answer sets.
+3.  Identify the actual algorithms used by each survey family.
+4.  Determine which algorithms deserve named standard scorers.
+5.  Implement those scorers in F#.
+6.  Run the same answer sets through old and new implementations.
+7.  Require identical results unless an intentional scoring change is
+    separately approved.
+8.  Only then decide whether the JSON should be rearranged.
+
+This protects existing scoring semantics while allowing the architecture
+to improve underneath them.
+
+21. Testing Strategy
+
+Every standard scorer should have direct unit tests.
+
+Every custom AST operation should have evaluator tests.
+
+More importantly, the engine should support table-driven scoring
+fixtures:
+
+    survey + answers + expected result
+
+These fixtures can test:
+
+-   standard scorers
+-   custom rules
+-   missing-answer policies
+-   boundaries
+-   negative values
+-   normalization
+-   section aggregation
+-   interpretation ranges
+
+For migrated surveys, fixtures should function as compatibility tests.
+
+Property-based testing is also attractive for pure scorers. Examples
+include:
+
+-   percentage outputs stay within declared bounds
+-   averages stay between valid minimum and maximum answer values
+-   adding an ignored unanswered question does not change a score
+-   normalization preserves ordering where the scorer promises
+    monotonicity
+
+The exact properties depend on each scorer’s semantics.
+
+22. Diagnostics and Explainability
+
+A scoring engine should consider returning an optional explanation trace
+in addition to the final number.
+
+For example:
+
+    Team Structure
+      Q0: No -> contribution -1
+      Q1: Yes -> contribution -1
+      Q2: In Progress -> contribution 0.5
+      Section total -> 6.5
+
+This is useful for:
+
+-   debugging survey definitions
+-   validating migrations
+-   authoring custom rules
+-   explaining results
+-   support and auditability
+
+The production UI does not have to expose this trace to respondents. It
+can be an engine capability used by tests, authoring tools, or
+diagnostics.
+
+A strong design is for tracing to observe the same evaluation rather
+than maintain a separate scoring implementation.
+
+23. Authoring Implications
+
+Eventually, survey authors should not need to manually construct
+expression-tree JSON.
+
+An authoring tool can offer:
+
+-   choose a standard scoring model
+-   configure allowed parameters
+-   preview results
+-   build advanced conditions visually
+-   validate custom rules
+-   run sample responses
+-   show a scoring explanation
+
+The typed AST becomes the common internal representation behind that
+authoring experience.
+
+This is another reason to keep the language small and domain-specific.
+
+24. Performance in WASM
+
+The common path should be very inexpensive because standard scorers are
+ordinary compiled F#.
+
+Custom scoring adds interpretation overhead, but survey scoring
+expressions should be small relative to typical application workloads.
+
+Performance priorities should therefore be:
+
+1.  make standard scoring fast and direct
+2.  validate custom rules once when the survey is loaded
+3.  avoid repeatedly parsing JSON during scoring
+4.  evaluate an already typed/validated representation
+5.  consider memoizing derived section values if expressions reuse them
+
+Runtime code generation is unnecessary.
+
+25. Security and Trust Boundary
+
+Even if Echelon controls survey definitions today, the scoring format
+should be treated as data crossing a trust boundary.
+
+The rule system should never allow a survey to invoke arbitrary CLR
+methods.
+
+The legal operations are exactly those represented by the scoring
+domain.
+
+This produces a useful security property:
+
+  A survey can choose among scoring behaviors the engine explicitly
+  permits, but it cannot acquire new application capabilities.
+
+That is much safer than storing scripts, snippets of F#, or general
+expression-tree calls.
+
+26. Error Model
+
+Scoring errors should be domain errors rather than exceptions wherever
+practical.
+
+Potential errors include:
+
+    UnknownQuestion
+    UnknownSection
+    UnsupportedScoringVersion
+    InvalidExpression
+    MissingRequiredAnswer
+    DivisionByZero
+    CircularDependency
+    ExpressionTooComplex
+
+The public evaluator can return a result type such as:
+
+    Result<SurveyScore, ScoringError list>
+
+The exact types can evolve, but failures should remain explicit.
+
+27. Recommended Boundary Between Standard and Custom
+
+A useful rule:
+
+  If a scoring method is common enough to have a stable name and
+  semantics, implement it as a standard precompiled scorer.
+
+Use custom expressions when the behavior is genuinely survey-specific.
+
+If the same custom expression pattern appears repeatedly, that is
+evidence that it should be promoted into a new standard scorer or a
+parameterized capability.
+
+This lets the scoring system evolve toward the simplest representation
+of actual usage.
+
+28. What Not to Build
+
+Avoid:
+
+-   arbitrary F# stored in JSON
+-   C# stored in JSON
+-   JavaScript scoring snippets
+-   runtime source compilation
+-   reflection-based arbitrary method invocation
+-   serialized System.Linq.Expressions as the public survey language
+-   one bespoke compiled scorer for every survey
+-   one giant universal custom-rule interpreter used even for trivial
+    sums and averages
+-   coupling selector names directly to one scoring algorithm
+
+Each of these either increases risk, implementation coupling, or
+unnecessary complexity.
+
+29. Proposed Architecture
+
+The complete conceptual flow is:
+
+    Survey JSON
+        |
+        v
+    Deserialize
+        |
+        v
+    Survey Definition
+        |
+        +-------------------------------+
+        |                               |
+        v                               v
+    Answer/Selector Model          Scoring Specification
+                                        |
+                              +---------+---------+
+                              |                   |
+                              v                   v
+                         Standard             Custom
+                         Scoring              Expression
+                              |                   |
+                              v                   v
+                      Precompiled F#        Validate AST
+                          scorer                 |
+                              |                  v
+                              |            Typed AST
+                              |                  |
+                              |                  v
+                              |           F# Interpreter
+                              |                  |
+                              +---------+--------+
+                                        |
+                                        v
+                                  SurveyScore
+                                        |
+                              +---------+---------+
+                              |                   |
+                              v                   v
+                         Interpretation       Diagnostics
+                              |
+                              v
+                        Display Result
+
+Everything that executes is compiled into the F# WASM application. The
+only dynamic element is the safe data describing which permitted scoring
+operations should be applied.
+
+30. Initial Implementation Direction
+
+A sensible implementation sequence is:
+
+Phase 1 - Characterize existing behavior - Find the current scoring
+algorithms. - Create compatibility fixtures. - Do not change existing
+JSON.
+
+Phase 2 - Define the scoring domain - Define IDs and answer-value
+types. - Define ScoringModel. - Define the initial standard scorer
+set. - Define scoring result and error types.
+
+Phase 3 - Implement standard scorers - Implement only the scorers
+required by existing surveys first. - Verify compatibility against the
+fixtures.
+
+Phase 4 - Define the custom expression AST - Start with the smallest
+operation set justified by known requirements. - Implement validation
+and pure evaluation. - Add complexity limits.
+
+Phase 5 - Serialization - Design the survey JSON representation around
+the proven F# model. - Add explicit scoring-language/scorer versions.
+
+Phase 6 - Interpretation and diagnostics - Add result
+bands/classifications separately. - Add optional contribution traces for
+authoring and testing.
+
+Phase 7 - Authoring support - Standard scorer selection first. - Custom
+rule building only as an advanced capability.
+
+31. Open Questions
+
+These should be answered before finalizing the model:
+
+1.  What exact formulas are used by the current Agile and Scrum Master
+    360 implementations?
+2.  Does score currently represent a question weight, a maturity level,
+    a direct contribution, or something else?
+3.  How does yesNoInProgress transform an entry’s score?
+4.  How are unanswered questions treated?
+5.  Are sections independently scored and then aggregated?
+6.  Are section weights needed?
+7.  Are scores normalized?
+8.  Can a survey produce multiple dimensions rather than one overall
+    score?
+9.  Must historical results always be exactly reproducible?
+10. Can survey templates change after responses have been
+    encoded/stored?
+11. Will custom scoring be authored only by Echelon or eventually by
+    external survey authors?
+12. What level of scoring explanation should be available to authors and
+    respondents?
+
+These are domain questions. They should drive the final AST rather than
+adding speculative language features.
+
+32. Summary Decision
+
+Use a hybrid scoring architecture for the F# WASM survey engine.
+
+-   Precompile common scoring algorithms as ordinary F#.
+-   Parameterize those algorithms where safe configuration covers common
+    variation.
+-   Represent exceptional custom scoring as a small domain-specific
+    expression tree.
+-   Deserialize and validate custom rules into strongly typed F#
+    structures.
+-   Interpret those structures using precompiled pure F# functions.
+-   Keep arbitrary executable code out of survey definitions.
+-   Separate selectors, scoring, and score interpretation.
+-   Version scoring semantics.
+-   Preserve existing survey behavior through characterization tests
+    before restructuring current JSON.
+-   Promote repeated custom patterns into standard scorers over time.
+
+The central idea is:
+
+    Known behavior -> compiled F#
+    Common variation -> declarative parameters
+    Survey-specific behavior -> constrained typed expression data
+    Arbitrary code -> not allowed
+
+This retains the flexibility that motivated expression trees while
+fitting F# WebAssembly, strong typing, deterministic execution, and a
+survey format that can remain independent of the implementation
+language.

@@ -1,0 +1,640 @@
+Survey Engine – Live URL State and Submission Lifecycle
+
+Purpose
+
+This document defines the survey URL as the continuously updated serialized state of the respondent's survey, not merely as a final submission artifact.
+
+The completed respondent URL becomes the submission artifact sent to the administrator.
+
+1. Core Principle
+
+The respondent URL is the canonical serialized state of the survey throughout the respondent lifecycle.
+
+As the respondent changes answers, the URL is updated in real time to reflect the current survey state.
+
+At essentially any point:
+
+The URL represents the current recoverable state of the survey.
+
+2. Live URL Update Flow
+
+The respondent-side flow should behave conceptually as follows:
+
+User changes answer
+    ↓
+Survey state changes
+    ↓
+Validate the new answer/state
+    ↓
+Recalculate applicability/flow if necessary
+    ↓
+Encode current answer state
+    ↓
+Replace the current URL
+    ↓
+Render the updated state
+
+The URL should therefore stay synchronized with the current logical SurveyResponse.
+
+3. URL as Resume State
+
+Because the URL contains the current survey state, it can also act as the resume/bookmark mechanism.
+
+Example:
+
+A respondent answers questions 1 through 10, copies the current URL, closes the browser, and later reopens the URL.
+
+The engine should be able to reconstruct the same survey state from:
+
+Immutable Template
++
+Current URL
+
+No server-side respondent session is required.
+
+4. Respondent Load Flow
+
+When a respondent opens a survey URL:
+
+Load URL
+    ↓
+Parse survey/template reference
+    ↓
+Resolve exact immutable template
+    ↓
+Decode answer state
+    ↓
+Validate decoded state
+    ↓
+Determine applicable questions/sections
+    ↓
+Render survey
+
+5. URL Update Should Replace Browser History
+
+Answer changes should normally replace the current browser URL rather than append a new browser history entry for every response change.
+
+The implementation should use behavior equivalent to:
+
+replaceState
+
+rather than creating a new navigation-history entry on every answer update.
+
+This avoids creating dozens or hundreds of browser-history entries while still keeping the visible URL synchronized.
+
+6. What Belongs in the Respondent URL
+
+The respondent URL should contain only state that cannot be reconstructed from the immutable template.
+
+Conceptually:
+
+TemplateReference
+SurveyGroupId
+SurveyInstanceId
+AnswerState
+ResponseEncodingVersion
+IntegrityData
+Optional non-reconstructable instance metadata
+
+The exact encoding should remain compact and versioned.
+
+7. What Should Not Be Stored in the Respondent URL
+
+Do not duplicate data that can be deterministically reconstructed from the template.
+
+The respondent URL should generally not contain:
+
+Question text
+Question labels
+Option labels
+Section definitions
+Scoring rules
+Section scores
+Overall scores
+Recommendations
+Result classifications
+Presentation configuration
+
+These belong to the template or are derived from:
+
+Template + AnswerState
+
+8. Scoring Does Not Need to Be Serialized in the Respondent URL
+
+Because scoring is deterministic from the exact template and answer state, respondent-side score data should not normally be stored in the URL.
+
+Conceptually:
+
+Template
++
+Answers
+=
+Scores
+
+Serializing both answers and scores would duplicate state and increase URL size.
+
+9. Completion Is a Derived State
+
+Completion does not require a separate persisted server-side state.
+
+The engine can derive completion from the current response.
+
+A survey may be considered ready for submission when:
+
+CompletionRules = satisfied
+and
+BlockingValidationErrors = none
+
+Potential respondent states:
+
+NotStarted
+InProgress
+Invalid
+ReadyToSubmit
+Terminated
+
+These states are derived from:
+
+Template
++
+Current Answer State
+
+10. Final Submission
+
+There does not need to be a traditional server-side "upload response" step.
+
+The respondent works with a continuously updated URL.
+
+Once the survey satisfies completion and validation rules, the UI exposes an action such as:
+
+Copy
+Share
+Send to administrator
+
+The current completed URL becomes the submission artifact.
+
+11. Clarified URL Lifecycle
+
+The model should be understood as:
+
+Live respondent URL
+    =
+Current serialized survey state
+
+Completed respondent URL
+    =
+Final serialized survey state suitable for submission
+
+Administrator receives completed URL
+    =
+Submission import begins
+
+12. Stronger Canonical Statement
+
+Previous wording:
+
+The URL is the canonical submission artifact.
+
+Updated wording:
+
+The respondent URL is the canonical serialized state of the survey throughout its lifecycle. A completed respondent URL becomes the submission artifact sent to the administrator.
+
+13. Anonymous Survey Behavior
+
+Anonymous surveys require an additional finalization step.
+
+While the respondent is completing the survey, the live URL may still contain the original SurveyInstanceId because the instance identifies the invitation and supports normal resume behavior.
+
+Conceptually:
+
+Live anonymous survey URL:
+
+SurveyInstanceId
+SurveyGroupId
+TemplateReference
+AnswerState
+
+At final submission, the engine must transform this into an unlinkable anonymous submission.
+
+14. Anonymous Finalization Flow
+
+Recommended flow:
+
+Respondent completes survey
+    ↓
+Validate completion
+    ↓
+Generate new random AnonymousSubmissionId
+    ↓
+Remove SurveyInstanceId
+    ↓
+Verify no invitation-linking data remains
+    ↓
+Encode anonymous completed URL
+    ↓
+Share/send anonymous URL to administrator
+
+15. Anonymous Final Submission Shape
+
+Anonymous completed submission:
+
+AnonymousSubmissionId
+SurveyGroupId
+TemplateReference
+AnswerState
+ResponseEncodingVersion
+IntegrityData
+
+The original SurveyInstanceId must not remain in the returned submission.
+
+16. Anonymous Resume vs Anonymous Submission
+
+This distinction is important:
+
+During completion:
+
+SurveyInstanceId may exist in the live URL.
+
+After anonymous finalization:
+
+SurveyInstanceId must not exist in the outgoing administrator URL.
+
+This preserves:
+
+Resume behavior
+Instance-specific invitation handling
+
+while maintaining:
+
+Unlinkable final anonymous submission
+
+17. Anonymous Invariant
+
+In anonymous mode:
+
+No identifier capable of linking the completed administrator-facing submission back to the original invitation may survive finalization.
+
+This includes:
+
+SurveyInstanceId
+Derived reversible identifiers
+Hidden invitation tokens
+Stable metadata that can recreate the mapping
+
+18. Respondent-Side Pipeline
+
+Canonical respondent pipeline:
+
+Template + Initial URL
+    ↓
+Decode
+    ↓
+Render
+    ↓
+Answer changes
+    ↓
+Validate
+    ↓
+Update typed SurveyResponse
+    ↓
+Recalculate flow/applicability
+    ↓
+Encode
+    ↓
+Replace current URL
+    ↓
+Render updated state
+
+This cycle repeats continuously while the respondent completes the survey.
+
+19. Identified Finalization
+
+For identified surveys:
+
+Live URL:
+
+SurveyInstanceId
+SurveyGroupId
+Answers
+
+Final submission URL:
+
+SurveyInstanceId
+SurveyGroupId
+Answers
+
+The identity remains because the administrator intentionally needs to associate that survey instance with a known person using their external mapping.
+
+20. Anonymous Finalization
+
+For anonymous surveys:
+
+Live URL:
+
+SurveyInstanceId
+SurveyGroupId
+Answers
+
+Final submission URL:
+
+AnonymousSubmissionId
+SurveyGroupId
+Answers
+
+The relationship between SurveyInstanceId and AnonymousSubmissionId must not be recoverable by the survey engine.
+
+21. Administrator Import Pipeline
+
+After receiving the completed URL:
+
+Completed URL
+    ↓
+Parse submission envelope
+    ↓
+Resolve exact immutable template
+    ↓
+Verify template fingerprint
+    ↓
+Verify integrity
+    ↓
+Decode answers
+    ↓
+Validate response
+    ↓
+Evaluate applicability
+    ↓
+Score
+    ↓
+Produce SurveyResult
+    ↓
+Add to SurveyGroupResult
+    ↓
+Update administrator report state
+
+22. Administrator Report State
+
+Historically, the administrator URL stored only the data needed for reporting rather than carrying the full raw response data forward.
+
+That remains a useful design.
+
+Conceptually:
+
+Respondent URL
+    =
+Raw answer state
+
+Administrator import
+    ↓
+
+SurveyResult
+    =
+Derived survey result
+
+SurveyGroupResult
+    =
+Combined derived group state
+
+Administrator URL
+    =
+Compact report-oriented state
+
+The report state is a projection of the respondent submissions, not another copy of the original surveys.
+
+23. Admin URL or External Store
+
+The same derived result model should support two persistence strategies.
+
+Small groups:
+
+ReportPersistence = EmbeddedInUrl
+
+The administrator URL contains the complete derived report state.
+
+Large groups:
+
+ReportPersistence = ExternalStore
+
+The administrator URL contains a compact identifier/reference and the external store contains the derived group/report state.
+
+24. External Store Is an Escalation Path
+
+External storage should not be required for every survey.
+
+The architecture should support:
+
+Small:
+URL-only respondent state
+URL-only administrator report state
+
+Larger:
+URL-only respondent submissions
+Externally stored administrator/group result
+
+This preserves the simplicity of the URL-first architecture while allowing the system to scale.
+
+25. Raw Submission vs Derived Report Source of Truth
+
+There are two related but distinct authoritative artifacts.
+
+Submission source of truth:
+
+Completed respondent URL
+
+This contains the authoritative raw answer state for that respondent submission.
+
+Report source of truth:
+
+Deterministically derived SurveyResult / SurveyGroupResult
+
+This contains the authoritative state used to produce the administrator report.
+
+The report result must always be reproducible from the relevant immutable templates and accepted respondent submissions.
+
+26. SurveyResult Boundary
+
+Introduce an explicit SurveyResult domain object.
+
+Pipeline:
+
+Submission URL
+    ↓
+SurveyResult
+    ↓
+SurveyGroupResult
+    ↓
+Report Model
+    ↓
+Admin URL or External Store
+
+The report renderer should not be the component that performs scoring, validation, applicability, or recommendation logic.
+
+27. No Duplicate Survey Instances
+
+For identified surveys:
+
+A SurveyInstanceId may contribute at most one accepted submission to a SurveyGroup.
+
+Duplicate instance submissions should not be accepted as additional group responses.
+
+28. Anonymous Duplicate Limitation
+
+For anonymous submissions:
+
+AnonymousSubmissionId can prevent the exact same anonymous artifact from being imported twice.
+
+However, if anonymity is truly unlinkable, the engine cannot guarantee that one person did not independently generate multiple distinct anonymous submissions.
+
+Preventing person-level duplicate anonymous submissions would require preserving linkability and would weaken the anonymity model.
+
+This is an inherent tradeoff.
+
+29. URL Encoding Is Core Engine Infrastructure
+
+Because the URL is continuously synchronized with respondent state, encoding is not a secondary serialization concern.
+
+It is core engine infrastructure.
+
+The encoding layer must therefore be:
+
+Deterministic
+Compact
+Versioned
+Round-trip safe
+Fast enough for real-time updates
+Compatible with browser URL replacement
+Able to represent partial as well as completed surveys
+
+30. Performance Requirement
+
+Real-time URL updates should not cause noticeable UI delay.
+
+The typical answer-change cycle should be cheap enough to perform immediately:
+
+Update answer
+Validate affected state
+Recalculate affected flow
+Encode response
+Replace URL
+
+The implementation should avoid unnecessarily recomputing unrelated parts of the survey when an answer changes.
+
+31. Incremental Evaluation Opportunity
+
+Because each response change is known, the engine may optimize recalculation by tracking dependencies.
+
+Example:
+
+Question Q4 changes
+
+Only recalculate:
+
+Rules depending on Q4
+Derived facts depending on Q4
+Sections affected by those facts
+Scores affected by Q4
+Completion state if affected
+
+The engine must remain deterministic even if it uses incremental evaluation internally.
+
+32. Canonical Respondent Invariant
+
+At any stable point during survey completion:
+
+decode(current URL, exact template)
+
+must reconstruct the current logical survey response.
+
+33. Round-Trip Invariant
+
+For every valid survey response state:
+
+decode(encode(response)) = response
+
+This applies to:
+
+Partial responses
+Completed responses
+Special answer states
+Identified instances
+Anonymous final submissions
+
+34. Final Architecture
+
+Respondent side:
+
+Immutable Template
++
+Continuously Updated URL
+    ↓
+Live Survey State
+
+Answer changes
+    ↓
+URL changes immediately
+
+Completed identified survey
+    ↓
+Completed URL with SurveyInstanceId
+
+Completed anonymous survey
+    ↓
+Finalize anonymity
+    ↓
+Completed URL with AnonymousSubmissionId
+
+Administrator side:
+
+Completed URL
+    ↓
+Decode
+    ↓
+Validate
+    ↓
+Score
+    ↓
+SurveyResult
+    ↓
+SurveyGroupResult
+    ↓
+Admin report state
+    ↓
+Embedded admin URL or external result store
+
+35. Core Requirements
+
+1. The respondent URL is updated in real time as answers change.
+2. The URL is the canonical serialized respondent state.
+3. Reopening the current URL reconstructs the current survey state.
+4. Server-side respondent session persistence is not required.
+5. Answer changes should replace the current browser URL rather than create a new history entry.
+6. The respondent URL stores state, not derived scoring/report data.
+7. Completion is derived from template rules and current answers.
+8. A completed respondent URL becomes the submission artifact.
+9. Identified submissions retain SurveyInstanceId.
+10. Anonymous live URLs may retain SurveyInstanceId during completion.
+11. Anonymous finalization removes SurveyInstanceId.
+12. Anonymous finalization generates a new unlinkable AnonymousSubmissionId.
+13. Administrator import produces SurveyResult.
+14. Group aggregation produces SurveyGroupResult.
+15. Administrator report state may be embedded in a URL for small groups.
+16. Large group report state may use an external store.
+17. The raw respondent URL remains the authoritative raw submission artifact.
+18. The derived SurveyResult/SurveyGroupResult is the authoritative reporting state.
+19. URL encoding must support partial and completed surveys.
+20. Encoding and decoding must round-trip deterministically.
+21. Real-time URL updates must be performant enough to occur on normal answer changes.
+22. Reporting consumes derived result state rather than raw survey business logic.
+
+36. Guiding Principle
+
+The URL is not merely where the survey is submitted.
+
+It is the live serialization of the respondent's survey state.
+
+The survey engine should continuously maintain the equivalence:
+
+Current Survey State
+=
+Current URL + Exact Immutable Template
+
+When the survey is complete, that same state representation becomes the portable submission sent to the administrator.

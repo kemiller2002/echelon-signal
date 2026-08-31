@@ -1,0 +1,781 @@
+# Survey Engine – Requirement Changes for URL-Based Submission Model
+
+## Purpose
+
+This document updates the previously defined survey-engine requirements based on the clarified submission model:
+
+> The completed survey URL itself is sent to the administrator and contains all response data needed to reconstruct the submission.
+
+The administrator does not receive a reference to server-side response state. The URL is the portable submission artifact.
+
+This changes several previously proposed requirements and introduces new ones.
+
+---
+
+# Core Submission Model
+
+The intended flow is:
+
+```text
+Published Survey Template
+        ↓
+Survey Instance
+        ↓
+Respondent answers locally
+        ↓
+Answers + required instance metadata encoded into URL
+        ↓
+Respondent sends URL to administrator
+        ↓
+Administrator opens/imports URL
+        ↓
+Engine resolves exact immutable template
+        ↓
+Decode
+        ↓
+Validate
+        ↓
+Score
+        ↓
+Report
+```
+
+The URL is therefore not merely a navigation mechanism.
+
+It is the response transport and submission artifact.
+
+---
+
+# Requirements to Delete
+
+## 1. Delete Server-Side Survey Response Persistence as a Core Requirement
+
+Previous concept:
+
+```text
+SurveyResponse
+    SurveyInstanceId
+    EncodedAnswers
+```
+
+as a separately persisted server-side entity.
+
+This is no longer required as a core architectural assumption.
+
+The response may still exist as a logical domain concept, but it does not need to exist as a server-side record before or during survey completion.
+
+The encoded URL contains the answer data.
+
+---
+
+## 2. Delete Server-Side In-Progress Status as a Required Feature
+
+Previously proposed instance states included:
+
+```text
+NotStarted
+InProgress
+Completed
+Expired
+Cancelled
+```
+
+These should not be required as centrally stored survey-instance lifecycle states.
+
+Because the survey can be completed locally, the server may have no knowledge that the respondent has:
+
+- Opened the survey
+- Started answering
+- Resumed answering
+- Finished answering
+
+Local state can determine whether the survey appears complete.
+
+---
+
+## 3. Delete Submission Count as a Core Instance Requirement
+
+The engine should not assume it can centrally track how many times a respondent has submitted a survey URL.
+
+The same URL may potentially be:
+
+- Sent multiple times
+- Forwarded
+- Saved
+- Reopened
+- Imported more than once
+
+If duplicate-detection is later required, it should be implemented as an administrator-side/import concern, not assumed as part of the basic survey lifecycle.
+
+---
+
+## 4. Delete Locked-After-Completion as a Required Server Behavior
+
+There is no required central system that automatically locks an instance after submission.
+
+The respondent may retain the URL and potentially modify answers before sending another version.
+
+If immutable submission behavior is required later, it must be defined separately.
+
+---
+
+## 5. Delete Mandatory Server-Side Resume State
+
+A server-side resume mechanism is not required.
+
+If the survey URL continuously represents the current response state, then the URL itself can serve as the resume mechanism.
+
+A respondent can return to a URL containing partial answers and continue from that state.
+
+---
+
+# Requirements to Alter
+
+## 1. SurveyResponse Becomes a Logical Concept Rather Than a Required Persisted Entity
+
+Previous concept:
+
+```text
+SurveyResponse
+    SurveyInstanceId
+    EncodedAnswers
+```
+
+Revised concept:
+
+```text
+SurveyResponse
+    Logical decoded answer state
+```
+
+The response exists conceptually for:
+
+- Validation
+- Scoring
+- Flow
+- Reporting
+
+but its physical serialized form is contained in the submission URL.
+
+---
+
+## 2. Introduce SurveySubmission as the Portable Artifact
+
+A new distinction should be made:
+
+```text
+SurveyResponse
+    Logical answers
+
+SurveySubmission
+    Portable encoded representation containing
+    the information needed by the administrator
+```
+
+Conceptually:
+
+```text
+SurveySubmission
+    SurveyInstanceId
+    SurveyGroupId
+    SurveyIdentifier
+    TemplateVersion or TemplateFingerprint
+    ResponseEncodingVersion
+    EncodedAnswers
+    Optional Instance Metadata
+    IntegrityCheck
+```
+
+The SurveySubmission is physically represented by the URL.
+
+---
+
+## 3. SurveyInstance Status Becomes Primarily Derived State
+
+Instead of requiring persisted lifecycle states, the local engine may derive state from the current response.
+
+Example:
+
+```text
+No applicable answers
+    -> Not Started
+
+Some valid answers
+    -> In Progress
+
+All completion requirements satisfied
+    -> Ready to Submit
+```
+
+This state may be useful to the UI but does not need to be centrally persisted.
+
+---
+
+## 4. AllowResume Changes Meaning
+
+Previous interpretation:
+
+```text
+Server retains partial response and allows respondent to return.
+```
+
+Revised interpretation:
+
+```text
+The current URL contains enough state to reopen and continue the survey.
+```
+
+If `AllowResume` remains as a configuration option, it should control whether the application permits partial-response URLs to be reused, rather than implying server-side persistence.
+
+---
+
+## 5. Completion Changes from Server Lifecycle to Response Validity
+
+Completion should be calculated from the response and template.
+
+The engine should determine whether the current submission satisfies:
+
+- Required applicable questions
+- Section requirements
+- Validation rules
+- Flow/applicability rules
+- Completion rules
+
+Potential local states:
+
+```text
+Incomplete
+ValidAndCompletable
+ReadyToSubmit
+Invalid
+Terminated
+```
+
+The administrator may later mark an imported submission as processed, but that is separate from survey completion.
+
+---
+
+## 6. Submission Policy Becomes Import/Artifact Policy
+
+Previously proposed policies included:
+
+```text
+Reusable
+SingleSubmission
+ReplacePrevious
+AppendRevision
+LockedAfterCompletion
+```
+
+These should no longer be considered inherent respondent-side behaviors.
+
+Instead, they may become administrator/import policies such as:
+
+```text
+AcceptDuplicate
+DetectDuplicate
+ReplaceExistingImportedSubmission
+KeepAllImportedVersions
+RejectPreviouslyImportedSubmission
+```
+
+These belong to the system receiving the URL, not necessarily to the survey engine itself.
+
+---
+
+## 7. Response Revision Semantics Change
+
+Previously proposed:
+
+```text
+ResponseRevision
+PreviousResponseHash
+ModifiedAt
+```
+
+as part of a central edit history.
+
+Revised requirement:
+
+A URL may represent a new version of the same survey instance.
+
+If revision tracking is needed, it should be based on the imported submission artifact.
+
+Possible administrator-side fields:
+
+```text
+ImportedSubmissionHash
+PreviousImportedSubmissionHash
+ImportedAt
+RevisionNumber
+```
+
+Revision tracking is optional and should not be required for the core respondent engine.
+
+---
+
+## 8. Integrity Policy Becomes More Important
+
+Because the URL is the complete submission artifact, corruption detection becomes more important.
+
+At minimum, the engine should support detection of:
+
+- URL truncation
+- Invalid encoding
+- Corrupted answer payload
+- Incorrect template reference
+- Invalid response length/cardinality
+
+A compact checksum or integrity value should be considered part of the submission format.
+
+---
+
+## 9. Template Resolution Becomes a Hard Requirement
+
+The administrator must be able to resolve the exact immutable template from the submission.
+
+The submission must contain enough identity information to determine:
+
+```text
+SurveyIdentifier
+TemplateVersion
+TemplateHash or TemplateFingerprint
+```
+
+The exact balance between these fields can be optimized for URL length, but the resolved template must be unambiguous.
+
+---
+
+## 10. SurveyGroupId Becomes Part of Portable Submission Context
+
+Because multiple survey URLs may arrive independently, the `SurveyGroupId` should travel with each submission when grouping is required.
+
+This allows the administrator to associate multiple survey submissions without requiring prior centralized coordination.
+
+Example:
+
+```text
+SurveyGroupId = group-123
+
+Submission A = Leadership Survey
+Submission B = Technology Survey
+Submission C = Governance Survey
+```
+
+The administrator can reconstruct the group from the submission metadata.
+
+---
+
+# New Requirements
+
+## 1. The URL Is the Canonical Submission Artifact
+
+New core requirement:
+
+> A completed survey URL must contain all response data necessary for the administrator to reconstruct the submission.
+
+The URL is the transport mechanism for the response.
+
+---
+
+## 2. Submission Must Be Self-Contained Relative to the Immutable Template
+
+A valid submission URL must be interpretable using only:
+
+1. The submission URL
+2. The referenced immutable survey template
+
+No respondent-side browser state may be required.
+
+Core invariant:
+
+> Once the respondent sends the URL, no additional respondent-side state is required to decode, validate, score, or interpret the response.
+
+---
+
+## 3. Submission Payload Must Contain Only Non-Reconstructable State
+
+To minimize URL length, do not duplicate information already present in the template.
+
+The submission should generally not include:
+
+- Question text
+- Question IDs when position is sufficient
+- Selector labels
+- Option labels
+- Scoring rules
+- Section definitions
+- Recommendation rules
+
+The submission should include only state that cannot be reconstructed from the template.
+
+---
+
+## 4. Submission Payload Needs a Defined Envelope
+
+The encoded URL should have a stable envelope format.
+
+Potential conceptual fields:
+
+```text
+ResponseEncodingVersion
+SurveyIdentifier
+TemplateVersion / TemplateFingerprint
+SurveyInstanceId
+SurveyGroupId
+EncodedAnswers
+IntegrityCheck
+Optional Instance Metadata
+```
+
+The exact binary/URL-safe encoding can be optimized later.
+
+---
+
+## 5. Response Encoding Version Is Mandatory
+
+The submission serialization format must have its own version.
+
+Example:
+
+```text
+ResponseEncodingVersion = 1
+```
+
+This allows future encoding/compression changes without invalidating old survey URLs.
+
+---
+
+## 6. Decode Must Fail Explicitly
+
+The administrator-side engine must fail safely and explicitly if:
+
+- The encoding version is unsupported
+- The template cannot be found
+- The template fingerprint does not match
+- The payload is malformed
+- The payload is truncated
+- The answer cardinalities do not match
+- Integrity validation fails
+
+Never silently guess.
+
+---
+
+## 7. Integrity Check Should Be Included
+
+A compact integrity value should be part of the URL format.
+
+Its first purpose is accidental corruption detection.
+
+Examples of failure scenarios:
+
+- Messaging application truncates the URL
+- User copies only part of the link
+- URL-safe encoding is damaged
+- Payload is manually edited accidentally
+
+Possible implementations:
+
+- CRC/checksum
+- Truncated cryptographic hash
+- Other compact deterministic integrity code
+
+The final implementation should balance reliability against URL size.
+
+---
+
+## 8. Authenticity Is Separate from Integrity
+
+The engine must distinguish:
+
+```text
+Integrity
+    Was the payload altered or corrupted?
+
+Authenticity
+    Was the payload produced through a trusted process?
+```
+
+A checksum or ordinary hash does not prove authenticity.
+
+If authenticity is required for a specific survey type, the engine may later support a keyed signature.
+
+Possible policies:
+
+```text
+None
+IntegrityOnly
+Signed
+```
+
+Do not require signing for every survey.
+
+---
+
+## 9. URLs Must Be Portable Across Devices
+
+A submission URL should be usable when:
+
+- Generated on one device
+- Sent through email/text/chat
+- Opened on another device
+- Opened by the administrator later
+
+No local storage dependency should be required for completed submissions.
+
+---
+
+## 10. Partial URLs May Also Represent Resume State
+
+If desired, the same encoding model can support partially completed surveys.
+
+A partial-response URL can contain:
+
+```text
+Survey identity
+Instance identity
+Current answer state
+```
+
+The respondent can reopen it and continue.
+
+This should be a natural consequence of the state model rather than a separate persistence mechanism.
+
+---
+
+## 11. Administrator Import Becomes a Distinct Operation
+
+The administrator-side application should treat receiving/opening a URL as an import operation.
+
+Conceptually:
+
+```text
+Receive URL
+    ↓
+Parse Submission Envelope
+    ↓
+Resolve Template
+    ↓
+Verify Template Fingerprint
+    ↓
+Verify Integrity
+    ↓
+Decode Answers
+    ↓
+Validate Response
+    ↓
+Score
+    ↓
+Associate With Survey Group
+    ↓
+Store or Report as Needed
+```
+
+---
+
+## 12. Imported Submission Identity Should Be Detectable
+
+The administrator should be able to determine whether the exact same submission artifact has been imported before.
+
+A deterministic submission hash can support this.
+
+Example:
+
+```text
+SubmissionHash = Hash(canonical submission payload)
+```
+
+This does not have to be included in the URL if it can be calculated during import.
+
+---
+
+## 13. SurveyInstanceId Must Survive in the URL
+
+The `SurveyInstanceId` becomes the stable identity of a particular survey occurrence.
+
+It allows multiple URLs containing modified answer states to still be recognized as belonging to the same survey instance.
+
+Example:
+
+```text
+Instance 123
+Submission A
+Submission B
+```
+
+Both may represent different answer states for the same logical survey instance.
+
+---
+
+## 14. SurveyGroupId Must Survive in the URL When Applicable
+
+The `SurveyGroupId` must be portable with each related submission.
+
+This lets independently completed survey instances be reassembled later.
+
+---
+
+## 15. Administrator Storage Is Optional to Respondent Completion
+
+The administrator may choose to persist imported submissions for:
+
+- Reporting
+- Audit
+- Group aggregation
+- Historical analysis
+- Duplicate detection
+
+But this persistence occurs after receipt/import.
+
+The respondent engine must not depend on it.
+
+---
+
+# Revised Core Domain Model
+
+The architecture should now be understood as:
+
+```text
+SurveyTemplate
+    Immutable meaning and interpretation
+
+SurveyInstance
+    Identity and context for this particular survey
+
+SurveyResponse
+    Logical decoded answer state
+
+SurveySubmission
+    Portable URL artifact containing instance state + encoded answers
+
+SurveyGroup
+    Relationship between multiple survey instances/submissions
+```
+
+---
+
+# Revised Data Ownership
+
+## Template Owns Meaning
+
+The immutable template owns:
+
+```text
+Questions
+Question order
+Selectors
+Option labels
+Answer cardinality
+Sections
+Flow
+Validation
+Scoring
+Thresholds
+Recommendations
+Result interpretation
+```
+
+---
+
+## Submission Owns State
+
+The URL submission owns:
+
+```text
+Survey identity/reference
+SurveyInstanceId
+SurveyGroupId
+Answer state
+Encoding version
+Required instance-specific metadata
+Integrity information
+```
+
+---
+
+# Revised Deterministic Interpretation Rule
+
+The core interpretation equation becomes:
+
+```text
+Immutable Published Template
++
+Submission URL
+=
+Complete Reproducible Survey Result
+```
+
+The administrator should not need any hidden respondent-side context.
+
+---
+
+# Requirements That Remain Unchanged
+
+The following previously defined requirements still apply:
+
+- Published templates are immutable
+- Any semantic change creates a new template version
+- TemplateVersion is required
+- TemplateHash/fingerprint is required for integrity/version verification
+- Templates use deterministic canonicalization before hashing
+- Old published templates must remain resolvable
+- Sections are first-class entities
+- Section-level scoring is explicit
+- Survey-level scoring is supported
+- Survey-group scoring may be supported
+- Flow/branching is part of the immutable template
+- Validation is separate from scoring
+- Derived facts are supported
+- Completion rules are explicit
+- N/A, Don't Know, Unanswered, and not-applicable-by-flow remain distinct
+- TemplateSchemaVersion is required
+- MinimumEngineVersion is required
+- Unsupported template behavior must fail explicitly
+- Published templates must not depend on mutable shared configuration
+- Randomization must be deterministic if supported
+- Localization must not change answer semantics
+- Recommendation rules belong to the survey engine, not the reporting renderer
+- Rule dependencies must be deterministic and cycle-free
+
+---
+
+# Most Important Architectural Changes
+
+The clarified model produces five major changes:
+
+## 1. The URL is the response artifact
+
+Not a pointer to a response.
+
+---
+
+## 2. Server-side respondent state is not required
+
+The respondent can complete the entire survey without centrally persisted response state.
+
+---
+
+## 3. Submission becomes a domain concept
+
+The engine should distinguish logical answers from their portable URL representation.
+
+---
+
+## 4. Integrity and template resolution become critical
+
+Because the entire response travels inside the URL.
+
+---
+
+## 5. Administrator import becomes the persistence boundary
+
+Persistent storage, duplicate detection, audit history, aggregation, and reporting can begin when the administrator receives/imports the submission.
+
+---
+
+# Core Invariant
+
+> A valid survey submission URL plus its exact immutable published template must be sufficient to deterministically reconstruct, validate, score, and interpret the complete response.
+
+This should be treated as one of the foundational invariants of the rebuilt survey engine.

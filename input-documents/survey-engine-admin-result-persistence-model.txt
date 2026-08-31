@@ -1,0 +1,1003 @@
+Survey Engine – Administrator Result, Group State, and Persistence Model
+
+Purpose
+
+This document defines the administrator-side model that begins when completed respondent URLs are imported.
+
+It focuses on:
+
+- SurveyResult
+- SurveyGroupResult
+- AdminReportState
+- Embedded URL persistence
+- External-store persistence
+- Accepted submission rules
+- Anonymous vs identified group behavior
+- Report-state boundaries
+- Audit/reproducibility requirements
+
+The intent is to keep respondent submissions, survey interpretation, and report presentation as distinct concerns.
+
+1. Core Administrator Pipeline
+
+Completed Respondent URL
+    ↓
+Parse Submission
+    ↓
+Resolve Exact Immutable Template
+    ↓
+Verify Template Fingerprint
+    ↓
+Verify Submission Integrity
+    ↓
+Decode Answers
+    ↓
+Validate
+    ↓
+Evaluate Applicability
+    ↓
+Score
+    ↓
+Produce SurveyResult
+    ↓
+Add to SurveyGroupResult
+    ↓
+Produce AdminReportState
+    ↓
+Persist Embedded in URL
+    or
+Persist in External Store
+    ↓
+Render Report
+
+2. Three Distinct Data Layers
+
+SurveyResult
+Represents the deterministic interpreted result of one accepted respondent submission.
+
+SurveyGroupResult
+Represents the deterministic aggregation of all accepted SurveyResults in one SurveyGroup.
+
+AdminReportState
+Represents the compact state required by the reporting application to render the desired report.
+
+These may overlap heavily in simple cases, but they should remain conceptually separate.
+
+3. SurveyResult
+
+Recommended logical model:
+
+SurveyResult
+    Identity
+    SubmissionIdentity
+    Completion
+    Validation
+    AnswersSummary
+    SectionResults
+    OverallResult
+    DerivedFacts
+    Recommendations
+    Coverage
+    Confidence
+    DiagnosticsReference?
+
+4. SurveyResult Identity
+
+Recommended fields:
+
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+SurveyGroupId
+
+For identified surveys:
+SurveyInstanceId
+
+For anonymous surveys:
+AnonymousSubmissionId
+
+The result should never contain both an original SurveyInstanceId and AnonymousSubmissionId for an anonymous submission.
+
+5. Submission Identity
+
+The administrator system may calculate:
+
+SubmissionHash
+
+The SubmissionHash should be calculated from a canonical form of the completed respondent submission.
+
+Uses:
+- Detect importing the exact same artifact again
+- Audit/reproducibility
+- Confirm report lineage
+- Compare stored records to original submission artifacts
+
+SubmissionHash does not need to be present in the respondent URL.
+
+6. No Duplicate Accepted Submissions
+
+For identified surveys:
+
+A SurveyInstanceId may contribute at most one accepted SurveyResult to a SurveyGroup.
+
+If an administrator attempts to import another completed submission carrying the same SurveyInstanceId, it must not be counted as an additional survey.
+
+Potential behavior:
+RejectDuplicateInstance
+
+The initial implementation should favor rejection rather than silent replacement.
+
+7. Anonymous Duplicate Rule
+
+For anonymous surveys:
+
+An AnonymousSubmissionId may contribute at most one accepted result.
+
+The exact same anonymous submission artifact must not be counted twice.
+
+However, strong anonymity prevents guaranteed person-level duplicate detection if one respondent intentionally generates multiple independent anonymous submissions.
+
+This limitation should be explicit.
+
+8. Accepted Submission
+
+Once a submission has passed:
+
+- Envelope parsing
+- Encoding compatibility
+- Template resolution
+- Fingerprint verification
+- Integrity verification
+- Answer decoding
+- Required validation/completion rules
+
+it may be accepted into the SurveyGroupResult.
+
+Rejected submissions should not affect group counts or scores.
+
+9. SurveyResult Completion
+
+Recommended completion information:
+
+State
+AnsweredCount
+ApplicableQuestionCount
+RequiredAnsweredCount
+RequiredQuestionCount
+BlockingValidationErrors
+Coverage
+
+Only submissions meeting the template-defined acceptance requirements should normally enter final group aggregation.
+
+10. SurveyResult Validation
+
+Recommended model:
+
+ValidationResult
+    IsValid
+    Errors
+    Warnings
+
+Validation errors should contain stable identifiers rather than presentation-only strings where possible:
+
+RuleId
+QuestionId?
+SectionId?
+ErrorCode
+Severity
+MessageKey
+
+11. AnswersSummary
+
+The report state should not automatically contain all decoded base answers.
+
+Instead, SurveyResult may expose a compact AnswersSummary only where needed.
+
+Possible contents:
+
+AnsweredCount
+DontKnowCount
+NACount
+ApplicableCount
+CriticalAnswerFlags
+SelectedAnswerReferencesNeededForReporting
+
+The complete decoded answers can exist transiently during import and scoring without automatically becoming part of long-term report state.
+
+12. SectionResult
+
+Recommended model:
+
+SectionResult
+    SectionId
+    RawScore?
+    NormalizedScore?
+    Category?
+    Direction
+    Coverage
+    Confidence?
+    Completion
+    Weight?
+    IncludedInOverall
+    RecommendationIds
+    KeyFlags
+
+Not every scoring model needs every field.
+
+13. OverallResult
+
+The overall result should support multiple shapes.
+
+Scalar
+Example: 74 / 100
+
+Categorical
+Example: Advanced
+
+Profile
+Example:
+Leadership = 82
+Governance = 49
+Technology = 67
+
+Composite
+Example:
+Overall Score = 74
+Maturity = Level 3
+Risk = Moderate
+Weakest Domain = Governance
+Coverage = 81%
+Confidence = Moderate
+
+14. Derived Facts
+
+SurveyResult may retain only derived facts needed for:
+- Group aggregation
+- Reporting
+- Recommendations
+- Audit/explanation
+
+Do not automatically serialize every internal intermediate expression result into admin state.
+
+15. Recommendations
+
+SurveyResult should contain triggered recommendation identifiers and metadata, not necessarily large repeated display text.
+
+Example:
+
+RecommendationResult
+    RecommendationId
+    Priority
+    RelatedSectionId?
+    RelatedQuestionIds?
+    TriggerReasonCode?
+
+Display text can be resolved from the immutable template/report configuration.
+
+16. SurveyGroupResult
+
+Recommended logical model:
+
+SurveyGroupResult
+    SurveyGroupId
+    GroupIdentityMode
+    ExpectedSurveyCount
+    AcceptedSurveyCount
+    MissingSurveyCount
+    SurveyResults
+    GroupCompletion
+    GroupAggregates
+    GroupRecommendations
+    GroupCoverage
+    GroupConfidence
+    TemplateSummary
+    ResultVersion
+
+17. ExpectedSurveyCount
+
+The administrator defines ExpectedSurveyCount when creating the survey group.
+
+18. AcceptedSurveyCount
+
+Derived as:
+count(accepted SurveyResults)
+
+Rejected or duplicate submissions do not increase this count.
+
+19. MissingSurveyCount
+
+Derived as:
+ExpectedSurveyCount - AcceptedSurveyCount
+
+Never infer which individuals are missing in anonymous mode.
+
+20. Group Identity Mode
+
+Recommended:
+
+GroupIdentityMode
+    Identified
+    Anonymous
+
+A group should generally have one identity mode.
+
+Mixing identified and anonymous instances in the same logical reporting group should be prohibited by default unless a future explicit use case requires it.
+
+21. Identified Group State
+
+For an identified group, the administrator may maintain an external mapping:
+
+SurveyInstanceId -> Person
+
+The core SurveyGroupResult still does not need names or email addresses.
+
+It may retain:
+SurveyInstanceId
+Survey result
+Role if applicable
+
+The reporting application may optionally join administrator-owned identity metadata at render time.
+
+22. Anonymous Group State
+
+For anonymous groups, SurveyGroupResult contains:
+
+AnonymousSubmissionIds
+Aggregate SurveyResults
+Group counts
+Group-level result
+
+It must not contain:
+
+Original SurveyInstanceIds
+Respondent names
+Invitation identifiers
+Administrator identity mappings
+
+23. Group Completion
+
+Group completion should be explicit.
+
+Possible state:
+
+GroupCompletion
+    WaitingForResponses
+    Complete
+    IncompleteClosed
+    Invalid
+
+For the simplest model:
+
+Complete = AcceptedSurveyCount >= ExpectedSurveyCount
+
+But future group configurations may define more complex rules such as required roles or required survey types.
+
+24. No Duplicate Group Contribution
+
+Each accepted submission identity contributes once.
+
+Identified:
+Unique by SurveyInstanceId
+
+Anonymous:
+Unique by AnonymousSubmissionId
+
+This invariant must be enforced before group aggregation.
+
+25. Group Aggregates
+
+Group-level aggregate outputs may include:
+
+OverallGroupScore
+SectionAggregates
+ResultDistribution
+CategoryDistribution
+ProfileAverages
+WeakestSections
+StrongestSections
+RiskCounts
+MaturityDistribution
+RecommendationFrequency
+Coverage
+Confidence
+
+The exact aggregate set is determined by reporting requirements and group scoring configuration.
+
+26. Group Section Aggregates
+
+For sections shared across survey instances, possible aggregate measures include:
+
+Mean
+Median
+Minimum
+Maximum
+Distribution
+PercentageAboveThreshold
+PercentageBelowThreshold
+CategoryCounts
+
+The scoring engine should define the aggregate values.
+The reporting layer decides which values to display.
+
+27. Group Recommendations
+
+Recommendations may be triggered at two levels:
+
+Survey-level recommendations
+Group-level recommendations
+
+Example group rule:
+More than 40% of accepted responses score Governance below 50.
+
+Group-level rules should be part of the scoring/group interpretation model, not report rendering.
+
+28. Group Coverage
+
+Group coverage should remain separate from performance.
+
+Possible metrics:
+
+AcceptedSurveyCount / ExpectedSurveyCount
+Average respondent coverage
+Section-specific response coverage
+Don't Know frequency
+N/A frequency
+
+These values can influence confidence but should not automatically alter performance scores unless explicitly configured.
+
+29. Group Confidence
+
+Group confidence may be derived from:
+
+Response completion rate
+Per-survey coverage
+Don't Know prevalence
+Minimum sample size
+Role coverage
+Evidence/confidence rules
+
+Potential result:
+High
+Moderate
+Low
+
+Do not equate group confidence with group score.
+
+30. Template Summary
+
+A SurveyGroup may contain instances from one or multiple survey templates.
+
+SurveyGroupResult should retain enough template summary information to reproduce/report the results.
+
+TemplateSummary[]
+    SurveyIdentifier
+    TemplateVersion
+    TemplateHash
+    AcceptedCount
+
+31. Result Version
+
+The derived administrator result format should itself be versioned.
+
+Recommended field:
+ResultSchemaVersion
+
+This is distinct from TemplateVersion, TemplateSchemaVersion, and ResponseEncodingVersion.
+
+32. AdminReportState
+
+Recommended logical shape:
+
+AdminReportState
+    ResultSchemaVersion
+    SurveyGroupId
+    GroupIdentityMode
+    ExpectedSurveyCount
+    AcceptedSurveyCount
+    GroupCompletion
+    ReportSummary
+    SectionSummaries
+    RecommendationSummary
+    Coverage
+    Confidence
+    PersistenceMetadata
+
+33. ReportSummary
+
+Possible contents:
+
+OverallResult
+Maturity
+RiskBand
+WeakestArea
+StrongestArea
+PrimaryCategory
+KeyFlags
+
+Only include fields relevant to the report configuration.
+
+34. SectionSummaries
+
+Each reportable section may contain:
+
+SectionId
+AggregateScore
+Category
+DistributionSummary?
+Coverage
+Confidence?
+RecommendationIds
+
+Avoid carrying raw base answers unless the report explicitly requires respondent-level answer detail.
+
+35. RecommendationSummary
+
+Possible contents:
+
+RecommendationId
+Priority
+Frequency
+AffectedSectionId
+SortOrder
+
+Display text should generally come from immutable report/template definitions rather than repeated in every admin URL.
+
+36. AdminReportState Is a Projection
+
+AdminReportState is not another copy of the respondent submissions.
+
+It is a deterministic projection of SurveyGroupResult optimized for report rendering.
+
+Accepted Submissions
+    ↓
+SurveyResults
+    ↓
+SurveyGroupResult
+    ↓
+AdminReportState
+
+37. Source-of-Truth Layers
+
+Raw Submission Source of Truth:
+Completed respondent URL
+
+Derived Report Source of Truth:
+SurveyResult / SurveyGroupResult
+
+AdminReportState is a projection optimized for rendering/persistence.
+
+38. Reproducibility Requirement
+
+A SurveyResult must be reproducible from:
+Exact immutable template + accepted respondent submission
+
+A SurveyGroupResult must be reproducible from:
+Accepted SurveyResults + group configuration
+
+An AdminReportState must be reproducible from:
+SurveyGroupResult + report-state projection rules
+
+39. Raw Respondent URL Retention
+
+The core respondent engine does not require administrator-side persistence of raw URLs.
+
+Two valid operating modes:
+
+Minimal / Privacy-Oriented
+After successful import:
+- Derive SurveyResult
+- Calculate SubmissionHash
+- Do not retain raw URL
+
+Audit / Full-Reproducibility
+After successful import:
+- Retain original completed submission URL or canonical submission payload
+- Retain SubmissionHash
+- Derive SurveyResult
+
+This should be an administrator deployment/policy decision.
+
+40. Submission Retention Policy
+
+Recommended:
+
+SubmissionRetention
+    NoneAfterImport
+    RetainCanonicalSubmission
+
+Do not accidentally persist raw URLs through generic logs, analytics, browser telemetry, or report-state serialization.
+
+41. Report Persistence Strategy
+
+Recommended model:
+
+ReportPersistence
+    EmbeddedInUrl
+    ExternalStore
+
+The reporting engine should operate on AdminReportState regardless of persistence strategy.
+
+42. EmbeddedInUrl
+
+Used when the complete AdminReportState fits safely within the supported administrator URL budget.
+
+Admin URL contains:
+
+ResultSchemaVersion
+SurveyGroupId
+Derived report state
+Integrity information
+
+Advantages:
+- No external database required
+- Portable
+- Easy to share/bookmark
+- Preserves URL-first philosophy
+
+43. ExternalStore
+
+Used when AdminReportState becomes too large for safe URL transport.
+
+Admin URL contains:
+
+ResultSchemaVersion
+SurveyGroupId
+ReportStateId / ResultId
+Integrity/reference metadata
+
+External store contains:
+
+AdminReportState
+or
+SurveyGroupResult + AdminReportState
+
+The external store should store derived administrator state, not automatically require every raw respondent answer.
+
+44. Persistence Should Be Transparent to Reporting
+
+The report renderer should receive AdminReportState.
+
+It should not care whether that state came from EmbeddedInUrl or ExternalStore.
+
+45. Choosing Embedded vs External
+
+Do not choose based on survey count alone.
+Choose based on serialized AdminReportState size.
+
+Conceptually:
+
+if EncodedAdminReportState <= SupportedAdminUrlBudget
+then EmbeddedInUrl
+else ExternalStore
+
+This can be automatic.
+
+46. URL Budget Safety Margin
+
+The threshold should include a safety margin for:
+
+Base application URL
+Routing parameters
+Encoding overhead
+Integrity fields
+Future schema expansion
+
+Do not fill the URL to the theoretical maximum.
+
+47. Automatic Escalation
+
+Recommended behavior:
+
+Create/update SurveyGroupResult
+    ↓
+Project AdminReportState
+    ↓
+Encode AdminReportState
+    ↓
+Measure URL size
+    ↓
+If below threshold:
+    EmbeddedInUrl
+Else:
+    ExternalStore
+
+48. External Store Abstraction
+
+Conceptual interface:
+
+ReportStateStore
+    Save(AdminReportState) -> ResultId
+    Load(ResultId) -> AdminReportState
+
+The engine/reporting layer should not depend on a specific database technology.
+
+49. External Result Identity
+
+Externally stored state should have a stable opaque identifier:
+ResultId
+
+Avoid sequential public database IDs where practical.
+
+50. External Store Integrity
+
+An externally stored admin URL should still protect against:
+
+Invalid ResultId
+Wrong group reference
+Malformed parameters
+Tampering with public references
+
+The exact security model can be finalized with deployment requirements.
+
+51. Admin URL Growth During Imports
+
+When another accepted respondent survey is imported:
+
+Existing SurveyGroupResult
++
+New SurveyResult
+    ↓
+Recalculate group aggregates
+    ↓
+Create new AdminReportState
+    ↓
+Update admin URL or external stored state
+
+52. Admin URL as Live Derived State
+
+For EmbeddedInUrl mode, the administrator URL becomes the live serialized derived state of the group/report.
+
+Respondent side:
+Answer change -> respondent URL changes
+
+Administrator side:
+Accepted survey import -> admin report URL changes
+
+Respondent URL = raw answer state
+Admin URL = derived group/report state
+
+53. Administrator Resume
+
+EmbeddedInUrl mode:
+Opening the current admin URL should reconstruct the state needed to continue importing additional surveys.
+
+ExternalStore mode:
+Opening the admin URL should resolve ResultId and restore stored group/report state.
+
+54. Group State Needed for Future Imports
+
+Persisted admin state must contain enough information to enforce:
+
+ExpectedSurveyCount
+AcceptedSurveyCount
+Previously accepted instance/submission identities
+Template/group configuration
+Existing derived aggregate state
+
+This is critical for duplicate prevention.
+
+55. Accepted Identity Set
+
+Identified groups:
+AcceptedSurveyInstanceIds
+
+Anonymous groups:
+AcceptedAnonymousSubmissionIds
+
+This allows future imports to reject duplicates.
+
+56. Identity Set Size
+
+For small groups, accepted identity values may fit in the admin URL.
+For large groups, this set may itself force ExternalStore.
+
+57. Compact Identity Fingerprints
+
+For duplicate enforcement, compact hashes/fingerprints of accepted identities may be stored instead of full IDs if URL space becomes important.
+
+Collision risk must be deliberately assessed.
+Correctness takes priority over minor byte savings.
+
+58. Administrator Import Error States
+
+Possible errors:
+
+DuplicateSurveyInstance
+DuplicateAnonymousSubmission
+UnexpectedSurveyGroup
+WrongTemplate
+TemplateVersionMismatch
+TemplateFingerprintMismatch
+SubmissionIntegrityFailure
+InvalidResponse
+IncompleteResponse
+UnsupportedEncodingVersion
+GroupAlreadyComplete
+
+These should be explicit domain errors.
+
+59. Unexpected Group
+
+A respondent submission with a different SurveyGroupId must not silently enter the current group.
+
+Aggregation must remain explicit.
+
+60. Group Already Complete
+
+When:
+AcceptedSurveyCount = ExpectedSurveyCount
+
+the group is complete under the simple count-based model.
+
+Additional imports should not be accepted unless group configuration explicitly allows over-completion.
+
+Default:
+Reject additional submissions.
+
+61. Report-State Minimalism
+
+The admin URL/store should contain only data needed to:
+
+- Resume importing
+- Prevent duplicates
+- Reconstruct the group result
+- Render reports
+- Prove template/result lineage
+
+Avoid carrying:
+
+- Full question prompts
+- Full option labels
+- Scoring algorithms
+- Repeated recommendation prose
+- Raw respondent answers unless explicitly required
+
+62. Reporting Must Consume Results
+
+Reporting must receive AdminReportState or SurveyGroupResult.
+
+It must not independently:
+
+- Decode respondent submissions
+- Decide question applicability
+- Recalculate scoring rules
+- Trigger recommendations
+- Determine completion
+- Detect duplicates
+
+63. Reporting Detail Levels
+
+The result model should support future reports at different levels without changing scoring logic.
+
+Examples:
+
+Executive Summary
+Section Detail
+Group Distribution
+Respondent Detail for identified groups
+Anonymous Aggregate
+Recommendations
+Methodology / Audit
+
+64. Anonymous Reporting Boundary
+
+Anonymous reporting may use:
+
+Aggregate score
+Distribution
+Counts
+Section breakdowns
+Recommendations
+Coverage/confidence
+
+Anonymous reporting must not expose or imply:
+
+Original SurveyInstanceId
+Invitee identity
+Person-level mapping
+
+65. Identified Reporting Boundary
+
+Identified reports may optionally join administrator-owned identity information.
+
+That join belongs outside the survey engine.
+
+66. Report Versioning
+
+If report projection logic changes materially, consider:
+
+ReportDefinitionVersion
+
+This is separate from ResultSchemaVersion.
+
+ResultSchemaVersion defines data structure compatibility.
+ReportDefinitionVersion defines how a particular report is composed/presented.
+
+67. Canonical Administrator Data Model
+
+CompletedSubmission
+    ↓
+SurveyResult
+
+SurveyResult[]
+    +
+SurveyGroupConfiguration
+    ↓
+SurveyGroupResult
+
+SurveyGroupResult
+    ↓
+AdminReportState
+
+AdminReportState
+    ↓
+EmbeddedInUrl
+or
+ExternalStore
+
+AdminReportState
+    ↓
+Report Renderer
+
+68. Suggested F# Types
+
+ReportPersistence =
+    | EmbeddedInUrl
+    | ExternalStore of ResultId
+
+GroupIdentityMode =
+    | Identified
+    | Anonymous
+
+SubmissionRetention =
+    | NoneAfterImport
+    | RetainCanonicalSubmission
+
+AcceptedSubmissionIdentity =
+    | IdentifiedInstance of SurveyInstanceId
+    | AnonymousSubmission of AnonymousSubmissionId
+
+GroupCompletion =
+    | WaitingForResponses
+    | Complete
+    | IncompleteClosed
+    | Invalid
+
+69. Core Invariants
+
+1. A valid identified SurveyInstanceId contributes at most once to a group.
+2. A valid AnonymousSubmissionId contributes at most once to a group.
+3. Rejected submissions do not affect group counts or scores.
+4. AcceptedSurveyCount cannot exceed ExpectedSurveyCount by default.
+5. SurveyGroupId must match the active administrator group.
+6. Anonymous results never retain original SurveyInstanceId.
+7. SurveyResult is deterministic from immutable template + accepted submission.
+8. SurveyGroupResult is deterministic from accepted SurveyResults + group configuration.
+9. AdminReportState is a deterministic projection of SurveyGroupResult.
+10. Reporting does not recreate scoring or validation logic.
+11. Embedded and external persistence produce the same logical AdminReportState.
+12. Persistence mode does not change report meaning.
+13. External storage is optional and used when derived admin state exceeds the supported URL budget.
+14. Small groups should remain capable of operating without external storage.
+15. Administrator state must retain enough accepted-submission identity information to prevent duplicate imports.
+16. Raw respondent URLs are not automatically required in long-term admin state.
+17. Raw-submission retention is an explicit policy.
+18. Report state stores derived values rather than unnecessarily duplicating immutable template data.
+19. Unsupported or invalid imports fail explicitly.
+20. Anonymous aggregation must not weaken the unlinkability guarantee.
+
+70. Guiding Principle
+
+The respondent URL is the portable source of truth for one respondent's submitted answer state.
+
+Import turns that submission into a deterministic SurveyResult.
+
+Accepted SurveyResults combine into a deterministic SurveyGroupResult.
+
+The administrator persists only the derived state needed to continue the group and render reports.
+
+For small groups, that state stays embedded in the administrator URL.
+
+For large groups, the exact same logical state moves behind an external-store reference.
+
+The reporting layer should not care which persistence mechanism is used.

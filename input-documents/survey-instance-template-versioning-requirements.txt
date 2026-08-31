@@ -1,0 +1,1134 @@
+# Survey Engine – Survey Instance, Template Versioning, Sections, and Immutability
+
+## Purpose
+
+This document defines additional requirements for the rebuilt survey engine, focusing on:
+
+- Survey instances
+- Survey groups
+- Survey template identity
+- Template versioning
+- Production immutability
+- Template hashing
+- Sections
+- Pagination
+- Section-level scoring
+- Survey-level and group-level results
+- Runtime configuration
+
+The key architectural distinction is between:
+
+1. Survey Definition / Template
+2. Survey Instance
+3. Survey Response
+4. Survey Group
+
+---
+
+# Core Entities
+
+## Survey Definition / Template
+
+The reusable authored definition of a survey.
+
+A survey definition contains:
+
+- Survey identifier
+- Template version
+- Template hash
+- Title
+- Description
+- Sections
+- Questions
+- Selector definitions
+- Scoring configuration
+- Result definitions
+- Presentation configuration
+- Completion rules
+- Engine/schema compatibility information
+
+The template defines the meaning of the encoded answer data.
+
+---
+
+## Survey Instance
+
+A concrete use of a published survey template.
+
+Each survey instance should include at minimum:
+
+```text
+SurveyInstanceId
+SurveyGroupId
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+```
+
+### SurveyInstanceId
+
+Uniquely identifies this specific survey instance.
+
+This should be unique even if multiple instances use the same survey template.
+
+---
+
+### SurveyGroupId
+
+Links multiple related survey instances together.
+
+Examples:
+
+- Multiple assessments belonging to the same engagement
+- Several surveys making up one larger diagnostic
+- A multi-survey respondent journey
+- Multiple surveys whose results are combined into one overall assessment
+
+A group may eventually support group-level scoring and results.
+
+---
+
+### SurveyIdentifier
+
+Stable identifier for the logical survey.
+
+Example:
+
+```text
+agile-assessment
+```
+
+This remains stable across template versions.
+
+Example:
+
+```text
+agile-assessment v1
+agile-assessment v2
+agile-assessment v3
+```
+
+all share the same SurveyIdentifier.
+
+---
+
+### TemplateVersion
+
+Human-readable version of the published survey template.
+
+Example:
+
+```text
+1
+2
+3
+```
+
+or:
+
+```text
+v1
+v2
+v3
+```
+
+A survey instance must always reference the exact version of the template used to create it.
+
+---
+
+### TemplateHash
+
+A deterministic hash of the published template.
+
+Example:
+
+```text
+SHA-256(canonicalized template)
+```
+
+The hash is the machine-level fingerprint of the exact immutable template version.
+
+It should be used as an integrity check in addition to the human-readable TemplateVersion.
+
+Do not use the hash as a complete replacement for TemplateVersion.
+
+Use both:
+
+```text
+SurveyIdentifier = "agile-assessment"
+TemplateVersion   = 3
+TemplateHash      = <deterministic hash>
+```
+
+---
+
+# Published Templates Are Immutable
+
+Once a survey template goes into production, it must never be modified.
+
+This is a core system invariant.
+
+Why:
+
+The survey template defines:
+
+- Question order
+- Answer cardinality
+- Option order
+- Answer interpretation
+- Section membership
+- Scoring
+- Weights
+- Thresholds
+- Result interpretation
+
+Because survey answers are encoded compactly and interpreted through the template, modifying a production template could cause old response data to be decoded or scored incorrectly.
+
+A production template is therefore effectively part of the data schema for every response created from it.
+
+Changing a published template would be similar to changing a database schema underneath persisted data without performing a migration.
+
+---
+
+# Template Lifecycle
+
+Templates should have an explicit lifecycle.
+
+Recommended lifecycle:
+
+```text
+Draft
+  ↓
+Validated
+  ↓
+Published / Locked
+  ↓
+Superseded
+```
+
+## Draft
+
+Can be freely modified.
+
+No production survey instance should rely on a mutable draft template.
+
+---
+
+## Validated
+
+The template has passed validation and is ready to be published.
+
+Validation may include:
+
+- Question definitions are valid
+- Answer cardinalities are known
+- Option ordering is valid
+- Section references are valid
+- Scoring configuration is valid
+- Thresholds do not overlap incorrectly
+- Required questions are valid
+- Result definitions can be calculated
+- Encoding can be generated deterministically
+
+---
+
+## Published / Locked
+
+The template is immutable.
+
+No changes are permitted.
+
+If anything needs to change, a new version must be created.
+
+---
+
+## Superseded
+
+A newer version exists.
+
+Superseded does not mean invalid.
+
+Old versions must remain available for interpreting historical or active survey responses.
+
+---
+
+# New Version Rule
+
+Any modification to a published survey creates a new template version.
+
+Examples of changes requiring a new version:
+
+- Changing question wording if wording affects interpretation
+- Adding a question
+- Removing a question
+- Reordering questions
+- Changing answer choices
+- Reordering answer choices
+- Changing answer cardinality
+- Changing N/A behavior
+- Changing section membership
+- Changing section order
+- Changing scoring rules
+- Changing weights
+- Changing thresholds
+- Changing result interpretation
+- Changing conditional logic
+- Changing answer encoding
+
+Do not mutate the existing published version.
+
+---
+
+# Template Hashing
+
+The template hash should be calculated from a canonical representation of the template.
+
+This prevents harmless serialization differences from producing different hashes.
+
+For example, these should ideally produce the same hash if they are semantically identical:
+
+```json
+{"id":"q1","score":5}
+```
+
+and:
+
+```json
+{
+  "score": 5,
+  "id": "q1"
+}
+```
+
+Before hashing, normalize the template.
+
+Potential canonicalization rules:
+
+- Stable property ordering
+- Consistent whitespace handling
+- Stable numeric representation
+- Consistent null/default handling
+- Stable boolean representation
+- Stable enum representation
+- Stable string encoding
+
+Where ordering is not semantically meaningful, normalize it.
+
+Where ordering is semantically meaningful, preserve it.
+
+Ordering that is likely semantically meaningful includes:
+
+- Question order
+- Section order
+- Option order
+- Page order
+- Rule evaluation order where applicable
+
+---
+
+# Response Interpretation Invariant
+
+A response must never be interpreted using a different template from the one that created it.
+
+Core invariant:
+
+> A response must always be decoded and scored using the exact published template version it references.
+
+Recommended identifiers available during interpretation:
+
+```text
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+```
+
+The TemplateHash provides a machine-level integrity check against accidental use of the wrong template.
+
+---
+
+# Compact Hash Reference
+
+Because response data is stored in the URL, the full template hash may be too expensive to include directly.
+
+Possible approaches:
+
+- Store the full hash outside the compact answer payload
+- Store a shortened hash fingerprint
+- Store a compact published-template identifier derived from the hash
+- Store SurveyIdentifier + TemplateVersion and verify against the expected hash
+
+The exact strategy should be evaluated against URL size requirements.
+
+The key requirement is that the engine can verify that the correct immutable template is being used.
+
+---
+
+# Survey Instance Runtime Information
+
+In addition to identity fields, a survey instance may include runtime configuration.
+
+Potential fields:
+
+```text
+CreatedAt
+ExpiresAt
+Status
+Locale
+AllowResume
+AllowBackNavigation
+AllowChangesAfterCompletion
+ShowResults
+ResultMode
+CompletionRequirements
+```
+
+---
+
+## Status
+
+Potential states:
+
+```text
+NotStarted
+InProgress
+Completed
+Expired
+Cancelled
+```
+
+Do not assume that response completeness alone is sufficient to determine lifecycle state.
+
+---
+
+## CreatedAt
+
+When the survey instance was created.
+
+Useful for:
+
+- Auditing
+- Expiration
+- Campaign analysis
+- Lifecycle management
+
+---
+
+## ExpiresAt
+
+Optional expiration date/time.
+
+Useful when survey links should no longer accept responses after a certain point.
+
+---
+
+## Locale
+
+Optional language/locale configuration.
+
+Example:
+
+```text
+en-US
+fr-FR
+it-IT
+```
+
+Locale should affect presentation, not answer encoding.
+
+---
+
+## AllowResume
+
+Controls whether an incomplete survey can be resumed later.
+
+---
+
+## AllowBackNavigation
+
+Controls whether respondents can return to previous pages.
+
+---
+
+## AllowChangesAfterCompletion
+
+Controls whether a completed response can be edited.
+
+This should normally default to false unless explicitly enabled.
+
+---
+
+## ShowResults
+
+Controls whether the respondent sees results after completion.
+
+---
+
+## ResultMode
+
+Potential modes:
+
+```text
+Immediate
+Hidden
+External
+Deferred
+```
+
+The exact set can be refined later.
+
+---
+
+# Survey Template Information
+
+The survey template should include all structural and interpretive information necessary to render and score the survey.
+
+At minimum:
+
+```text
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+Title
+Description
+Sections
+Questions
+Selectors
+Scoring
+ResultDefinitions
+Presentation
+CompletionRules
+```
+
+---
+
+# Pagination
+
+The template should support page-level presentation behavior.
+
+## Default Items Per Page
+
+A survey should be able to define:
+
+```text
+ItemsPerPage
+```
+
+Example:
+
+```text
+5 questions per page
+```
+
+This is a presentation setting and should not affect scoring or answer encoding.
+
+---
+
+## Per-Section Items Per Page
+
+A section may override the survey-level default.
+
+Example:
+
+```text
+Survey default: 5
+Section A: 3
+Section B: 10
+```
+
+---
+
+## Explicit Page Breaks
+
+The template should allow page breaks independent of item count.
+
+Useful when:
+
+- A section should start on a new page
+- Related questions should remain together
+- Instructions need their own page
+- The author wants deliberate pacing
+
+---
+
+## Section Starts on New Page
+
+Each section should optionally define whether it starts on a new page.
+
+---
+
+## Question Numbering
+
+Optional:
+
+```text
+ShowQuestionNumbers = true/false
+```
+
+---
+
+## Progress Indicator
+
+Optional progress display.
+
+Possible progress modes:
+
+```text
+Question
+Page
+Section
+```
+
+---
+
+## Review Before Submit
+
+Optional final review page.
+
+---
+
+## Randomization
+
+Potential optional features:
+
+```text
+RandomizeQuestions
+RandomizeChoices
+```
+
+These should default to false.
+
+If randomization is supported, the engine must ensure it does not break positional response encoding.
+
+This may require deterministic randomization or storing the presentation order separately.
+
+---
+
+# Sections
+
+Sections should be first-class entities.
+
+Each section should have its own stable identifier.
+
+Recommended fields:
+
+```text
+SectionId
+Title
+Description
+Order
+QuestionMembership
+Required
+DisplayRules
+Pagination
+Scoring
+ResultDefinition
+OverallWeight
+CompletionRules
+ApplicabilityRule
+```
+
+---
+
+## SectionId
+
+Stable identifier for the section.
+
+Do not rely solely on display title.
+
+---
+
+## Title
+
+Human-readable section title.
+
+---
+
+## Description / Instructions
+
+Optional explanatory text shown before or within the section.
+
+---
+
+## Order
+
+Controls display and scoring order where order matters.
+
+---
+
+## Question Membership
+
+Defines which questions belong to the section.
+
+A question should reference a stable question identifier or position as defined by the template.
+
+---
+
+## Required / Optional
+
+A section may be:
+
+```text
+Required
+Optional
+Conditionally Applicable
+```
+
+---
+
+## Applicability Rule
+
+Defines when a section applies.
+
+Example:
+
+```text
+Only show and score this section if question X = Yes
+```
+
+If a section is not applicable, it should not automatically score as zero.
+
+---
+
+# Section-Level Scoring
+
+Each section should have its own scoring configuration.
+
+Potential section scoring properties:
+
+```text
+ScoringAlgorithm
+QuestionWeights
+Normalization
+MinimumScore
+MaximumScore
+ScoringDirection
+Thresholds
+NAHandling
+DontKnowHandling
+MinimumCompletion
+OverallWeight
+IncludeInOverallScore
+ResultDefinition
+```
+
+---
+
+## Scoring Algorithm
+
+Examples:
+
+- Raw sum
+- Average
+- Weighted average
+- Percentage of maximum
+- Normalized score
+- Minimum
+- Maximum
+- Maturity stage
+- Rule-based classification
+
+---
+
+## Question Weights
+
+Questions inside a section may have different weights.
+
+---
+
+## Normalization
+
+A section may normalize results into a standard scale such as:
+
+```text
+0–100
+```
+
+---
+
+## Scoring Direction
+
+Explicitly define whether higher values mean:
+
+```text
+Better
+Worse
+Neutral / Domain-Specific
+```
+
+Do not assume higher is always better.
+
+---
+
+## Thresholds
+
+A section may define result bands.
+
+Example:
+
+```text
+0–39   -> Low
+40–69  -> Moderate
+70–100 -> High
+```
+
+---
+
+## N/A Handling
+
+Define explicitly whether N/A answers are:
+
+- Excluded from denominator
+- Treated specially
+- Invalid for the section
+- Used in result confidence calculations
+
+They should not silently become zero.
+
+---
+
+## Don't Know Handling
+
+Don't Know should remain distinct from N/A.
+
+Potential behavior:
+
+- Exclude from score
+- Reduce coverage/confidence
+- Trigger a recommendation
+- Count as a separate diagnostic signal
+
+---
+
+## Minimum Completion
+
+A section may require:
+
+- Minimum number answered
+- Minimum percentage answered
+- Specific required questions
+
+before producing a valid score.
+
+---
+
+## Overall Weight
+
+Defines how strongly the section contributes to the overall survey score.
+
+Example:
+
+```text
+Governance = 40%
+Technology = 30%
+People = 20%
+Process = 10%
+```
+
+---
+
+## Include in Overall Score
+
+Some sections may produce their own result but not contribute to the overall score.
+
+---
+
+# Survey-Level Scoring
+
+The survey should be able to calculate a result from section results.
+
+Possible survey-level algorithms:
+
+- Average of section scores
+- Weighted average of sections
+- Balanced domain scoring
+- Minimum / weakest section
+- Geometric mean
+- Maturity-stage logic
+- Rule-based classification
+
+This creates a scoring hierarchy:
+
+```text
+Question
+   ↓
+Section
+   ↓
+Survey
+```
+
+---
+
+# Survey Group
+
+A SurveyGroup links multiple related survey instances.
+
+Possible group information:
+
+```text
+SurveyGroupId
+SurveyInstances
+Order
+RequiredSurveys
+OptionalSurveys
+CompletionState
+GroupScoring
+GroupResult
+SharedMetadata
+Dependencies
+```
+
+---
+
+## Survey Instance Ordering
+
+A group may define the order in which surveys are taken.
+
+---
+
+## Required vs Optional Surveys
+
+Some surveys in a group may be required while others are optional.
+
+---
+
+## Group Completion
+
+Completion should be explicitly defined.
+
+Examples:
+
+- All required surveys completed
+- Minimum number completed
+- Specific dependency completed
+
+---
+
+## Group-Level Scoring
+
+The group may calculate a combined result from multiple surveys.
+
+This extends the hierarchy:
+
+```text
+Question
+   ↓
+Section
+   ↓
+Survey
+   ↓
+Survey Group
+```
+
+Each level may produce its own result.
+
+---
+
+## Group-Level Result Examples
+
+A group could produce:
+
+```text
+Overall Readiness: 72
+Weakest Survey: Governance
+Risk Level: Moderate
+Coverage: 88%
+```
+
+---
+
+# Completion and Validation
+
+The engine should explicitly model completion rules.
+
+Potential question-level rules:
+
+```text
+Required
+AllowNA
+AllowDontKnow
+ConditionalApplicability
+```
+
+Potential section-level rules:
+
+```text
+RequiredSection
+MinimumAnsweredCount
+MinimumAnsweredPercent
+RequiredQuestionSet
+```
+
+Potential survey-level rules:
+
+```text
+RequiredSections
+MinimumCompletion
+CompletionExpression
+```
+
+Do not define completion implicitly as:
+
+```text
+all possible answers exist
+```
+
+because N/A, conditional sections, optional sections, and Don't Know states make that unreliable.
+
+---
+
+# Result Definitions
+
+The template should define the outputs the survey produces.
+
+Possible outputs:
+
+```text
+OverallScore
+SectionScores
+MaturityLevel
+RiskBand
+WeakestSection
+StrongestSection
+Recommendations
+Coverage
+Confidence
+Completion
+```
+
+A survey does not need to produce only one number.
+
+---
+
+# Result Shapes
+
+Supported result shapes should include:
+
+## Scalar
+
+Example:
+
+```text
+74 / 100
+```
+
+---
+
+## Categorical
+
+Example:
+
+```text
+Advanced
+High Risk
+Ready
+```
+
+---
+
+## Profile
+
+Example:
+
+```text
+Leadership = 82
+Technology = 67
+Governance = 49
+```
+
+---
+
+## Composite
+
+Example:
+
+```text
+Overall Score: 74
+Maturity: Level 3
+Weakest Section: Governance
+Coverage: 81%
+Confidence: Moderate
+```
+
+---
+
+# Survey Response
+
+The SurveyResponse should remain separate from the SurveyInstance.
+
+Conceptually:
+
+```text
+SurveyResponse
+    SurveyInstanceId
+    EncodedAnswers
+```
+
+The response should contain as little duplicated template information as possible.
+
+The survey instance/template relationship provides the interpretation.
+
+---
+
+# Suggested Conceptual Model
+
+```text
+SurveyDefinition
+    SurveyIdentifier
+    TemplateVersion
+    TemplateHash
+    Lifecycle
+    Sections
+    Questions
+    Selectors
+    Scoring
+    Results
+    Presentation
+    CompletionRules
+
+SurveyInstance
+    SurveyInstanceId
+    SurveyGroupId
+    SurveyIdentifier
+    TemplateVersion
+    TemplateHash
+    RuntimeConfig
+
+SurveyResponse
+    SurveyInstanceId
+    EncodedAnswers
+
+SurveyGroup
+    SurveyGroupId
+    SurveyInstances
+    GroupCompletion
+    GroupScoring
+    GroupResults
+```
+
+---
+
+# Critical Invariants
+
+1. A published survey template is immutable.
+2. Any change to a published template creates a new version.
+3. Survey instances reference the exact template version used to create them.
+4. TemplateVersion and TemplateHash should both be retained.
+5. A response must never be interpreted with a different template version.
+6. Old published templates must remain resolvable while historical responses may exist.
+7. Question order and option order must remain stable within a published version.
+8. Sections are first-class scoring and presentation units.
+9. Section scoring must be explicit.
+10. Survey-level scoring may aggregate section results.
+11. Survey-group scoring may aggregate multiple survey results.
+12. N/A, Don't Know, and Unanswered must remain semantically distinct.
+13. Completion rules must be explicit rather than inferred.
+14. Pagination must not affect scoring or answer meaning.
+15. Template hashing must use a deterministic canonical representation.
+
+---
+
+# Guiding Principle
+
+> A published survey template is both an authored survey and the schema required to interpret every response created from it.
+
+That means production template immutability, exact version resolution, and deterministic hashing are correctness requirements, not merely administrative versioning features.

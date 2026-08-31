@@ -1,0 +1,997 @@
+# Survey Engine – Answer Types, Selectors, and Default Scoring
+
+## Core Constraint
+
+Survey answers are stored in the URL.
+
+The survey template provides the meaning and interpretation of the answer data, including:
+
+- Question order
+- Question type
+- Selector labels
+- Scoring rules
+- Weights
+- Sections/categories
+- Whether N/A is allowed
+- Survey/version interpretation
+
+Because the template carries the meaning, the URL should store only the minimum state necessary to reconstruct the answers.
+
+> **The URL stores only state. The survey template stores meaning.**
+
+Human-readable labels such as `Strongly Agree`, `Rarely`, or `Optimized` should never need to appear in the answer payload.
+
+---
+
+# Design Separation
+
+The survey engine should keep three concepts separate:
+
+1. **Answer representation**
+2. **Selector presentation**
+3. **Scoring rule**
+
+These should not be coupled.
+
+For example, a 5-point ordinal question could:
+
+- Display as agreement
+- Display as frequency
+- Display as maturity
+- Score directly
+- Score in reverse
+- Use a nonlinear mapping
+- Have a weight
+- Be unscored
+
+The answer data itself can still be the same small ordinal value.
+
+---
+
+# Core Answer Primitives
+
+The engine should have a small number of compact underlying answer primitives.
+
+## Boolean
+
+Represents two states.
+
+Examples:
+
+- Yes / No
+- True / False
+- Present / Absent
+- Pass / Fail
+
+Possible encoding:
+
+```text
+0
+1
+```
+
+Potential storage requirement:
+
+```text
+1 bit
+```
+
+---
+
+## Ordinal
+
+Represents an ordered scale.
+
+Examples:
+
+- 3-point scale
+- 5-point Likert
+- 7-point Likert
+- Frequency
+- Agreement
+- Confidence
+- Satisfaction
+- Maturity
+
+Prefer zero-based internal values.
+
+Example 5-point scale:
+
+```text
+0 1 2 3 4
+```
+
+Potential storage requirement:
+
+```text
+3 bits
+```
+
+The template determines what each value means.
+
+---
+
+## Single Choice
+
+Represents one selection from a fixed set of choices defined by the survey template.
+
+Examples:
+
+- Role
+- Department
+- Scenario
+- Category
+- Primary preference
+
+The response should store the option index rather than an option ID or label.
+
+For `N` choices, storage can approach:
+
+```text
+ceil(log2(N)) bits
+```
+
+---
+
+## Multi-Choice
+
+Represents multiple selected choices from a fixed list.
+
+Examples:
+
+- Select all that apply
+- Capabilities currently in use
+- Symptoms observed
+- Practices currently followed
+
+A bitset/bitmask is a natural representation.
+
+For six available options:
+
+```text
+001101
+```
+
+would indicate which options are selected.
+
+Potential storage requirement:
+
+```text
+N bits for N choices
+```
+
+---
+
+## Bounded Number
+
+Represents a small numeric range rather than arbitrary numeric input.
+
+Examples:
+
+- 0–10 rating
+- 1–5 count
+- Number of occurrences
+- 0 / 1 / 2 / 3 / 4 / 5+
+
+Bounded numbers are preferable to unrestricted numeric entry because they:
+
+- Encode compactly
+- Are easier to validate
+- Are easier to score
+- Avoid unnecessary free-form input
+
+---
+
+## Forced Choice
+
+Requires the respondent to choose between two or a small number of alternatives.
+
+Examples:
+
+- Statement A vs. Statement B
+- Which behavior is closer to your team?
+- Which priority matters more?
+
+Benefits:
+
+- Extremely compact
+- Forces tradeoffs
+- Reduces the tendency to agree with every desirable statement
+
+This can often use the same underlying representation as `Single Choice`.
+
+---
+
+## Ranking / Ordering
+
+Allows the respondent to put a small number of items in order.
+
+Examples:
+
+- Rank these three priorities
+- Put these risks in order of importance
+- Rank your top three concerns
+
+This is useful but should probably not be a default first-line question type because:
+
+- Encoding is more expensive
+- UI complexity increases
+- Validation is more complicated
+- Cognitive load increases quickly as the number of items grows
+
+Keep ranking sets small.
+
+---
+
+## Allocation
+
+Allows the respondent to distribute a fixed quantity across several choices.
+
+Example:
+
+> Allocate 10 points across these priorities.
+
+Useful for measuring relative importance when respondents must make explicit tradeoffs.
+
+Considerations:
+
+- More complex UI
+- More validation
+- More answer data
+- Potentially powerful for prioritization and strategy surveys
+
+This should likely be an optional/advanced selector.
+
+---
+
+## Paired Comparison
+
+Presents two alternatives and asks the respondent to choose one.
+
+Examples:
+
+- Which is more important?
+- Which better describes the organization?
+- Which outcome would you prioritize?
+
+Each individual answer is extremely compact.
+
+This can be valuable for:
+
+- Preference measurement
+- Priority discovery
+- Relative importance
+
+The tradeoff is that measuring many items may require many comparisons.
+
+---
+
+# Special Answer States
+
+Some states should be distinct from the actual response scale.
+
+## Unanswered
+
+Means the respondent has not supplied an answer.
+
+This should not automatically mean:
+
+- Zero
+- Lowest score
+- No
+- Not applicable
+
+---
+
+## Not Applicable
+
+Means the question does not apply to the respondent or situation.
+
+This should generally be excluded from scoring unless the survey explicitly defines otherwise.
+
+N/A should not normally be represented as zero because that can contaminate averages and aggregates.
+
+---
+
+## Unknown / Don't Know
+
+Means the respondent cannot determine the answer.
+
+This is semantically different from N/A.
+
+Example:
+
+- `Not Applicable` = this practice does not apply here.
+- `Don't Know` = this practice may apply, but I do not know whether we do it.
+
+In assessments, the number of `Don't Know` responses can itself be meaningful evidence.
+
+---
+
+# Recommended Selector Presets
+
+Selectors are presentation configurations over the underlying answer primitives.
+
+## Yes / No
+
+Underlying type:
+
+```text
+Boolean
+```
+
+Typical display:
+
+```text
+Yes
+No
+```
+
+---
+
+## Yes / No / Not Applicable
+
+Underlying concept:
+
+```text
+Boolean + special N/A state
+```
+
+Useful where applicability varies.
+
+---
+
+## 3-Point Likert
+
+Underlying type:
+
+```text
+Ordinal(3)
+```
+
+Examples:
+
+```text
+Low
+Medium
+High
+```
+
+or:
+
+```text
+Rarely
+Sometimes
+Often
+```
+
+Useful for simple assessments where additional precision is not useful.
+
+---
+
+## 5-Point Likert
+
+This should be the primary/default ordinal selector.
+
+Underlying type:
+
+```text
+Ordinal(5)
+```
+
+It generally provides enough discrimination for assessments without creating excessive or artificial precision.
+
+---
+
+## 7-Point Likert
+
+Underlying type:
+
+```text
+Ordinal(7)
+```
+
+Best suited for:
+
+- Research-oriented surveys
+- Cases where greater response differentiation is actually useful
+
+Should not necessarily be the default for normal business assessments.
+
+---
+
+## Agreement – 5 Point
+
+Example labels:
+
+```text
+Strongly Disagree
+Disagree
+Neither Agree nor Disagree
+Agree
+Strongly Agree
+```
+
+Underlying type:
+
+```text
+Ordinal(5)
+```
+
+---
+
+## Frequency – 5 Point
+
+Example labels:
+
+```text
+Never
+Rarely
+Sometimes
+Often
+Always
+```
+
+Underlying type:
+
+```text
+Ordinal(5)
+```
+
+---
+
+## Quality – 5 Point
+
+Example labels:
+
+```text
+Very Poor
+Poor
+Fair
+Good
+Excellent
+```
+
+Underlying type:
+
+```text
+Ordinal(5)
+```
+
+---
+
+## Confidence – 5 Point
+
+Example labels:
+
+```text
+Not at All Confident
+Slightly Confident
+Moderately Confident
+Very Confident
+Extremely Confident
+```
+
+Underlying type:
+
+```text
+Ordinal(5)
+```
+
+---
+
+## Satisfaction – 5 Point
+
+Example labels:
+
+```text
+Very Dissatisfied
+Dissatisfied
+Neutral
+Satisfied
+Very Satisfied
+```
+
+Underlying type:
+
+```text
+Ordinal(5)
+```
+
+---
+
+## Maturity – 5 Point
+
+Example labels might be:
+
+```text
+Initial
+Developing
+Defined
+Managed
+Optimized
+```
+
+Underlying type:
+
+```text
+Ordinal(5)
+```
+
+The exact maturity labels should be survey/template defined rather than hard-coded into the engine.
+
+---
+
+## Numeric Rating
+
+Examples:
+
+```text
+0–5
+0–10
+1–10
+```
+
+Underlying type:
+
+```text
+Bounded Number
+```
+
+---
+
+## Single Select
+
+Underlying type:
+
+```text
+Single Choice
+```
+
+The template defines:
+
+- Option labels
+- Option order
+- Optional score mappings
+
+---
+
+## Multi-Select
+
+Underlying type:
+
+```text
+Multi-Choice
+```
+
+The template defines all available selections.
+
+Bitmask encoding is preferred where practical.
+
+---
+
+## Bounded Count
+
+Example:
+
+```text
+0
+1
+2
+3
+4
+5+
+```
+
+This is often preferable to arbitrary number entry.
+
+Underlying type:
+
+```text
+Bounded Number
+```
+
+---
+
+## Forced Choice
+
+Underlying type:
+
+```text
+Single Choice
+```
+
+The presentation should visually emphasize that the respondent must select the closest/best alternative rather than simply rate each independently.
+
+---
+
+## Ranking
+
+Underlying type:
+
+```text
+Ranking / Ordering
+```
+
+Prefer:
+
+- Small item sets
+- Top-3 ranking
+- Limited use
+
+---
+
+## Allocation
+
+Underlying type:
+
+```text
+Allocation
+```
+
+Example:
+
+```text
+Distribute 10 points across 4 priorities.
+```
+
+Treat as an advanced selector.
+
+---
+
+## Paired Comparison
+
+Underlying type:
+
+```text
+Single Choice / Pairwise Comparison
+```
+
+Example:
+
+```text
+Option A
+Option B
+```
+
+Could be represented compactly as one bit when there are exactly two possibilities.
+
+---
+
+# Default Scoring Strategies
+
+The engine should provide standard/precompiled scoring strategies for common surveys.
+
+Custom scoring should be available when necessary, but it should not be the default path.
+
+The built-in scoring strategies should cover the majority of surveys.
+
+---
+
+## Unscored
+
+The answer is collected but does not contribute to a score.
+
+Examples:
+
+- Demographic/context question
+- Routing question
+- Classification question
+- Informational selection
+
+---
+
+## Direct Numeric
+
+The answer value is the score.
+
+Example:
+
+```text
+Ordinal value 0–4
+```
+
+maps directly to:
+
+```text
+Score 0–4
+```
+
+This should be a common/default scoring strategy for ordinal questions.
+
+---
+
+## Reverse Numeric
+
+Used for negatively worded questions.
+
+Example:
+
+```text
+0 -> 4
+1 -> 3
+2 -> 2
+3 -> 1
+4 -> 0
+```
+
+This allows the overall score direction to remain consistent.
+
+---
+
+## Binary
+
+Typical mapping:
+
+```text
+No  = 0
+Yes = 1
+```
+
+The exact mapping should be template configurable.
+
+---
+
+## Weighted Numeric
+
+The question's score is multiplied by a weight.
+
+Conceptually:
+
+```text
+score = answerScore * weight
+```
+
+Useful when some questions contribute more heavily to an aggregate.
+
+---
+
+## Mapped Choice
+
+Each option explicitly maps to a score.
+
+Example:
+
+```text
+Never     -> 0
+Sometimes -> 2
+Always    -> 5
+```
+
+This allows nonlinear scoring without requiring a custom expression.
+
+---
+
+## Multi-Select Aggregate
+
+A multi-choice answer can be scored using strategies such as:
+
+- Count selected
+- Sum option values
+- Maximum selected value
+- Minimum selected value
+- Explicit combination mapping
+
+The engine should support common strategies without requiring custom scoring code.
+
+---
+
+## Section / Domain Aggregate
+
+Questions may belong to a section or assessment domain.
+
+Typical aggregate strategies:
+
+- Sum
+- Mean
+- Weighted mean
+- Percentage of maximum score
+
+---
+
+## Normalized Score
+
+Raw results can be transformed to a standard range, such as:
+
+```text
+0–100
+```
+
+This is useful when:
+
+- Sections contain different numbers of questions
+- Different sections use different raw scales
+- Scores need to be compared across domains
+
+---
+
+# Recommended Defaults
+
+For normal survey authoring, encourage these answer types first:
+
+1. Boolean
+2. Ordinal
+3. Single Choice
+4. Multi-Choice
+5. Bounded Number
+
+More advanced types should be available when justified:
+
+- Forced Choice
+- Ranking
+- Allocation
+- Paired Comparison
+
+The primary default selector should be:
+
+```text
+5-point ordinal / Likert
+```
+
+The engine should provide multiple presentation presets for that same underlying primitive.
+
+---
+
+# Selector Presets Should Not Become New Answer Types
+
+Avoid creating separate engine types for:
+
+- Agreement
+- Frequency
+- Satisfaction
+- Confidence
+- Quality
+- Maturity
+
+These are all usually:
+
+```text
+Ordinal(5)
+```
+
+with different labels.
+
+The template should define the labels and presentation.
+
+This prevents the engine from gradually accumulating many superficially different question types that all encode the same state.
+
+---
+
+# Compact Answer Encoding
+
+Because answers are stored in a URL, answer encoding should be deterministic and compact.
+
+Approximate minimum storage examples:
+
+| Answer | Approximate storage |
+|---|---:|
+| Boolean | 1 bit |
+| 3-value ordinal | 2 bits |
+| 5-value ordinal | 3 bits |
+| 7-value ordinal | 3 bits |
+| 0–10 bounded number | 4 bits |
+| Choice among 8 options | 3 bits |
+| 6-option multi-select | 6 bits |
+
+The survey template already knows the sequence and cardinality of questions, so the answer payload should not need to store:
+
+- Question IDs
+- Question labels
+- Option labels
+- Answer labels
+- Selector types
+- Score types
+
+Those belong to the survey definition.
+
+---
+
+# Cardinality Requirement
+
+Every answer definition should declare or allow the engine to determine its maximum cardinality.
+
+Examples:
+
+```text
+Boolean        -> 2 states
+Ordinal(5)     -> 5 states
+Choice(6)      -> 6 states
+Bounded(0..10) -> 11 states
+```
+
+This lets the encoder calculate exactly how many bits are needed for each answer.
+
+Conceptually:
+
+```text
+bits = ceil(log2(numberOfStates))
+```
+
+This supports deterministic bit packing of the complete survey response instead of relying on a generic serialization format.
+
+---
+
+# N/A and Missing-State Encoding
+
+For a 5-value ordinal question that supports N/A, one possible representation is:
+
+```text
+0–4 = actual answers
+5   = N/A
+```
+
+That requires six representable states and still fits within three bits.
+
+However, for surveys with many optional/special states, it may be more efficient to maintain separate bitmaps for:
+
+- Answer presence
+- N/A
+- Don't know
+
+The final encoding strategy should be evaluated against realistic survey sizes before choosing one approach globally.
+
+---
+
+# Scoring Should Be Explicit
+
+Every scored question should declare its scoring semantics explicitly, even when using a standard default.
+
+Do not silently infer scoring solely from the selector.
+
+For example:
+
+```text
+Selector: Ordinal(5)
+Scoring: Direct
+```
+
+rather than assuming that every `Ordinal(5)` automatically scores from low to high.
+
+This makes:
+
+- Survey evolution safer
+- Versioning clearer
+- Auditing easier
+- Reverse-scored questions explicit
+- Custom mappings easier to reason about
+
+---
+
+# Suggested Architectural Model
+
+Conceptually, a survey question should describe independent concerns such as:
+
+```text
+Answer Type
+Selector / Presentation
+Allowed Special States
+Scoring Strategy
+Weight
+Section / Domain
+```
+
+The response payload should contain only the encoded answer state.
+
+The F# WASM application can then:
+
+1. Load the survey template.
+2. Decode the URL payload using the template's answer definitions.
+3. Construct typed answer state.
+4. Interpret selectors and labels from the template.
+5. Apply the declared scoring strategies.
+6. Produce section/domain/overall results.
+
+---
+
+# Guiding Principles
+
+1. **Store state, not meaning, in the URL.**
+2. **Keep answer representation independent from presentation.**
+3. **Keep scoring independent from selector type.**
+4. **Prefer compact structured answers over free-form input.**
+5. **Use standard/precompiled scoring for common cases.**
+6. **Reserve custom scoring for genuinely custom surveys.**
+7. **Treat N/A, Don't Know, and Unanswered as different states.**
+8. **Use selector presets rather than multiplying engine-level question types.**
+9. **Declare answer cardinality so responses can be bit-packed efficiently.**
+10. **Make scoring semantics explicit in the survey definition.**

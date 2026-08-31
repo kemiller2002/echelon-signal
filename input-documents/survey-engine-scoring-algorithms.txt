@@ -1,0 +1,1112 @@
+# Survey Engine – Scoring Algorithms and Rebuild Requirements
+
+## Purpose
+
+The rebuilt survey engine should support a small, stable set of reusable scoring primitives and named scoring algorithms.
+
+The goal is to avoid implementing every survey as custom scoring code.
+
+Most surveys should be expressible using:
+
+- Built-in scoring algorithms
+- Small composable scoring primitives
+- Explicit result shapes
+- Survey-template configuration
+
+Custom scoring should remain available as an escape hatch for genuinely unusual surveys.
+
+---
+
+# Core Design Principle
+
+Separate:
+
+1. **Answer representation**
+2. **Scoring transformation**
+3. **Aggregation**
+4. **Result interpretation**
+5. **Result shape**
+
+A selector should not determine scoring automatically.
+
+For example, a 5-point ordinal answer could be:
+
+- Scored directly
+- Reverse scored
+- Weighted
+- Mapped nonlinearly
+- Used as a threshold
+- Used as a gate
+- Left unscored
+
+The survey template should explicitly declare the scoring behavior.
+
+---
+
+# Recommended Built-In Algorithms for V1
+
+These should cover the majority of survey use cases.
+
+## 1. Raw Sum
+
+Add all scored answers.
+
+Example:
+
+```text
+2 + 4 + 3 + 5 = 14
+```
+
+Useful for:
+
+- Simple assessments
+- Checklists
+- Risk accumulation
+- Point-based surveys
+
+---
+
+## 2. Average / Mean
+
+Calculate the arithmetic mean of scored answers.
+
+Example:
+
+```text
+(2 + 4 + 3 + 5) / 4 = 3.5
+```
+
+Useful for:
+
+- Likert surveys
+- Satisfaction
+- Confidence
+- Maturity indicators
+
+---
+
+## 3. Weighted Sum
+
+Multiply each question by its weight, then sum the results.
+
+Conceptually:
+
+```text
+score = Σ(answerScore × questionWeight)
+```
+
+Useful when some questions contribute more strongly than others.
+
+---
+
+## 4. Weighted Average
+
+Calculate a weighted mean.
+
+Conceptually:
+
+```text
+score =
+Σ(answerScore × questionWeight)
+/
+Σ(questionWeight)
+```
+
+Useful when:
+
+- Questions differ in importance
+- Sections differ in importance
+- Scores should remain on a familiar scale
+
+---
+
+## 5. Percentage of Maximum
+
+Convert the raw score into a percentage of the maximum possible score.
+
+Conceptually:
+
+```text
+percentage =
+actualScore
+/
+maximumPossibleScore
+× 100
+```
+
+Example:
+
+```text
+34 / 50 = 68%
+```
+
+This should be one of the primary default algorithms.
+
+Useful because it makes differently sized assessments easier to compare.
+
+---
+
+## 6. Normalized Score
+
+Convert a score from its original scale into a standard range, normally:
+
+```text
+0–100
+```
+
+Example:
+
+A 1–5 average could be normalized to 0–100.
+
+Useful for:
+
+- Dashboards
+- Cross-domain comparisons
+- Combining sections using different scales
+- Consistent visual reporting
+
+---
+
+## 7. Mapped Scoring
+
+Each possible answer maps to an explicitly defined score.
+
+Example:
+
+```text
+Never     -> 0
+Rarely    -> 1
+Sometimes -> 3
+Often     -> 7
+Always    -> 10
+```
+
+This supports nonlinear scoring without custom code.
+
+Useful for:
+
+- Risk models
+- Rubrics
+- Nonlinear maturity assessments
+- Answers where ordinal distance is not uniform
+
+---
+
+## 8. Reverse Scoring
+
+Invert selected questions before aggregation.
+
+For a 0–4 scale:
+
+```text
+0 -> 4
+1 -> 3
+2 -> 2
+3 -> 1
+4 -> 0
+```
+
+Useful for negatively worded items and surveys that mix positive and negative phrasing.
+
+Reverse scoring should be explicit in the survey template.
+
+---
+
+## 9. Threshold / Banding
+
+Convert a numeric result into a named range.
+
+Example:
+
+```text
+0–39   -> Low
+40–69  -> Moderate
+70–100 -> High
+```
+
+Useful for:
+
+- Risk levels
+- Maturity levels
+- Readiness categories
+- Recommendations
+- Summary reporting
+
+Thresholding can be applied to:
+
+- Questions
+- Sections
+- Domains
+- Overall scores
+
+---
+
+## 10. Pass / Fail
+
+Return a binary result based on a threshold or condition.
+
+Examples:
+
+```text
+Score >= 80 -> Pass
+Score < 80  -> Fail
+```
+
+or:
+
+```text
+All required controls present -> Pass
+Otherwise -> Fail
+```
+
+Useful for:
+
+- Compliance checks
+- Qualification assessments
+- Readiness gates
+- Certification-style surveys
+
+---
+
+## 11. Section / Domain Scoring
+
+Calculate scores independently for defined groups of questions.
+
+Example:
+
+```text
+Leadership  -> 82
+Process     -> 64
+Technology  -> 71
+Governance  -> 49
+```
+
+Then optionally calculate an overall result.
+
+This should be a first-class engine concept rather than requiring custom scoring.
+
+Supported domain aggregation should include:
+
+- Sum
+- Average
+- Weighted average
+- Percentage of maximum
+- Normalized score
+
+---
+
+## 12. Profile Scoring
+
+Produce multiple independent results instead of one overall score.
+
+Example:
+
+```text
+Leadership: 82
+Execution: 61
+Adaptability: 74
+Risk: 38
+```
+
+Useful for:
+
+- Personality/profile assessments
+- Organizational diagnostics
+- Capability assessments
+- Multi-dimensional maturity surveys
+
+A survey should not be required to produce one scalar score.
+
+---
+
+# Advanced Built-In Algorithms
+
+These should be supported by the scoring system, but do not necessarily need to be first-line authoring defaults.
+
+## Count Matching
+
+Count how many desired conditions are satisfied.
+
+Example:
+
+```text
+7 of 10 practices are present
+```
+
+Useful for:
+
+- Checklists
+- Capability coverage
+- Compliance indicators
+
+---
+
+## Penalty Scoring
+
+Start with a base or maximum score and subtract penalties.
+
+Example:
+
+```text
+100
+- 10 for missing control A
+- 25 for critical failure B
+= 65
+```
+
+Useful for:
+
+- Risk scoring
+- Compliance
+- Quality assessments
+
+---
+
+## Risk Accumulation
+
+Answers contribute risk points.
+
+Higher scores represent greater risk rather than better performance.
+
+Example:
+
+```text
+Low risk answer     -> 0
+Moderate risk       -> 3
+High risk           -> 8
+Critical condition  -> 20
+```
+
+The result direction should be explicitly defined so a higher score is not always assumed to be better.
+
+---
+
+## Best-of / Maximum
+
+Use the highest score in a group.
+
+Conceptually:
+
+```text
+score = max(values)
+```
+
+Useful when:
+
+- Any strong capability is sufficient
+- Highest severity matters
+- Highest observed risk should determine the result
+
+---
+
+## Worst-of / Minimum
+
+Use the lowest score in a group.
+
+Conceptually:
+
+```text
+score = min(values)
+```
+
+Useful for:
+
+- Weakest-link assessments
+- Readiness
+- Governance
+- Security
+- Reliability
+- Maturity
+
+This is important because averages can hide critical weaknesses.
+
+---
+
+## Top-N / Bottom-N
+
+Aggregate only the strongest or weakest N results.
+
+Examples:
+
+```text
+Average the 3 weakest domains
+```
+
+or:
+
+```text
+Use the top 5 scored competencies
+```
+
+Useful when the distribution matters more than the overall mean.
+
+---
+
+## Capped Sum
+
+Sum scores but stop at a defined maximum.
+
+Example:
+
+```text
+score = min(sum(values), 100)
+```
+
+Useful when multiple conditions contribute risk or credit but should not exceed a defined ceiling.
+
+---
+
+## Floor / Ceiling Rules
+
+Certain answers impose a maximum or minimum possible result.
+
+Example:
+
+```text
+If critical control is absent:
+overall score cannot exceed 40
+```
+
+or:
+
+```text
+If regulatory approval exists:
+minimum readiness score is 20
+```
+
+Useful when a single answer materially constrains interpretation.
+
+---
+
+## Gate / Dependency Scoring
+
+One condition controls whether another score is considered.
+
+Example:
+
+```text
+If GovernanceReady = false:
+DeploymentReadiness cannot be "Ready"
+```
+
+or:
+
+```text
+Only score Section B if Section A is applicable
+```
+
+Useful for:
+
+- Readiness assessments
+- Compliance
+- Decision trees
+- Conditional survey structures
+
+---
+
+## Conditional Scoring
+
+Scoring behavior changes based on another answer or condition.
+
+Example:
+
+```text
+If organizationSize = Small:
+use scoring model A
+
+Otherwise:
+use scoring model B
+```
+
+This should remain declarative where possible.
+
+---
+
+## Balanced Domain Scoring
+
+Give each domain equal influence regardless of how many questions each domain contains.
+
+Example:
+
+```text
+Leadership: 5 questions
+Process: 12 questions
+Technology: 8 questions
+
+Each domain still contributes 1/3 of the overall score.
+```
+
+This prevents larger sections from dominating simply because they contain more questions.
+
+---
+
+## Weighted Domain Scoring
+
+Assign explicit importance to each domain.
+
+Example:
+
+```text
+Governance  -> 40%
+Technology  -> 30%
+People      -> 20%
+Process     -> 10%
+```
+
+Useful when domain importance is intentionally unequal.
+
+---
+
+## Geometric Mean
+
+Combine scores using the geometric mean.
+
+This penalizes imbalance more than a standard arithmetic average.
+
+Example behavior:
+
+A survey with:
+
+```text
+90, 90, 90, 20
+```
+
+will receive a substantially lower result than a normal arithmetic average would suggest.
+
+Useful for:
+
+- Readiness
+- Maturity
+- Resilience
+- Multi-domain capability
+
+where consistently adequate performance matters.
+
+---
+
+## Harmonic Mean
+
+Combine scores using the harmonic mean.
+
+This is even more sensitive to low values than the geometric mean.
+
+Useful when weak areas should strongly constrain the overall result.
+
+Use carefully because it can be unintuitive to survey authors.
+
+---
+
+## Minimum-Domain Rule
+
+Set the overall score based on, or capped by, the weakest domain.
+
+Examples:
+
+```text
+Overall = minimum(domainScores)
+```
+
+or:
+
+```text
+Overall = average(domainScores)
+but cannot exceed weakestDomain + 20
+```
+
+Useful for weakest-link models.
+
+---
+
+## Maturity Stage
+
+Determine the highest maturity level whose requirements are satisfied.
+
+Example:
+
+```text
+Level 1 requirements satisfied
+Level 2 requirements satisfied
+Level 3 requirements not satisfied
+
+Result = Level 2
+```
+
+This differs fundamentally from averaging Likert answers.
+
+A maturity model often means:
+
+> You cannot be Level 4 merely because a high score in one area compensates for missing Level 2 fundamentals.
+
+This should be a reusable scoring pattern.
+
+---
+
+## Rubric / Rule-Based Classification
+
+Return a named outcome based on a set of conditions rather than a numeric score.
+
+Example:
+
+```text
+If governance >= 4
+and security >= 4
+and operations >= 3
+then:
+    Ready
+
+Else if ...
+    Partially Ready
+
+Else:
+    Not Ready
+```
+
+Useful for:
+
+- Decision support
+- Recommendations
+- Readiness classification
+- Diagnostic surveys
+
+---
+
+## Ipsative Scoring
+
+Compare a respondent's answers against their own other responses rather than against an external absolute scale.
+
+Useful for:
+
+- Preference profiles
+- Strength prioritization
+- Forced-choice assessments
+
+This should be considered an advanced option.
+
+---
+
+## Pairwise Preference Scoring
+
+Derive preferences or rankings from repeated A-vs-B choices.
+
+Possible approaches include:
+
+- Win counts
+- Weighted wins
+- Pairwise ranking models
+
+Useful for:
+
+- Priority discovery
+- Preference surveys
+- Tradeoff analysis
+
+---
+
+## Rank-Point Scoring
+
+Assign points based on rank position.
+
+Example:
+
+```text
+1st -> 3 points
+2nd -> 2 points
+3rd -> 1 point
+```
+
+Useful for ranking questions and prioritization surveys.
+
+---
+
+## Allocation Scoring
+
+Use distributed points directly or normalize them.
+
+Example:
+
+```text
+Strategy A -> 5
+Strategy B -> 3
+Strategy C -> 2
+```
+
+Could be interpreted directly or converted to percentages.
+
+---
+
+## Confidence-Adjusted Scoring
+
+Modify a score based on a separate confidence response.
+
+Example:
+
+```text
+answerScore × confidenceFactor
+```
+
+Potential use:
+
+A respondent reports high maturity but very low confidence in the answer.
+
+This can make uncertainty visible rather than treating all answers as equally reliable.
+
+Use carefully because it changes the interpretation of the score.
+
+---
+
+## Completeness-Adjusted Scoring
+
+Account for unanswered, N/A, or Don't Know responses.
+
+This should not necessarily reduce the primary score directly.
+
+A better pattern may be to return:
+
+```text
+Score: 78
+Coverage: 62%
+Confidence: Low
+```
+
+This preserves the distinction between:
+
+- Performance
+- Evidence coverage
+- Confidence in the result
+
+---
+
+# Weakest-Link Scoring
+
+Weakest-link scoring deserves explicit support.
+
+A normal arithmetic mean can hide serious deficiencies.
+
+Example:
+
+```text
+Domain A = 90
+Domain B = 90
+Domain C = 90
+Domain D = 90
+Domain E = 20
+```
+
+Arithmetic mean:
+
+```text
+76
+```
+
+A result of 76 may imply a reasonably healthy system even though one critical domain is severely deficient.
+
+For surveys involving:
+
+- Readiness
+- Risk
+- Governance
+- Security
+- Compliance
+- Operational capability
+- Resilience
+- Maturity
+
+the engine should support ways to keep weak domains visible.
+
+Useful mechanisms include:
+
+- Minimum
+- Geometric mean
+- Harmonic mean
+- Score caps
+- Gates
+- Required thresholds
+- Maturity-stage rules
+
+---
+
+# Result Shapes
+
+The scoring engine should explicitly support different output shapes.
+
+## Scalar Result
+
+Example:
+
+```text
+74 / 100
+```
+
+Useful for:
+
+- Overall score
+- Percentage
+- Risk index
+- Readiness index
+
+---
+
+## Categorical Result
+
+Example:
+
+```text
+Advanced
+High Risk
+Ready
+Needs Intervention
+```
+
+The category may come from:
+
+- Thresholds
+- Rules
+- Maturity requirements
+
+---
+
+## Profile Result
+
+Example:
+
+```text
+Leadership  -> 82
+Process     -> 51
+Technology  -> 67
+Governance  -> 73
+```
+
+Useful where a single overall number would hide important differences.
+
+---
+
+## Composite Result
+
+The engine should also allow multiple output components.
+
+Example:
+
+```text
+Overall Score: 74
+Maturity: Level 3
+Weakest Domain: Governance
+Coverage: 81%
+Confidence: Moderate
+```
+
+This may be more informative than forcing everything into one number.
+
+---
+
+# Scoring Direction
+
+Every scoring definition should explicitly declare whether higher values mean:
+
+```text
+Better
+Worse
+Neutral / domain-specific
+```
+
+Examples:
+
+- Maturity score: higher is better
+- Risk score: higher is worse
+- Preference score: neither is inherently better
+
+The engine should not assume that higher always means better.
+
+---
+
+# Scoring Primitives
+
+Rather than implementing every named scoring algorithm as completely separate code, build the scoring system from a small set of composable primitives.
+
+Recommended primitives:
+
+```text
+Map
+Reverse
+Weight
+Filter
+Sum
+Mean
+Min
+Max
+Count
+Normalize
+Clamp
+Threshold
+Require
+Conditional
+Group
+Rank
+```
+
+Potential additional primitives:
+
+```text
+GeometricMean
+HarmonicMean
+Cap
+Floor
+```
+
+---
+
+# Example Composition
+
+A percentage-of-maximum algorithm could conceptually be expressed as:
+
+```text
+Map(answerValue)
+-> Weight(questionWeight)
+-> Sum
+-> Normalize(maximumPossible)
+```
+
+A domain-based assessment could be:
+
+```text
+GroupBy(domain)
+-> Mean
+-> Normalize(0..100)
+```
+
+A weakest-link readiness model could be:
+
+```text
+GroupBy(domain)
+-> Mean
+-> Normalize(0..100)
+-> Min
+```
+
+A maturity model could be:
+
+```text
+GroupBy(levelRequirements)
+-> Require(Level1)
+-> Require(Level2)
+-> Require(Level3)
+-> ReturnHighestSatisfiedLevel
+```
+
+---
+
+# Precompiled Algorithms vs Declarative Scoring
+
+Common algorithms should have precompiled implementations in F#.
+
+Examples:
+
+- Sum
+- Mean
+- Weighted mean
+- Percentage of maximum
+- Normalization
+- Domain scoring
+- Thresholding
+
+This provides:
+
+- Simplicity
+- Speed
+- Predictability
+- Easier testing
+- Smaller configuration
+
+However, the survey definition should describe scoring declaratively enough that the engine can interpret more complex combinations when necessary.
+
+The preferred model is:
+
+```text
+Named Built-In Strategy
+        |
+        v
+Stable Scoring Primitives
+        |
+        v
+F# WASM Scoring Engine
+```
+
+---
+
+# Custom Scoring
+
+Custom scoring should remain available as an escape hatch.
+
+It should be used when a survey genuinely cannot be represented by the built-in algorithms and primitives.
+
+Possible custom mechanisms:
+
+- Expression tree
+- Declarative rule tree
+- Restricted scoring DSL
+- Interpreted scoring AST
+
+Avoid arbitrary executable code embedded directly in survey templates.
+
+The custom mechanism should be:
+
+- Deterministic
+- Validatable
+- Versionable
+- Testable
+- Safe to execute in WASM
+- Independent of UI implementation
+
+---
+
+# Recommended V1 Authoring Choices
+
+For normal survey authors, expose roughly 10–12 primary scoring choices:
+
+1. Raw Sum
+2. Average
+3. Weighted Sum
+4. Weighted Average
+5. Percentage of Maximum
+6. Normalized Score
+7. Mapped Scoring
+8. Reverse Scoring
+9. Threshold / Banding
+10. Pass / Fail
+11. Domain / Section Scoring
+12. Profile Scoring
+
+Then expose advanced scoring separately:
+
+- Penalty
+- Risk accumulation
+- Min / Max
+- Weakest-link
+- Geometric mean
+- Harmonic mean
+- Gates
+- Conditional rules
+- Maturity stages
+- Rubric classification
+- Ranking
+- Pairwise preference
+- Allocation
+- Confidence adjustment
+
+This keeps the normal authoring experience simple while allowing sophisticated surveys when needed.
+
+---
+
+# Guiding Principles
+
+1. **Do not make custom scoring the normal path.**
+2. **Use named built-in strategies for common survey patterns.**
+3. **Build algorithms from a small stable scoring algebra.**
+4. **Keep answer type independent from scoring behavior.**
+5. **Make scoring direction explicit.**
+6. **Support scalar, categorical, profile, and composite results.**
+7. **Treat domains as first-class scoring units.**
+8. **Support weakest-link models so averages cannot hide critical deficiencies.**
+9. **Keep N/A, Don't Know, and unanswered separate from score values.**
+10. **Prefer declarative scoring definitions that can be interpreted and validated by F# WASM.**
+11. **Precompile common scoring algorithms for simplicity and performance.**
+12. **Use custom expressions or rule trees only as an escape hatch.**

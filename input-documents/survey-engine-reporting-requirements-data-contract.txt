@@ -1,0 +1,1097 @@
+Survey Engine – Reporting Requirements and Report Data Contract
+
+Purpose
+
+This document defines the reporting layer that consumes SurveyResult, SurveyGroupResult, and AdminReportState.
+
+The reporting layer must present already-computed survey meaning. It must not recreate survey business logic.
+
+1. Reporting Boundary
+
+Reporting may decide:
+
+- What information to display
+- How to organize information
+- Which audience-specific view to use
+- Which charts/tables/cards to render
+- Which sections to collapse or expand
+- Which export format to produce
+- Which report blocks are included
+
+Reporting must not decide:
+
+- Whether a question applies
+- Whether an answer is valid
+- How a question scores
+- How a section scores
+- Which maturity level applies
+- Which recommendation triggers
+- Whether a survey is complete
+- Whether a submission is a duplicate
+- Whether a group is complete
+- How anonymous identity is enforced
+
+Those are engine/import responsibilities.
+
+2. Core Report Inputs
+
+Reports should consume one of:
+
+SurveyResult
+SurveyGroupResult
+AdminReportState
+
+Preferred normal reporting input:
+
+AdminReportState
+
+SurveyGroupResult may be used where richer detail is required.
+
+SurveyResult may be used for single-survey detail.
+
+3. Report Audiences
+
+Recommended audience types:
+
+Administrator
+Executive
+Respondent
+Facilitator
+GroupReviewer
+Technical/Audit
+
+Not every survey needs every audience.
+
+4. Administrator Report
+
+Administrator reports may include:
+
+- Expected survey count
+- Accepted survey count
+- Missing survey count
+- Group completion status
+- Overall result
+- Section/domain results
+- Distribution summaries
+- Recommendations
+- Coverage
+- Confidence
+- Import warnings/errors
+- Identified respondent-instance detail when permitted
+- Template/version information
+- Submission/report lineage information
+
+Administrator reports are the richest operational view.
+
+5. Executive Report
+
+Executive reports should emphasize:
+
+- Overall result
+- Key strengths
+- Key weaknesses
+- Most important recommendations
+- Material risks
+- Maturity/readiness category
+- Section/domain summary
+- Coverage/confidence
+- Trend/comparison where available
+
+Avoid overwhelming executives with raw question-level detail unless explicitly requested.
+
+6. Respondent Report
+
+A respondent-facing report may include:
+
+- Personal overall result
+- Personal section results
+- Recommendations
+- Explanation of scoring
+- Coverage/confidence
+- Optional answer review
+
+This is only valid when the survey/report design allows respondent result visibility.
+
+Anonymous group reports should not attempt to create identifiable respondent reports after anonymous finalization.
+
+7. Facilitator Report
+
+Facilitator reports may include:
+
+- Group summary
+- Section distributions
+- Strongest/weakest domains
+- Common recommendations
+- Variability/disagreement
+- Coverage/confidence
+- Discussion prompts
+- Role breakdowns when allowed
+- Comparison against prior groups/targets
+
+Facilitator reports should support discussion rather than merely ranking participants.
+
+8. Group / 360 Reviewer Report
+
+May include:
+
+- Overall group result
+- Self vs others
+- Manager vs peers
+- Role-based distributions
+- Shared strengths
+- Perception gaps
+- Recommendations
+- Coverage by role
+
+Only available when identity/role configuration allows it.
+
+Anonymous constraints must still apply.
+
+9. Technical / Audit Report
+
+May include:
+
+- SurveyIdentifier
+- TemplateVersion
+- TemplateHash
+- ResultSchemaVersion
+- ReportDefinitionVersion
+- SubmissionHash references
+- Scoring direction
+- Section algorithms
+- Rule/recommendation IDs
+- Coverage calculations
+- Diagnostic/explanation data
+
+This is for verification and audit, not normal presentation.
+
+10. Core Report Blocks
+
+Recommended report blocks:
+
+ReportHeader
+ReportSummary
+ResponseCounts
+OverallResult
+SectionResults
+GroupDistributions
+Strengths
+Weaknesses
+Recommendations
+CoverageAndConfidence
+Comparisons
+RespondentDetail
+RoleBreakdown
+Methodology
+AuditMetadata
+
+Each report definition selects from these blocks.
+
+11. ReportHeader
+
+Potential fields:
+
+ReportTitle
+SurveyTitle
+SurveyGroupId
+ReportAudience
+GeneratedAt
+GroupIdentityMode
+ReportDefinitionVersion
+
+Avoid exposing technical identifiers unless the audience needs them.
+
+12. ReportSummary
+
+Recommended fields:
+
+OverallResult
+PrimaryCategory
+MaturityLevel?
+RiskBand?
+StrongestArea?
+WeakestArea?
+TopRecommendationIds
+KeyFlags
+
+The exact fields are survey/report-specific.
+
+13. ResponseCounts
+
+Recommended fields:
+
+ExpectedSurveyCount
+AcceptedSurveyCount
+MissingSurveyCount
+RejectedSubmissionCount?
+CompletionPercentage
+
+For anonymous groups, do not identify which invitees are missing.
+
+14. OverallResult
+
+Supported shapes:
+
+Scalar
+Categorical
+Profile
+Composite
+
+Example scalar:
+
+74 / 100
+
+Example categorical:
+
+Advanced
+
+Example profile:
+
+Leadership = 82
+Governance = 49
+Technology = 67
+
+Example composite:
+
+Overall Score = 74
+Maturity = Level 3
+Risk = Moderate
+Weakest Domain = Governance
+Coverage = 81%
+Confidence = Moderate
+
+15. SectionResults
+
+Recommended reportable fields:
+
+SectionId
+SectionTitleKey
+Score?
+NormalizedScore?
+Category?
+Direction
+Coverage
+Confidence?
+Weight?
+IncludedInOverall
+RecommendationIds
+DistributionSummary?
+
+Reporting resolves display labels from immutable template/report definitions.
+
+16. GroupDistributions
+
+For grouped results, reports may include:
+
+Mean
+Median
+Minimum
+Maximum
+Range
+CategoryCounts
+ThresholdCounts
+PercentageAboveThreshold
+PercentageBelowThreshold
+DistributionBuckets
+
+Use only aggregates that are meaningful for the scoring model.
+
+17. Strengths
+
+Potential definition sources:
+
+Top-N section scores
+Sections above threshold
+Positive derived facts
+Strongest categories
+Consistent high scores
+
+Strength logic must be computed by engine/group result logic where semantics matter.
+
+Reporting may choose how many to display.
+
+18. Weaknesses
+
+Potential sources:
+
+Bottom-N section scores
+Sections below threshold
+Weakest-link results
+Critical flags
+Low-confidence important sections
+
+Again, reporting chooses presentation, not semantics.
+
+19. Recommendations
+
+Recommendation report block may include:
+
+RecommendationId
+Priority
+Category
+TitleKey
+DescriptionKey
+AffectedSectionId?
+Frequency?
+TriggerSummary?
+ActionType?
+
+For group reports, recommendation frequency may be useful.
+
+20. Coverage and Confidence
+
+Keep separate from performance.
+
+Potential report fields:
+
+SurveyCoverage
+GroupResponseCoverage
+SectionCoverage
+DontKnowRate
+NARate
+ConfidenceLevel
+ConfidenceReasonCodes
+
+A strong score with weak coverage should be visibly different from a strong score with high confidence.
+
+21. Comparisons
+
+Comparison support should be explicit and optional.
+
+Possible comparison types:
+
+PriorSurveyGroup
+PriorAssessment
+Target
+Benchmark
+Cohort
+Role
+SelfVsOthers
+CurrentVsPrevious
+SectionVsGroupAverage
+
+22. Comparison Data Contract
+
+Recommended model:
+
+ComparisonResult
+    ComparisonType
+    ComparisonLabelKey
+    BaselineReference
+    CurrentValue
+    BaselineValue
+    Delta
+    Direction
+    SignificanceOrConfidence?
+    Comparable
+
+23. Comparable Flag
+
+Do not compare results merely because numeric values exist.
+
+Comparison should require semantic compatibility.
+
+Potential compatibility conditions:
+
+Same SurveyIdentifier
+Compatible TemplateVersion
+Same scoring semantics
+Same normalized scale
+Same section identity
+Same benchmark definition
+
+If incompatible:
+
+Comparable = false
+
+Reporting must not fake comparability.
+
+24. Historical Comparisons
+
+For prior group comparisons, retain:
+
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+Section identities
+Result schema/version
+Scoring compatibility metadata
+
+If scoring meaning changed between template versions, results may not be directly comparable.
+
+25. Benchmarking / Norms
+
+Benchmark support should be modeled separately from ordinary scoring.
+
+Possible future benchmark types:
+
+CohortMean
+Percentile
+IndustryBenchmark
+OrganizationTarget
+ExternalStandard
+HistoricalBaseline
+
+Benchmark data should not be embedded inside mutable report code.
+
+26. Benchmark Reference
+
+Possible model:
+
+BenchmarkReference
+    BenchmarkId
+    BenchmarkVersion
+    PopulationDefinition
+    EffectiveDate
+    MetricDefinitions
+
+Benchmarks should be versioned because populations and calculation methods may change.
+
+27. Percentile Reporting
+
+Percentiles require external population data.
+
+They should never be inferred from a single survey group's current results.
+
+If percentile support is added, it must declare:
+
+Benchmark population
+Sample size
+Benchmark version
+Metric mapping
+Date/effective period
+
+28. Role Comparisons
+
+For 360/group surveys, possible role comparisons:
+
+Self
+Manager
+Peer
+DirectReport
+Customer
+Reviewer
+
+Reports may show:
+
+Role averages
+Role distributions
+Perception gaps
+Self vs others
+
+Only where role counts are sufficient and privacy rules allow.
+
+29. Anonymous Small-Group Protection
+
+Anonymous reporting may need minimum-group-size suppression.
+
+Example policy:
+
+Do not show a subgroup distribution if fewer than N submissions contribute.
+
+This prevents accidental re-identification.
+
+The threshold should be configurable by group/report policy.
+
+30. Anonymous Reporting Rules
+
+Anonymous reports may show:
+
+Aggregate score
+Section aggregates
+Distribution summaries
+Response counts
+Coverage/confidence
+Recommendations
+Benchmark comparisons
+
+Anonymous reports must not show:
+
+Original SurveyInstanceId
+Invitee identity
+Person-level answer records
+Recoverable respondent linkage
+
+31. Identified Reporting Rules
+
+Identified reports may optionally join administrator-owned identity information.
+
+The survey engine still returns instance-level results.
+
+Identity join happens outside core scoring.
+
+32. Respondent Detail Block
+
+Only valid for identified reports or single-person reports.
+
+Potential fields:
+
+SurveyInstanceId
+ExternalDisplayIdentity?
+Role?
+OverallResult
+SectionResults
+Recommendations
+Coverage
+Confidence
+
+Names/emails should come from administrator-owned data, not respondent URL payloads.
+
+33. RoleBreakdown Block
+
+Potential fields:
+
+Role
+AcceptedCount
+OverallAggregate
+SectionAggregates
+Coverage
+Confidence
+
+For anonymous groups, only expose role breakdown if role itself does not create re-identification risk.
+
+34. Methodology Block
+
+A report may include human-readable methodology information such as:
+
+- What the score means
+- Whether higher is better/worse
+- How sections are combined
+- How N/A is treated
+- How Don't Know affects coverage/confidence
+- How maturity bands are interpreted
+- Benchmark source
+
+The reporting layer displays methodology, but the methodology content should be derived from immutable survey/report definitions.
+
+35. Audit Metadata Block
+
+Potential fields:
+
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+ResultSchemaVersion
+ReportDefinitionVersion
+SurveyGroupId
+SubmissionCount
+GeneratedAt
+BenchmarkVersion?
+PersistenceMode?
+
+This block may be hidden in normal reports but retained for verification/export.
+
+36. Report Definition
+
+Reports should themselves be declaratively defined.
+
+Recommended conceptual model:
+
+ReportDefinition
+    ReportDefinitionId
+    ReportDefinitionVersion
+    Audience
+    IncludedBlocks
+    BlockOrder
+    VisibilityRules
+    DetailLevel
+    ComparisonRules
+    PrivacyRules
+    ExportOptions
+    Localization
+
+37. Report Definition Versioning
+
+ReportDefinitionVersion is separate from:
+
+TemplateVersion
+TemplateSchemaVersion
+ResultSchemaVersion
+ResponseEncodingVersion
+
+A report can change presentation/composition without changing survey scoring.
+
+38. Report Definition Immutability
+
+Once a report definition is used for a formally issued report, consider treating that version as immutable for reproducibility.
+
+A new presentation/configuration can create a new ReportDefinitionVersion.
+
+39. Report Visibility Rules
+
+Examples:
+
+ShowRecommendations = true
+ShowRawAnswerDetail = false
+ShowCoverage = true
+ShowAuditMetadata = false
+ShowRespondentDetail = IdentifiedOnly
+ShowRoleBreakdown = MinCount(5)
+
+These are presentation/privacy rules, not scoring rules.
+
+40. Report Detail Levels
+
+Recommended levels:
+
+Summary
+Standard
+Detailed
+Audit
+
+Summary:
+Executive-level highlights
+
+Standard:
+Overall + section results + recommendations
+
+Detailed:
+Adds distributions/comparisons/respondent detail when permitted
+
+Audit:
+Adds methodology, identifiers, hashes, rule lineage
+
+41. Report Localization
+
+Reporting should resolve localized text for:
+
+Titles
+Section names
+Categories
+Recommendations
+Methodology
+Labels
+Warnings
+
+Localization must not alter scores or result semantics.
+
+42. Export Formats
+
+Recommended order of implementation:
+
+On-screen HTML
+Print-friendly HTML
+PDF
+Structured JSON export
+CSV for selected tabular data
+
+Do not make PDF the canonical report model.
+
+PDF should be one renderer over the report data contract.
+
+43. Structured Report Export
+
+Consider a versioned report JSON export containing:
+
+ReportDefinitionId
+ReportDefinitionVersion
+SurveyGroupId
+ReportSummary
+SectionResults
+Recommendations
+Coverage
+Confidence
+Comparisons
+AuditMetadata
+
+This supports integrations without exposing internal engine state.
+
+44. CSV Export
+
+CSV is useful for:
+
+Section summaries
+Distribution tables
+Identified respondent-level exports when allowed
+Role aggregates
+
+CSV is not suitable as the canonical representation for complex composite results.
+
+45. Report Rendering Contract
+
+Conceptually:
+
+AdminReportState
++
+ReportDefinition
++
+Localization
++
+Optional ComparisonData
+=
+Rendered Report
+
+46. Comparison Provider Boundary
+
+Historical/benchmark data may require an external provider.
+
+Conceptual interface:
+
+ComparisonProvider
+    GetBaseline(reference, metric) -> ComparisonValue
+
+Reporting should consume already-prepared ComparisonResults where practical.
+
+Do not let visual components query arbitrary mutable data independently.
+
+47. No Hidden Recalculation
+
+A report renderer must not silently recalculate scores from displayed data.
+
+If a score is 74 in SurveyGroupResult, every renderer should display/report that same authoritative result unless applying an explicitly labeled display transformation such as rounding.
+
+48. Rounding Rules
+
+Rounding is presentation behavior.
+
+ReportDefinition may specify:
+
+DecimalPlaces
+PercentagePrecision
+RoundingMode
+
+The canonical result retains sufficient precision.
+
+49. Missing Data Presentation
+
+Missing or unavailable results must be explicit.
+
+Use states such as:
+
+NotAvailable
+NotApplicable
+InsufficientResponses
+NotComparable
+LowConfidence
+
+Do not render missing values as zero.
+
+50. Insufficient Sample Size
+
+Group/report rules may require minimum accepted counts before showing:
+
+Benchmarks
+Role breakdowns
+Distributions
+Anonymous subgroup results
+Confidence labels
+
+This is especially important for privacy and statistical usefulness.
+
+51. Warning Model
+
+Reports may surface warnings such as:
+
+LowCoverage
+LowResponseCount
+HighDontKnowRate
+IncompleteGroup
+NotComparableToPriorVersion
+BenchmarkOutOfDate
+AnonymousSmallGroupSuppressed
+
+Warnings should come from result/comparison/privacy evaluation, not ad hoc UI logic.
+
+52. Report Status
+
+Potential report status:
+
+Draft
+Complete
+Partial
+InsufficientData
+Invalid
+
+Example:
+
+Partial = group has some accepted responses but ExpectedSurveyCount not yet reached.
+
+53. Partial Group Reporting
+
+The administrator may need to view a report before all expected submissions arrive.
+
+The report should clearly indicate:
+
+AcceptedSurveyCount
+ExpectedSurveyCount
+CompletionPercentage
+Partial status
+Potential confidence impact
+
+Do not make a partial result look final.
+
+54. Final Group Reporting
+
+When group completion rules are satisfied:
+
+ReportStatus = Complete
+
+The report may still show low confidence if coverage or evidence rules require it.
+
+55. Report Snapshot
+
+When sharing or exporting a formal report, consider creating a report snapshot identity.
+
+Conceptual fields:
+
+ReportSnapshotId
+ReportDefinitionVersion
+SurveyGroupResultHash
+GeneratedAt
+
+This allows a later system to prove exactly which result state produced a report.
+
+This is optional for v1 but useful for auditability.
+
+56. SurveyGroupResultHash
+
+A deterministic hash of canonical SurveyGroupResult may be useful.
+
+Uses:
+
+Report snapshot lineage
+Change detection
+Audit verification
+Cache identity
+
+This does not replace the raw SubmissionHashes.
+
+57. Privacy Classification
+
+Each report block should be classifiable.
+
+Example:
+
+PublicWithinOrganization
+AdministratorOnly
+IdentifiedOnly
+AnonymousSafe
+AuditOnly
+
+This allows report definitions to enforce privacy systematically.
+
+58. Report Block Capability Matrix
+
+Example conceptual matrix:
+
+ReportSummary
+    AnonymousSafe = true
+
+SectionResults
+    AnonymousSafe = true
+
+GroupDistributions
+    AnonymousSafe = true with minimum count
+
+RespondentDetail
+    AnonymousSafe = false
+
+RoleBreakdown
+    AnonymousSafe = conditional
+
+AuditMetadata
+    AdministratorOnly = true
+
+59. Report Performance
+
+Reports should consume precomputed result state where possible.
+
+Avoid rescanning raw submissions every time the report renders.
+
+For embedded mode:
+AdminReportState should already contain required derived report values.
+
+For external-store mode:
+The store may retain SurveyGroupResult and/or AdminReportState.
+
+60. Report Caching
+
+Rendered report caching is optional.
+
+If used, cache keys should include:
+
+SurveyGroupResultHash
+ReportDefinitionVersion
+Locale
+ComparisonVersion/reference
+
+This prevents stale renders after group state changes.
+
+61. Report Extensibility
+
+The report model should allow new blocks without changing scoring.
+
+Examples future blocks:
+
+TrendChart
+BenchmarkPercentile
+RecommendationRoadmap
+Heatmap
+RoleGapMatrix
+QuestionDetail
+EvidenceSummary
+
+The block model should be extensible.
+
+62. Initial V1 Report Types
+
+Recommended first report types:
+
+Administrator Group Report
+Executive Summary Report
+Detailed Section Report
+Anonymous Aggregate Report
+Identified Detail Report
+
+Optional later:
+
+360 Role Comparison Report
+Historical Comparison Report
+Benchmark Report
+Audit Report
+
+63. V1 Administrator Group Report
+
+Include:
+
+ReportHeader
+ResponseCounts
+ReportSummary
+OverallResult
+SectionResults
+Recommendations
+CoverageAndConfidence
+Methodology
+AuditMetadata optionally collapsed
+
+64. V1 Executive Summary
+
+Include:
+
+ReportHeader
+ReportSummary
+OverallResult
+Top Strengths
+Top Weaknesses
+Top Recommendations
+CoverageAndConfidence
+Comparison summary if available
+
+65. V1 Detailed Section Report
+
+Include:
+
+SectionResults
+Section distributions
+Section recommendations
+Coverage
+Confidence
+Optional question-level detail where allowed
+
+66. V1 Anonymous Aggregate Report
+
+Include:
+
+ExpectedSurveyCount
+AcceptedSurveyCount
+Overall aggregate
+Section aggregates
+Distributions subject to privacy threshold
+Recommendations
+Coverage/confidence
+
+Never include respondent-level data.
+
+67. V1 Identified Detail Report
+
+Include:
+
+Instance-level result
+Section results
+Recommendations
+Coverage/confidence
+Optional administrator identity join
+
+68. Reporting and External Storage
+
+Reporting must behave identically whether AdminReportState is:
+
+EmbeddedInUrl
+or
+ExternalStore
+
+Persistence mode should not change report semantics.
+
+69. Core Report Data Contract
+
+Minimum recommended contract:
+
+ReportData
+    ReportStatus
+    Audience
+    SurveyGroupId
+    GroupIdentityMode
+    ResponseCounts
+    ReportSummary
+    OverallResult
+    SectionResults
+    Recommendations
+    Coverage
+    Confidence
+    Warnings
+    Comparisons?
+    RespondentDetail?
+    RoleBreakdown?
+    Methodology
+    AuditMetadata
+
+70. Core Reporting Invariants
+
+1. Reporting does not perform survey scoring.
+2. Reporting does not determine applicability.
+3. Reporting does not determine submission validity.
+4. Reporting does not enforce duplicate rules.
+5. Reporting does not reconstruct anonymous identity.
+6. Missing values are never silently treated as zero.
+7. Coverage/confidence remain separate from performance.
+8. Partial groups are visibly marked as partial.
+9. Anonymous subgroup reporting respects minimum-count privacy rules.
+10. Comparisons occur only when semantics are compatible.
+11. Benchmark definitions are versioned.
+12. Report definitions are versioned.
+13. Report rendering is deterministic from report data + report definition + localization + comparison data.
+14. Embedded and external persistence yield identical report meaning.
+15. Raw respondent answers are included only when explicitly required and privacy permits.
+16. Report text/layout may change without changing underlying survey scores.
+17. Formal report snapshots should be reproducible when snapshot/audit mode is used.
+18. Report blocks should support privacy classification.
+19. Reporting should rely on precomputed result state rather than re-running engine business logic.
+20. Anonymous reports must never expose invitation-level linkage.
+
+71. Guiding Principle
+
+The survey engine determines what the results mean.
+
+The reporting layer determines how those results are communicated.
+
+Conceptually:
+
+Accepted Submissions
+    ↓
+SurveyResult
+    ↓
+SurveyGroupResult
+    ↓
+AdminReportState
+    ↓
+ReportData
+    +
+ReportDefinition
+    +
+Localization
+    +
+Optional ComparisonData
+    ↓
+Rendered Report
+
+This separation allows the same authoritative survey results to support multiple audiences, formats, privacy modes, and comparison views without duplicating scoring logic.

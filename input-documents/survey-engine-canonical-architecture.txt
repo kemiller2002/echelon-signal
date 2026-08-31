@@ -1,0 +1,1258 @@
+Survey Engine – Canonical Architecture and Core Data Contracts
+
+Purpose
+
+This specification consolidates the survey engine architecture before reporting. It defines the canonical template, instance, submission, URL encoding, rule/scoring model, publication validation, and result model.
+
+1. Architectural Model
+
+The engine distinguishes five concepts:
+
+SurveyTemplate
+SurveyInstance
+SurveyResponse
+SurveySubmission
+SurveyGroup
+
+- SurveyTemplate — immutable published definition; owns meaning.
+- SurveyInstance — one concrete occurrence of a survey; owns identity/context.
+- SurveyResponse — logical decoded answers used by the engine.
+- SurveySubmission — portable URL artifact sent to the administrator.
+- SurveyGroup — relates multiple survey instances/submissions.
+
+Core deterministic rule:
+
+Immutable Published Template
++
+Survey Submission URL
+=
+Complete Reproducible Survey Result
+
+No respondent-side hidden state should be required.
+
+2. Canonical Survey Template
+
+Logical structure:
+
+SurveyTemplate
+    Identity
+    Lifecycle
+    Compatibility
+    Metadata
+    Presentation
+    Sections
+    Questions
+    DerivedFacts
+    FlowRules
+    ValidationRules
+    Scoring
+    CompletionRules
+    Recommendations
+    Localization
+
+Identity
+
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+
+- SurveyIdentifier is stable across versions.
+- TemplateVersion is human-readable.
+- TemplateHash is a deterministic fingerprint, preferably SHA-256 over a canonical representation.
+
+Lifecycle
+
+Draft
+Validated
+Published
+Superseded
+
+Published templates are immutable. Superseded templates remain resolvable.
+
+Lineage
+
+ParentTemplateVersion
+ParentTemplateHash
+CreatedAt
+CreatedBy
+PublishedAt
+PublishedBy
+
+Compatibility
+
+TemplateSchemaVersion
+MinimumEngineVersion
+ResponseEncodingVersion
+Capabilities
+
+Possible capability declarations:
+
+UsesBranching
+UsesDerivedFacts
+UsesCustomScoring
+UsesRanking
+UsesAllocation
+UsesGroupScoring
+UsesConditionalSections
+UsesRecommendations
+UsesAdvancedValidation
+UsesLocalization
+
+Unsupported capabilities must fail explicitly.
+
+3. Template Metadata and Presentation
+
+Metadata may include:
+
+Title
+ShortTitle
+Description
+Instructions
+Tags
+Category
+
+Survey-level presentation:
+
+ItemsPerPage
+ShowQuestionNumbers
+ShowProgress
+ProgressMode
+AllowBackNavigation
+ReviewBeforeSubmit
+SectionStartsOnNewPage
+RandomizationMode
+
+Progress modes:
+
+Question
+Page
+Section
+None
+
+Randomization should default to None in v1. If later supported, it must be deterministic.
+
+4. Sections
+
+Canonical section model:
+
+Section
+    SectionId
+    Title
+    Description
+    Order
+    QuestionIds
+    Required
+    ApplicabilityRule
+    Presentation
+    Validation
+    Scoring
+    Completion
+    ResultDefinition
+
+Section presentation may include:
+
+ItemsPerPage
+StartOnNewPage
+ShowTitle
+ShowDescription
+ExplicitPageBreaks
+
+Sections are first-class scoring and presentation units. A non-applicable section must not automatically score as zero.
+
+5. Questions
+
+Canonical question model:
+
+Question
+    QuestionId
+    SectionId
+    Order
+    Prompt
+    HelpText
+    AnswerDefinition
+    Selector
+    SpecialStates
+    Required
+    ApplicabilityRule
+    Validation
+    Scoring
+    Tags
+
+Each question has a stable semantic QuestionId. Position may be used by encoding, but position alone is not semantic identity.
+
+6. Answer Primitives
+
+Recommended core answer types:
+
+Boolean
+Ordinal
+SingleChoice
+MultiChoice
+BoundedInteger
+Ranking
+Allocation
+
+Forced-choice and pairwise comparison normally reuse SingleChoice.
+
+Examples:
+
+Boolean       -> 2 states
+Ordinal(5)    -> values 0..4
+SingleChoice  -> option index
+MultiChoice   -> bitmask
+BoundedInteger -> fixed numeric range
+
+Ranking and allocation are advanced answer types.
+
+Special answer states must remain distinct:
+
+Unanswered
+NotApplicable
+DontKnow
+Answered(value)
+
+They must never collapse into numeric zero.
+
+7. Selectors
+
+Selectors are presentation, not scoring.
+
+Selector
+    SelectorType
+    Labels
+    OptionOrder
+    AccessibilityMetadata
+
+Common presets:
+
+YesNo
+YesNoNA
+Likert3
+Likert5
+Likert7
+Agreement5
+Frequency5
+Quality5
+Confidence5
+Satisfaction5
+Maturity5
+NumericRating
+SingleSelect
+MultiSelect
+BoundedCount
+ForcedChoice
+Ranking
+Allocation
+Pairwise
+
+Most presets reuse the same underlying answer primitives.
+
+8. Scoring
+
+Primary built-in algorithms:
+
+Unscored
+RawSum
+Mean
+WeightedSum
+WeightedMean
+PercentageOfMaximum
+Normalize
+Mapped
+Reverse
+Threshold
+PassFail
+SectionAggregate
+Profile
+
+Advanced algorithms:
+
+CountMatching
+Penalty
+RiskAccumulation
+Min
+Max
+TopN
+BottomN
+CappedSum
+Floor
+Ceiling
+Gate
+Conditional
+BalancedDomain
+WeightedDomain
+GeometricMean
+HarmonicMean
+MinimumDomain
+MaturityStage
+RuleClassification
+Ipsative
+PairwisePreference
+RankPoints
+AllocationScore
+ConfidenceAdjusted
+CompletenessAdjusted
+
+Every numeric scoring definition declares direction:
+
+HigherIsBetter
+HigherIsWorse
+Neutral
+
+Section Scoring
+
+Each section may define:
+
+Algorithm
+QuestionWeights
+Normalization
+MinimumScore
+MaximumScore
+Direction
+Thresholds
+NAHandling
+DontKnowHandling
+MinimumCompletion
+OverallWeight
+IncludeInOverallScore
+ResultDefinition
+
+Survey-Level Scoring
+
+May operate over question scores, section scores, and derived facts. Supported patterns include weighted section averages, balanced domain scoring, weakest-section models, geometric mean, maturity-stage logic, rule-based classification, and profile output.
+
+Group-Level Scoring
+
+Optional, for combining multiple surveys or respondent roles into a higher-level result.
+
+9. Derived Facts
+
+Derived facts are calculated values, not fake questions.
+
+DerivedFact
+    FactId
+    ResultType
+    Expression
+
+Potential types:
+
+Boolean
+Integer
+Decimal
+Ordinal
+Category
+
+Examples:
+
+CriticalRisk
+GovernanceReady
+CoverageSufficient
+MaturityPrerequisiteMet
+
+Derived facts may be reused by flow, validation, scoring, completion, recommendations, and reporting.
+
+10. Flow Rules
+
+Flow rules determine applicability/navigation and are part of the immutable template.
+
+Possible actions:
+
+ShowQuestion
+HideQuestion
+ShowSection
+HideSection
+SkipToQuestion
+SkipToSection
+TerminateSurvey
+RestrictChoices
+
+Example:
+
+If Answer(Q1) = No
+Then Hide Section(SecurityImplementation)
+
+Flow must be deterministic.
+
+11. Validation
+
+Validation is separate from scoring.
+
+Supported validation may include:
+
+Required
+MinimumSelections
+MaximumSelections
+ExactSelections
+AllowedRange
+MutualExclusion
+RankingUniqueness
+AllocationTotal
+CrossQuestionRequirement
+ProhibitedCombination
+
+Completion should be calculated explicitly from applicability and validation.
+
+Possible derived completion states:
+
+NotStarted
+InProgress
+Invalid
+ReadyToSubmit
+Terminated
+
+No server-side lifecycle state is required.
+
+12. Recommendations
+
+Recommendations are engine outputs, not reporting logic.
+
+Recommendation
+    RecommendationId
+    TriggerExpression
+    Priority
+    Category
+    Title
+    Description
+    RelatedSectionId
+    RelatedQuestionId
+
+Possible priorities:
+
+Informational
+Suggested
+Important
+Critical
+
+13. Shared Rule / Expression AST
+
+Use one small shared expression model for:
+
+- Flow
+- Validation
+- Derived facts
+- Scoring
+- Completion
+- Recommendations
+
+Conceptual AST:
+
+Value
+Answer
+Fact
+SectionScore
+SurveyScore
+Constant
+
+Equal
+NotEqual
+GreaterThan
+GreaterThanOrEqual
+LessThan
+LessThanOrEqual
+
+And
+Or
+Not
+
+IfThenElse
+
+Map
+Reverse
+Weight
+Filter
+
+Sum
+Mean
+Min
+Max
+Count
+GeometricMean
+HarmonicMean
+
+Normalize
+Clamp
+Threshold
+
+Contains
+ContainsAny
+ContainsAll
+
+Require
+Group
+
+Expressions should be typed. Invalid combinations fail template validation.
+
+Rules must not depend on mutable external services, random state, network availability, browser-specific behavior, or unversioned external configuration.
+
+Rule dependencies should form a DAG where possible. Circular dependencies must be rejected.
+
+14. Evaluation Order
+
+Recommended conceptual order:
+
+1. Parse submission envelope
+2. Resolve template
+3. Verify template fingerprint
+4. Verify submission integrity
+5. Decode primitive answers
+6. Validate answer cardinality
+7. Determine applicability
+8. Calculate prerequisite derived facts
+9. Run validation
+10. Calculate completion state
+11. Calculate question scores
+12. Calculate section scores
+13. Calculate survey result
+14. Calculate group result if context exists
+15. Calculate remaining derived facts
+16. Trigger recommendations/actions
+17. Produce SurveyResult
+
+Implementation may optimize this, but dependency behavior must remain deterministic.
+
+15. Survey Instance
+
+Canonical model:
+
+SurveyInstance
+    SurveyInstanceId
+    SurveyGroupId
+    SurveyIdentifier
+    TemplateVersion
+    TemplateFingerprint
+
+    SubjectId
+    RespondentId
+    RespondentRole
+
+    Locale
+    CreatedAt
+    ExpiresAt
+
+    RuntimeOptions
+
+Not every field is required.
+
+Minimum identity:
+
+SurveyInstanceId
+Exact immutable template reference
+
+When grouping applies:
+
+SurveyGroupId
+
+Sensitive information should normally use compact opaque identifiers rather than human-readable personal data in URLs.
+
+16. Template Fingerprint
+
+The full template hash may be too large for URL use.
+
+Conceptual approach:
+
+Full TemplateHash -> template repository
+Short TemplateFingerprint -> submission URL
+
+The fingerprint length should be chosen deliberately based on collision risk, number of templates, URL budget, and expected system lifetime.
+
+17. Survey Group
+
+Canonical model:
+
+SurveyGroup
+    SurveyGroupId
+    SubjectId
+    RequiredInstanceRules
+    RoleRequirements
+    Dependencies
+    CompletionRules
+    GroupScoring
+
+Supports multi-survey diagnostics and 360 assessments.
+
+18. Survey Submission / URL Envelope
+
+The URL is the canonical portable submission artifact.
+
+Conceptual envelope:
+
+SubmissionEnvelope
+    ResponseEncodingVersion
+    TemplateReference
+    SurveyInstanceId
+    SurveyGroupId?
+    InstanceMetadata?
+    EncodedAnswers
+    IntegrityValue
+
+A valid submission URL plus the exact immutable template must be sufficient to reconstruct, validate, score, and interpret the response.
+
+19. Template Reference in URL
+
+Potential components:
+
+SurveyIdentifier
+TemplateVersion
+TemplateFingerprint
+
+Possible strategies:
+
+Explicit:
+SurveyIdentifier + TemplateVersion + Fingerprint
+
+Compact Registry Reference:
+PublishedTemplateId + Fingerprint
+
+Content-Addressed:
+HashDerivedTemplateId
+
+The repository should still retain human-readable SurveyIdentifier and TemplateVersion.
+
+20. Answer Encoding
+
+Answers should be bit-packed based on template-defined cardinality.
+
+Examples:
+
+Boolean          -> 1 bit
+Ordinal(3)       -> 2 bits
+Ordinal(5)       -> 3 bits
+Ordinal(7)       -> 3 bits
+Bounded 0..10    -> 4 bits
+Choice(8)        -> 3 bits
+MultiChoice(6)   -> 6-bit mask
+
+The published template defines a deterministic response layout.
+
+21. Special-State Encoding
+
+For a 5-value ordinal, one possible encoding is:
+
+0..4 = actual answer
+5 = N/A
+6 = Don't Know
+7 = Unanswered
+
+This fits in three bits.
+
+But the encoder should be optimized across the whole survey. Separate presence/special-state bitmaps may be more efficient when many questions support the same special states.
+
+The decision should be based on measured survey payloads, not intuition.
+
+22. Multi-Select, Ranking, and Allocation
+
+Multi-select should normally use bitmasks.
+
+Ranking may later use compact permutation encoding such as factoradic/Lehmer coding or bounded Top-N representation.
+
+Allocation uses bounded integer values based on the template's fixed total and choice count, with validation enforcing the total.
+
+23. URL-Safe Serialization
+
+After binary packing, encode the payload using a URL-safe representation.
+
+Candidates:
+
+Base64url
+Base32
+Custom alphabet
+
+Base64url is the likely first default because it is compact and widely supported.
+
+24. Response Encoding Version
+
+Every submission explicitly identifies the encoding format version.
+
+ResponseEncodingVersion = 1
+
+This permits future changes to bit layout, compression, special-state representation, envelope structure, and integrity algorithms without breaking old submissions.
+
+25. Integrity and Authenticity
+
+Every submission should support corruption detection.
+
+Possible integrity mechanisms:
+
+CRC32
+Truncated cryptographic hash
+
+Integrity detects truncation, malformed copying, and accidental corruption.
+
+Authenticity is a separate concern.
+
+Possible policies:
+
+None
+IntegrityOnly
+Signed
+
+If signed submissions are needed, HMAC or another keyed signature can be used. Signing should only be required where it provides actual business value.
+
+26. URL Size Budget
+
+Do not design to theoretical browser maximums.
+
+Establish a conservative supported URL budget through real testing, including:
+
+- Safari on iPhone
+- Safari on macOS
+- Chrome
+- Edge
+- Email clients
+- SMS/iMessage
+- Slack/Teams-style messaging
+- Copy/paste workflows
+- QR codes if planned
+
+Benchmark realistic surveys:
+
+25 questions
+50 questions
+100 questions
+200 questions
+
+with combinations of Boolean, Likert 5, Likert 7, single choice, multi-select, N/A, and Don't Know.
+
+Record:
+
+Raw bits
+Encoded bytes
+URL characters
+Header overhead
+Integrity overhead
+
+27. Submission Hash and Import
+
+Administrator-side systems may calculate:
+
+SubmissionHash
+
+from the canonical submission payload.
+
+Uses:
+
+- Duplicate detection
+- Revision comparison
+- Import history
+- Audit trail
+
+It does not need to be stored in the URL if it can be calculated during import.
+
+Administrator import pipeline:
+
+Receive URL
+↓
+Parse envelope
+↓
+Check encoding version
+↓
+Resolve exact template
+↓
+Verify template fingerprint
+↓
+Verify integrity
+↓
+Decode answers
+↓
+Validate
+↓
+Evaluate applicability
+↓
+Score
+↓
+Compute results
+↓
+Associate with SurveyGroup
+↓
+Persist/report if desired
+
+Administrator persistence begins after receipt/import and is not required for survey completion.
+
+28. Publication Validation
+
+Publishing is explicit. A template must pass comprehensive validation before it can become immutable.
+
+Identity:
+SurveyIdentifier exists
+TemplateVersion valid and unique
+Parent reference valid
+
+Questions:
+QuestionIds unique
+Answer definitions supported
+Cardinality known
+Selector compatible
+Option IDs unique
+Option order deterministic
+Required properties present
+
+Sections:
+SectionIds unique
+Question references valid
+Ordering deterministic
+Scoring references valid
+
+Flow:
+References exist
+Conditions type-check
+No dependency cycles
+No permanently unreachable required content
+
+Validation Rules:
+Selection bounds valid
+Allocation totals valid
+Mutual exclusions valid
+Cross-question references valid
+Ranges valid
+
+Scoring:
+Algorithms supported
+Weights valid
+Mapped scores complete
+Thresholds valid
+Normalization valid
+Direction defined
+Section aggregation valid
+Survey aggregation valid
+Group aggregation valid if used
+
+Derived Facts:
+FactIds unique
+Expressions type-check
+Dependencies valid
+No cycles
+
+Recommendations:
+RecommendationIds unique
+Triggers valid
+References valid
+Priorities valid
+
+Compatibility:
+TemplateSchemaVersion supported
+MinimumEngineVersion valid
+Capabilities known
+Operators supported
+Selectors supported
+Algorithms supported
+
+Encoding:
+Every answer has known cardinality
+Response layout deterministic
+All answer states representable
+Submission header generatable
+Template reference encodable
+Expected maximum payload size calculable
+
+29. Canonicalization and Publishing
+
+Before hashing, normalize:
+
+Property order
+Whitespace
+Number representation
+Boolean representation
+Null/default handling
+String encoding
+
+Preserve semantically meaningful ordering:
+
+Section order
+Question order
+Option order
+Rule order where order matters
+
+Recommended publish sequence:
+
+Draft
+↓
+Normalize
+↓
+Validate
+↓
+Resolve reusable definitions
+↓
+Embed or immutably reference dependencies
+↓
+Calculate encoding layout
+↓
+Canonicalize
+↓
+Calculate TemplateHash
+↓
+Assign TemplateVersion
+↓
+Lock artifact
+↓
+Publish
+
+Published templates cannot change.
+
+Reusable authoring presets may exist, but published templates must embed them or reference immutable content-addressed artifacts.
+
+30. Canonical Survey Result
+
+Reporting should consume a result object and must not recreate scoring/business logic.
+
+SurveyResult
+    Identity
+    Completion
+    Validation
+    Answers
+    SectionResults
+    OverallResult
+    DerivedFacts
+    Recommendations
+    Coverage
+    Confidence
+    Diagnostics
+
+Identity:
+
+SurveyInstanceId
+SurveyGroupId
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+SubmissionHash
+
+Completion:
+
+State
+AnsweredCount
+ApplicableQuestionCount
+RequiredAnsweredCount
+BlockingErrors
+
+Validation:
+
+ValidationResult
+    IsValid
+    Errors
+    Warnings
+
+Error context may include:
+
+RuleId
+QuestionId?
+SectionId?
+MessageKey
+Severity
+
+Answer Result:
+
+AnswerResult
+    QuestionId
+    State
+    RawValue
+    DisplayValueKey
+    Score?
+    Applicable
+
+Section Result:
+
+SectionResult
+    SectionId
+    Completion
+    RawScore
+    NormalizedScore
+    Category
+    Direction
+    Coverage
+    Confidence
+    IncludedInOverall
+    Weight
+
+31. Overall Result Shapes
+
+The engine supports:
+
+Scalar
+Categorical
+Profile
+Composite
+
+Examples:
+
+Scalar:
+74 / 100
+
+Categorical:
+Advanced
+High Risk
+Ready
+
+Profile:
+Leadership = 82
+Governance = 49
+Technology = 67
+
+Composite:
+Overall Score = 74
+Maturity = Level 3
+Risk = Moderate
+Weakest Domain = Governance
+Coverage = 81%
+Confidence = Moderate
+
+Do not force every survey into one number.
+
+32. Coverage and Confidence
+
+Coverage should remain separate from performance score.
+
+Possible coverage formula:
+
+AnsweredApplicableQuestions / ApplicableQuestions
+
+Don't Know treatment should be template-defined.
+
+Confidence should not automatically equal coverage. It may consider:
+
+- Don't Know answers
+- Missing evidence
+- Explicit confidence questions
+- Coverage
+- Rule-based uncertainty indicators
+
+Possible confidence output:
+
+High
+Moderate
+Low
+
+33. Recommendation Results
+
+The engine emits triggered recommendation IDs and context.
+
+RecommendationResult
+    RecommendationId
+    Priority
+    TriggeredBy
+    RelatedSectionId
+    RelatedQuestionIds
+
+The reporting layer decides how to display the text.
+
+34. Diagnostics and Explainability
+
+Optional diagnostic output may include:
+
+Rule evaluations
+Derived fact values
+Score contributions
+Excluded answers
+Normalization calculations
+
+Every result should be reproducible and, where practical, explainable. The engine should be able to identify:
+
+- Which answers contributed
+- Which weights applied
+- Which values were excluded
+- Which thresholds fired
+- Which rules produced a category or recommendation
+
+35. Error Model
+
+Recommended error categories:
+
+SubmissionParseError
+UnsupportedEncodingVersion
+TemplateNotFound
+TemplateFingerprintMismatch
+IntegrityFailure
+DecodeError
+ValidationError
+UnsupportedTemplateCapability
+RuleEvaluationError
+ScoringError
+
+Fail explicitly. Never guess when interpretation is ambiguous.
+
+36. F# Modeling Direction
+
+Use discriminated unions for important state.
+
+Conceptually:
+
+AnswerState =
+    | Unanswered
+    | NotApplicable
+    | DontKnow
+    | Answered of AnswerValue
+
+ResultDirection =
+    | HigherIsBetter
+    | HigherIsWorse
+    | Neutral
+
+ResultShape =
+    | Scalar
+    | Categorical
+    | Profile
+    | Composite
+
+TemplateLifecycle =
+    | Draft
+    | Validated
+    | Published
+    | Superseded
+
+This aligns with the explicit-state architecture and makes illegal combinations harder to represent.
+
+37. Recommended Module Boundaries
+
+Possible F# modules:
+
+Survey.Domain
+Survey.Template
+Survey.Validation
+Survey.Expressions
+Survey.Encoding
+Survey.Flow
+Survey.Scoring
+Survey.Results
+Survey.Submission
+Survey.Group
+Survey.Publication
+
+Encoding must not depend on UI.
+
+Reporting should depend on SurveyResult, not directly on scoring internals.
+
+38. Reporting Boundary
+
+Reporting must not determine:
+
+- Whether a question applies
+- Whether an answer is valid
+- How a question scores
+- How a section scores
+- Which maturity level applies
+- Which recommendations trigger
+- Whether the survey is complete
+
+Those are engine responsibilities.
+
+Reporting should decide:
+
+- What to display
+- How to organize it
+- Audience-specific views
+- Visual presentation
+- Export format
+
+39. Recommended Implementation Order
+
+Before reporting:
+
+1. Finalize canonical logical schemas.
+2. Create representative template JSON examples.
+3. Define F# domain types.
+4. Define the expression AST.
+5. Build template validation.
+6. Build deterministic canonicalization and hashing.
+7. Prototype answer encoding and measure real URL sizes.
+8. Build decode/encode round-trip tests.
+9. Implement standard scoring algorithms.
+10. Implement canonical SurveyResult.
+11. Design reporting against SurveyResult.
+
+Representative template fixtures should include:
+
+Simple Likert assessment
+Multi-section weighted assessment
+Branching assessment
+Maturity assessment
+360/group assessment
+
+40. Required Tests
+
+Include tests for:
+
+Template validation
+Template immutability
+Canonical hashing
+Encoding round-trip
+Special states
+Branching determinism
+Derived fact evaluation
+Rule cycle detection
+Scoring algorithms
+Section aggregation
+Group aggregation
+Wrong template detection
+URL corruption
+Unsupported encoding versions
+Legacy template resolution
+Result reproducibility
+
+Property-based tests are particularly appropriate for encoding.
+
+Core property:
+
+decode(encode(response)) = response
+
+Other important properties:
+
+semantically identical canonical templates -> same hash
+same template + same submission -> same result
+
+41. Core Invariants
+
+1. Published templates are immutable.
+2. Every published template has a deterministic hash.
+3. Any semantic template change creates a new version.
+4. Old published versions remain resolvable.
+5. A submission identifies the exact template needed to interpret it.
+6. The URL contains all non-reconstructable respondent state.
+7. The template owns meaning; the submission owns state.
+8. Decoding never depends on mutable external configuration.
+9. Unsupported versions/features fail explicitly.
+10. Special answer states remain semantically distinct.
+11. Validation is separate from scoring.
+12. Flow is deterministic.
+13. Derived facts are deterministic.
+14. Rule dependencies are cycle-free.
+15. Section scoring is first-class.
+16. Survey-level scoring is first-class.
+17. Group-level scoring is optional but supported.
+18. Result shape is not assumed to be a single number.
+19. Recommendations are engine outputs.
+20. Reporting consumes engine results rather than recreating business logic.
+21. The same template, instance context, and answers always produce the same result.
+22. URL corruption is detectable.
+23. Response encoding is explicitly versioned.
+24. Published templates contain or immutably reference everything required for interpretation.
+25. Every valid answer state is representable by the encoding contract.
+
+42. Canonical Architectural Principle
+
+The survey system should behave like a small deterministic interpreter.
+
+Immutable Template = program
+Submission URL     = input state
+Survey Engine      = interpreter
+SurveyResult       = deterministic output
+
+Execution:
+
+Template
+    +
+Submission
+    ↓
+Decode
+    ↓
+Validate
+    ↓
+Evaluate
+    ↓
+Score
+    ↓
+Classify
+    ↓
+Recommend
+    ↓
+SurveyResult
+
+This architecture keeps the engine compact, testable, explainable, version-safe, and well suited to F# WebAssembly.

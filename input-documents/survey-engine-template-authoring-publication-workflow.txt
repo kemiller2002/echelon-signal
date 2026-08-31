@@ -1,0 +1,1165 @@
+Survey Engine – Template Authoring and Publication Workflow
+
+Purpose
+
+This document defines how survey templates are created, tested, validated, versioned, and published.
+
+It also establishes a core privacy requirement:
+
+Surveys must not collect or store personally identifiable information (PII).
+
+The survey engine should operate on survey instances, anonymous submission identifiers, group identifiers, answers, and results rather than names, email addresses, phone numbers, employee numbers, addresses, or other directly identifying personal data.
+
+1. Core Authoring Principle
+
+A published survey template is immutable.
+
+Therefore, authoring must provide enough validation and testing before publication to make accidental scoring, flow, encoding, or reporting defects unlikely.
+
+The publication process should treat a survey template similarly to a compiled artifact:
+
+Draft
+    ↓
+Validate
+    ↓
+Test
+    ↓
+Canonicalize
+    ↓
+Hash
+    ↓
+Lock
+    ↓
+Publish
+
+2. Template Lifecycle
+
+Recommended lifecycle:
+
+Draft
+Validated
+Published
+Superseded
+
+Draft
+
+Mutable.
+
+Authors may freely change:
+
+Questions
+Sections
+Selectors
+Scoring
+Flow
+Validation
+Recommendations
+Presentation
+Localization
+Report definitions
+
+Validated
+
+The template has passed structural and semantic validation but is not yet immutable.
+
+Published
+
+The template is locked and immutable.
+
+Superseded
+
+The template remains valid and resolvable, but a newer version exists.
+
+3. No-PII Requirement
+
+Survey templates must not collect PII.
+
+Do not create survey questions for:
+
+Name
+Email address
+Phone number
+Street address
+Employee number
+Account number
+Username
+Government identifier
+Other directly identifying personal data
+
+The survey engine should not require such data for normal operation.
+
+4. Identity Boundary
+
+When an administrator needs to know who is associated with an identified survey:
+
+Administrator-owned external mapping:
+
+Person
+    ↔
+SurveyInstanceId
+
+Survey engine:
+
+SurveyInstanceId
+SurveyGroupId
+Answers
+Results
+
+For anonymous surveys:
+
+AnonymousSubmissionId
+SurveyGroupId
+Answers
+Results
+
+The survey engine must not depend on personal identity information.
+
+5. Authoring Workspace
+
+The authoring system should allow creation of a Draft SurveyTemplate.
+
+Recommended top-level authoring areas:
+
+Identity
+Metadata
+Sections
+Questions
+Selectors
+Scoring
+Flow
+Validation
+Derived Facts
+Completion Rules
+Recommendations
+Presentation
+Localization
+Reporting
+Test Cases
+Compatibility
+
+6. Survey Identity During Authoring
+
+Draft fields:
+
+SurveyIdentifier
+DraftVersion
+ParentTemplateVersion?
+ParentTemplateHash?
+
+SurveyIdentifier remains stable across published versions.
+
+Example:
+
+agile-assessment
+
+DraftVersion may be internal and should not be treated as the published TemplateVersion until publication.
+
+7. Creating a New Survey
+
+Basic authoring flow:
+
+Create Survey
+    ↓
+Assign SurveyIdentifier
+    ↓
+Add Metadata
+    ↓
+Add Sections
+    ↓
+Add Questions
+    ↓
+Configure Selectors
+    ↓
+Configure Validation
+    ↓
+Configure Flow
+    ↓
+Configure Scoring
+    ↓
+Configure Derived Facts
+    ↓
+Configure Completion
+    ↓
+Configure Recommendations
+    ↓
+Configure Presentation
+    ↓
+Configure Report Definition
+    ↓
+Create Test Cases
+    ↓
+Validate
+    ↓
+Publish
+
+8. Creating a New Version
+
+A new version of a published template should be created by cloning or deriving from an existing published version.
+
+Example:
+
+Published v2
+    ↓
+Create Draft from v2
+    ↓
+Modify Draft
+    ↓
+Validate/Test
+    ↓
+Publish as v3
+
+The published v2 artifact remains unchanged.
+
+9. Parent Lineage
+
+New versions should retain:
+
+ParentTemplateVersion
+ParentTemplateHash
+
+This allows the system to show exactly which published version was used as the starting point.
+
+10. Section Authoring
+
+The author should be able to:
+
+Add section
+Remove section from draft
+Rename section
+Reorder sections
+Set section description
+Set section instructions
+Set items per page
+Set page-break behavior
+Set applicability rules
+Set section scoring
+Set section completion rules
+Set section report behavior
+
+Section IDs must be stable semantic identifiers.
+
+11. Question Authoring
+
+The author should be able to:
+
+Add question
+Remove question from draft
+Reorder question
+Move question between sections
+Set prompt
+Set help text
+Choose answer primitive
+Choose selector
+Set allowed special states
+Set required behavior
+Set validation
+Set applicability
+Set scoring
+Assign tags/domains
+
+Question IDs must be unique and stable.
+
+12. Selector Authoring
+
+Authors should normally select from presets:
+
+YesNo
+YesNoNA
+Likert3
+Likert5
+Likert7
+Agreement5
+Frequency5
+Quality5
+Confidence5
+Satisfaction5
+Maturity5
+NumericRating
+SingleSelect
+MultiSelect
+BoundedCount
+ForcedChoice
+Ranking
+Allocation
+Pairwise
+
+Custom labels may be allowed while retaining the underlying answer primitive.
+
+13. Scoring Authoring
+
+Authors should be able to choose primary built-in scoring strategies without writing expressions.
+
+Primary choices:
+
+Unscored
+RawSum
+Mean
+WeightedSum
+WeightedMean
+PercentageOfMaximum
+Normalize
+Mapped
+Reverse
+Threshold
+PassFail
+SectionAggregate
+Profile
+
+Advanced scoring should be available separately.
+
+14. Advanced Scoring Authoring
+
+Advanced options may include:
+
+Penalty
+RiskAccumulation
+Min
+Max
+TopN
+BottomN
+CappedSum
+Floor
+Ceiling
+Gate
+Conditional
+BalancedDomain
+WeightedDomain
+GeometricMean
+HarmonicMean
+MinimumDomain
+MaturityStage
+RuleClassification
+PairwisePreference
+RankPoints
+AllocationScore
+ConfidenceAdjusted
+
+The authoring UI should not force ordinary authors to work directly with the expression AST unless necessary.
+
+15. Rule Authoring
+
+Flow, validation, derived facts, completion, scoring, and recommendations should use the same underlying typed rule model.
+
+The authoring UI may present rules visually or through structured forms.
+
+Example:
+
+If:
+    Answer(Q1) = No
+
+Then:
+    Hide Section(SecurityImplementation)
+
+The stored template should use the canonical rule representation.
+
+16. Derived Fact Authoring
+
+Authors may define named derived facts.
+
+Example:
+
+FactId = CriticalRisk
+
+Expression:
+
+SectionScore(Security) < 40
+AND
+Answer(Q14) = Critical
+
+Derived facts should be reusable elsewhere.
+
+17. Recommendation Authoring
+
+Authors should be able to define:
+
+RecommendationId
+Priority
+Category
+Title
+Description
+TriggerRule
+RelatedSection
+RelatedQuestion
+ActionType
+
+Recommendations are interpreted by the engine and rendered later by reporting.
+
+18. Completion Rule Authoring
+
+Authors should explicitly define what constitutes a valid completed survey.
+
+Examples:
+
+All applicable required questions answered
+Minimum 80% applicable questions answered
+All required sections valid
+No blocking validation errors
+
+Do not infer completion merely from question count.
+
+19. Presentation Authoring
+
+Authors should configure:
+
+ItemsPerPage
+Section page breaks
+ShowQuestionNumbers
+ShowProgress
+ProgressMode
+AllowBackNavigation
+ReviewBeforeSubmit
+
+Randomization should remain disabled by default in v1.
+
+20. Preview Mode
+
+Authors should be able to preview the draft as a respondent would see it.
+
+Preview should include:
+
+Pagination
+Section transitions
+Selectors
+Conditional questions
+Conditional sections
+Validation messages
+Progress display
+Completion behavior
+
+Preview must not create a production survey instance.
+
+21. Preview URL Behavior
+
+If the authoring preview uses the live URL state engine, preview URLs must be clearly marked as draft/test artifacts.
+
+A draft preview URL must never be accepted as a production submission.
+
+22. Scoring Preview
+
+Authors should be able to enter sample answers and immediately view:
+
+Question scores
+Section scores
+Overall score
+Categories
+Maturity level
+Derived facts
+Recommendations
+Coverage
+Confidence
+
+This is essential for finding scoring errors before publication.
+
+23. Rule Trace Preview
+
+For advanced templates, provide an optional rule trace.
+
+Example:
+
+Q1 = No
+    ↓
+Security section hidden
+
+GovernanceScore = 48
+    ↓
+GovernanceWeak = true
+    ↓
+Recommendation R4 triggered
+
+This improves author understanding and debugging.
+
+24. Response Simulation
+
+Authors should be able to simulate complete response sets without manually clicking through every question.
+
+A test/simulation may directly provide answer state.
+
+Example fixture:
+
+TestCase:
+    Name = "Critical governance weakness"
+
+Answers:
+    Q1 = 4
+    Q2 = 2
+    Q3 = 0
+
+Expected:
+    GovernanceScore = 32
+    RiskBand = High
+    Recommendation R7 triggered
+
+25. Required Test Fixtures
+
+Each non-trivial published survey should support authored test fixtures.
+
+Recommended standard fixtures:
+
+All minimum answers
+All maximum answers
+All neutral/middle answers
+Mostly N/A
+Mostly Don't Know
+Partially completed
+Critical-risk scenario
+Best-case scenario
+Typical mixed response
+Branching path A
+Branching path B
+
+Not every template needs every fixture, but relevant boundary cases should be represented.
+
+26. Expected Result Assertions
+
+Test cases should be able to assert:
+
+Completion state
+Applicable questions
+Section scores
+Overall score
+Category
+Maturity level
+Derived facts
+Recommendations
+Coverage
+Confidence
+
+Tests should fail publication when required assertions do not match.
+
+27. Encoding Test During Authoring
+
+The authoring system should calculate:
+
+Maximum encoded answer size
+Estimated live URL size
+Submission envelope overhead
+Expected final URL length
+
+If the survey exceeds the supported respondent URL budget:
+
+Publication must fail or require an explicitly supported alternate encoding/storage strategy.
+
+28. URL Capacity Preview
+
+Display useful diagnostics such as:
+
+Question count
+Raw answer bits
+Special-state bits
+Envelope bytes
+Encoded URL characters
+Remaining supported URL budget
+
+This allows the author to understand why a template may be too large.
+
+29. No Long Free-Text Answers
+
+Because response state is carried in the URL, the authoring system should not offer unrestricted long text boxes.
+
+The core survey engine should prefer:
+
+Boolean
+Ordinal
+SingleChoice
+MultiChoice
+BoundedInteger
+Ranking
+Allocation
+
+If short text is ever added later, it must have an explicit strict maximum length and URL-size impact.
+
+30. PII Validator
+
+Publication validation should scan template definitions for disallowed PII-oriented fields or question types.
+
+This cannot perfectly determine semantic intent from wording, but it can prevent obvious schema support for direct PII collection.
+
+Examples of fields that should not exist as standard survey primitives:
+
+Email
+Phone
+Address
+Name
+EmployeeId
+
+31. Author Warning for PII-Like Prompts
+
+Optional authoring safeguard:
+
+If question text appears to request direct identifying information, surface a warning before publication.
+
+Examples:
+
+"What is your name?"
+"Enter your email"
+"Employee ID"
+
+This should be treated as a warning/error according to policy.
+
+32. Structural Validation
+
+Before publication check:
+
+SurveyIdentifier exists
+Section IDs unique
+Question IDs unique
+Recommendation IDs unique
+Derived Fact IDs unique
+All references resolve
+Ordering deterministic
+Required properties present
+
+33. Answer Validation
+
+Check:
+
+Answer primitive supported
+Cardinality known
+Selector compatible
+Special states representable
+Option IDs unique
+Option order deterministic
+Bounded ranges valid
+Multi-select limits valid
+
+34. Flow Validation
+
+Check:
+
+Rule references valid
+Rule expressions type-check
+No circular dependencies
+No permanently unreachable required content
+No impossible completion paths
+Termination rules valid
+
+35. Scoring Validation
+
+Check:
+
+Scoring algorithms supported
+Mapped scoring complete
+Weights valid
+Normalization valid
+Thresholds valid
+Direction defined
+Section scoring valid
+Survey scoring valid
+Group scoring valid when used
+
+36. Derived Fact Validation
+
+Check:
+
+Fact references valid
+Result types valid
+Expressions type-check
+No dependency cycles
+
+37. Recommendation Validation
+
+Check:
+
+Trigger rules valid
+Recommendation IDs unique
+Referenced sections/questions valid
+Priority valid
+No impossible references
+
+38. Completion Validation
+
+Check:
+
+Completion rules are evaluable
+Required question paths can complete
+Conditional sections interact correctly with completion
+N/A handling explicit
+Don't Know handling explicit
+
+39. Reporting Validation
+
+Check:
+
+Report block references valid
+Requested metrics exist
+Anonymous-incompatible blocks prohibited where needed
+Section/report references valid
+Recommendation references valid
+
+40. Compatibility Validation
+
+Check:
+
+TemplateSchemaVersion supported
+MinimumEngineVersion valid
+ResponseEncodingVersion supported
+All declared capabilities supported
+
+41. Encoding Validation
+
+Check:
+
+Every possible answer state is encodable
+Response layout deterministic
+Encoding round-trip succeeds for fixtures
+Maximum supported URL size not exceeded
+Submission envelope can be generated
+
+42. Privacy Validation
+
+Check:
+
+No unsupported PII field types
+No PII metadata fields
+Anonymous mode removes invitation linkage
+Report definitions respect identity mode
+No identifying values embedded in URL configuration
+
+43. Canonicalization Preview
+
+Before publication, the authoring system should be able to show or calculate:
+
+Canonical template representation
+TemplateHash
+Encoding layout fingerprint
+
+The author does not necessarily need to inspect raw canonical JSON, but the system must produce it deterministically.
+
+44. Template Diff
+
+When creating a new version from a previous template, provide a semantic diff.
+
+Possible categories:
+
+Metadata changed
+Question added
+Question removed
+Question wording changed
+Question reordered
+Option added/removed/reordered
+Section changed
+Scoring changed
+Flow changed
+Validation changed
+Recommendation changed
+Report definition changed
+
+45. Scoring Impact Diff
+
+Changes that can alter results should be called out prominently.
+
+Examples:
+
+Question scoring changed
+Weight changed
+Threshold changed
+Section membership changed
+Normalization changed
+Maturity rule changed
+N/A handling changed
+Don't Know handling changed
+
+46. Encoding Impact Diff
+
+Changes that alter answer interpretation should be marked.
+
+Examples:
+
+Question order changed
+Answer cardinality changed
+Option order changed
+Special states changed
+Question added/removed
+
+These changes require a new template version.
+
+47. Presentation-Only Diff
+
+Presentation-only changes should still create a new immutable artifact if they are published, but the system may classify them separately.
+
+Examples:
+
+Instruction wording
+Help text
+Items per page
+Progress display
+Report layout
+
+This helps humans understand whether scores remain semantically comparable.
+
+48. Comparability Assessment
+
+When a new version is created, the system should assess whether old and new results are comparable.
+
+Possible outcome:
+
+Comparable
+ComparableWithCaution
+NotComparable
+
+Reasons may include:
+
+Scoring semantics changed
+Question set changed
+Section structure changed
+Normalization changed
+Thresholds changed
+
+This metadata can later protect historical reporting.
+
+49. Validation Report
+
+Before publication, produce a validation summary.
+
+Example:
+
+Structural Validation: Pass
+Scoring Validation: Pass
+Flow Validation: Pass
+Encoding Validation: Pass
+Privacy Validation: Pass
+Test Fixtures: 12/12 Pass
+Maximum URL Size: 684 characters
+Compatibility: Pass
+
+Warnings should be clearly separate from blocking errors.
+
+50. Publication Blockers
+
+Publication must fail for:
+
+Structural errors
+Invalid references
+Rule cycles
+Unsupported capabilities
+Invalid scoring
+Invalid encoding
+Failed required test assertions
+Exceeding supported URL budget
+Broken anonymous unlinkability
+Known PII schema violations
+
+51. Publication Warnings
+
+Warnings may include:
+
+Very high Don't Know allowance
+Low number of scoring items
+No test for one branch
+Unusual weighting concentration
+Very small anonymous group threshold
+Potential semantic comparability issue
+PII-like question wording
+
+Warnings may require explicit acknowledgment depending on policy.
+
+52. Publishing Operation
+
+Recommended final flow:
+
+Draft
+    ↓
+Run Validation
+    ↓
+Run Test Fixtures
+    ↓
+Run Encoding Capacity Check
+    ↓
+Run Privacy Check
+    ↓
+Compare to Parent Version
+    ↓
+Resolve Reusable Presets
+    ↓
+Embed or Immutably Reference Dependencies
+    ↓
+Canonicalize
+    ↓
+Calculate TemplateHash
+    ↓
+Assign TemplateVersion
+    ↓
+Lock Artifact
+    ↓
+Publish
+
+53. TemplateVersion Assignment
+
+TemplateVersion should be assigned as part of publication, not casually edited afterward.
+
+Once published:
+
+SurveyIdentifier + TemplateVersion
+
+must refer to exactly one immutable template artifact.
+
+54. Template Hash Lock
+
+After TemplateHash is calculated and the artifact is published:
+
+Any byte/semantic change that would alter the canonical artifact requires a new version.
+
+Do not update the hash in place on an existing published version.
+
+55. Publication Confirmation
+
+The authoring system should show a clear publication summary before the final operation.
+
+Example:
+
+SurveyIdentifier: agile-assessment
+New Version: 3
+Parent Version: 2
+TemplateHash: ...
+Question Count: 42
+Section Count: 6
+Maximum URL Size: ...
+Breaking Scoring Changes: Yes
+Comparable to v2: No
+
+56. Superseding
+
+Publishing v3 does not delete v2.
+
+v2 becomes:
+
+Superseded
+
+but remains:
+
+Resolvable
+Scorable
+Reportable
+Auditable
+
+Old respondent URLs must continue to work.
+
+57. Rollback
+
+Do not "roll back" by modifying the current published version.
+
+If the organization decides the previous design was better:
+
+Create a new draft derived from the appropriate prior version
+Validate
+Publish as a new version
+
+Example:
+
+v3 has a problem
+Use v2 as parent
+Publish corrected design as v4
+
+History remains intact.
+
+58. Template Deletion
+
+Published templates should generally not be deletable while any valid submission URL or historical result may depend on them.
+
+A template may be hidden from new authoring/distribution without becoming unresolvable.
+
+59. Draft Deletion
+
+Drafts with no published dependency may be deleted.
+
+60. Template Test Mode
+
+The system should support explicit test mode.
+
+Test artifacts should be clearly distinguished from production.
+
+Possible marker:
+
+Environment
+    Test
+    Production
+
+or
+
+SubmissionMode
+    Preview
+    Production
+
+Production admin import must reject test submissions unless explicitly opened in a test environment.
+
+61. Sample Generated URLs
+
+Authors should be able to generate sample respondent URLs from test fixtures.
+
+This allows validation on:
+
+iPhone Safari
+Desktop browsers
+Email
+Messaging applications
+Copy/paste workflows
+
+62. Cross-Device Publication Check
+
+Before accepting a new encoding/version strategy as supported, test published sample URLs across the supported browser/device matrix.
+
+63. Scoring Explainability Test
+
+For each test fixture, the engine should be able to explain:
+
+Question contributions
+Section calculations
+Weights
+Exclusions
+Thresholds
+Triggered recommendations
+
+This assists authors in verifying intended semantics.
+
+64. Authoring Permissions
+
+If the system later supports multiple users, distinguish:
+
+DraftEditor
+Reviewer
+Publisher
+
+The engine design should allow publication authority to be separate from editing authority.
+
+This is optional for initial implementation but useful to preserve in the model.
+
+65. Review Workflow
+
+Optional future workflow:
+
+Draft
+    ↓
+ReadyForReview
+    ↓
+Reviewed
+    ↓
+Validated
+    ↓
+Published
+
+Do not require this complexity for v1 unless needed.
+
+66. Report Definition Authoring
+
+Report definitions should be authored alongside or referenced by the survey template.
+
+Authors may configure:
+
+Audience
+Included report blocks
+Block order
+Detail level
+Privacy rules
+Comparison rules
+Localization
+Export options
+
+Report definitions do not change survey scoring.
+
+67. Anonymous Report Validation
+
+If IdentityMode = Anonymous:
+
+Block or suppress report configurations that expose:
+
+RespondentDetail
+Original SurveyInstanceId
+Person-level mappings
+Small subgroup breakdowns below privacy thresholds
+
+68. Test Fixture Persistence
+
+Test fixtures should live with the draft/template development artifacts.
+
+Published templates may retain their test fixtures or at least a test manifest/hash for reproducibility.
+
+Keeping the fixtures is preferable because they document expected behavior.
+
+69. Published Test Manifest
+
+Recommended:
+
+TestManifest
+    TestCaseId
+    ExpectedResultHash
+    PassedAtPublication
+
+This provides evidence that the immutable template passed its expected behavior tests when published.
+
+70. Deterministic Publication
+
+Publishing the exact same canonical template content should produce the same TemplateHash.
+
+Hash identity should not depend on:
+
+Current timestamp embedded in hashed semantic content
+Property serialization order
+Whitespace
+Editor identity
+UI implementation
+
+Provenance metadata that must vary should be clearly separated from the canonical semantic content or canonicalized deliberately.
+
+71. Core Authoring Invariants
+
+1. Draft templates are mutable.
+2. Published templates are immutable.
+3. New changes create new versions.
+4. Published templates remain resolvable after supersession.
+5. Surveys do not collect PII.
+6. Personal identity remains outside survey answer payloads.
+7. Question IDs and section IDs are stable semantic identifiers.
+8. Scoring is explicit.
+9. Flow is explicit.
+10. Validation is explicit.
+11. Completion is explicit.
+12. Derived facts are deterministic.
+13. Recommendations are engine rules, not report logic.
+14. Authors can preview scoring before publication.
+15. Authors can simulate response fixtures.
+16. Required fixture failures block publication.
+17. Encoding capacity is checked before publication.
+18. URL size limits are enforced before publication.
+19. Anonymous unlinkability is validated before publication.
+20. Rule cycles block publication.
+21. Unsupported engine capabilities block publication.
+22. Template hashes are deterministic.
+23. Template versions are assigned and locked at publication.
+24. Rollback creates a new version rather than mutating history.
+25. Report definitions are validated against privacy mode.
+26. Test submissions are distinguishable from production submissions.
+27. Template lineage is retained.
+28. Version comparability is explicitly assessed where practical.
+
+72. Recommended V1 Authoring Workflow
+
+For v1, implement:
+
+Create Draft
+Edit Sections
+Edit Questions
+Choose Selectors
+Configure Scoring
+Configure Basic Flow
+Configure Validation
+Configure Recommendations
+Configure Presentation
+Preview Survey
+Enter Sample Responses
+Preview Scores
+Create Test Fixtures
+Run Validation
+Run URL Capacity Test
+Run Privacy Check
+Compare to Parent Version
+Publish Immutable Version
+
+Advanced visual rule editors and multi-stage approval workflows can come later.
+
+73. Guiding Principle
+
+Because published survey templates cannot be changed without creating a new version, quality must be pushed left into authoring.
+
+The authoring system should make it easy to experiment while a survey is a draft and difficult to publish a survey whose behavior is ambiguous, untested, incompatible, too large for URL transport, privacy-violating, or internally inconsistent.
+
+A production template should be a validated, tested, deterministic, immutable artifact.

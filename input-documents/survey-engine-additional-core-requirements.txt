@@ -1,0 +1,1295 @@
+# Survey Engine – Additional Core Requirements Before Reporting
+
+## Purpose
+
+This document captures important survey-engine requirements that should be defined before the reporting layer is designed.
+
+These requirements build on the existing model of:
+
+- Immutable published survey templates
+- Survey identifiers
+- Template versions
+- Template hashes
+- Survey instances
+- Survey groups
+- Sections
+- Section scoring
+- Compact URL-based response storage
+
+The main goal is to make the survey engine deterministic, version-safe, extensible, and capable of handling more sophisticated survey behavior without requiring later architectural changes.
+
+---
+
+# 1. Survey Flow and Branching
+
+Survey flow should be a first-class part of the template.
+
+A survey should not assume that every respondent sees every question or every section.
+
+The engine should support deterministic flow rules based on previously known state.
+
+## Supported Flow Behaviors
+
+Potential flow behaviors include:
+
+- Show/hide question
+- Show/hide section
+- Skip to question
+- Skip to section
+- End survey early
+- Make later content applicable or not applicable
+- Change available answer choices
+- Change instructions or presentation
+- Trigger derived state used later in the survey
+
+---
+
+## Flow Rules Must Be Declarative
+
+Flow behavior should be stored as template-defined rules rather than arbitrary executable code.
+
+Conceptually:
+
+```text
+If Answer(Q1) = Yes
+Then Show Section(Security)
+
+If Answer(Q4) = No
+Then Skip Section(Implementation)
+
+If RiskFlag = Critical
+Then EndSurvey(CriticalResult)
+```
+
+The preferred approach is a restricted rule model or expression tree.
+
+Flow rules should be:
+
+- Deterministic
+- Validatable
+- Versionable
+- Testable
+- Safe to execute in F# WASM
+- Independent of UI code
+
+---
+
+## Flow Rules Are Part of the Immutable Template
+
+Once a template is published, its flow rules must not change.
+
+Changing branching behavior can change:
+
+- Which questions a respondent sees
+- Which answers exist
+- Which sections are scored
+- How completion is determined
+- How a response is interpreted
+
+Therefore, changing flow behavior requires a new template version.
+
+---
+
+## Flow Should Depend Only on Stable Inputs
+
+Flow rules should normally depend on:
+
+- Prior answers
+- Derived facts
+- Survey instance configuration
+- Stable respondent role or group context
+
+Avoid flow that depends on mutable external services or time-varying external data unless explicitly modeled.
+
+A published template should be able to reproduce the same flow decisions from the same survey state.
+
+---
+
+# 2. Derived Facts
+
+The engine should support derived values that are calculated from survey state but are not themselves respondent answers.
+
+Examples:
+
+```text
+RiskFlag = Critical
+MaturityPrerequisiteMet = true
+EligibleForSectionB = false
+CoverageSufficient = true
+LeadershipWeakness = true
+```
+
+Derived facts should not be represented as fake survey questions.
+
+---
+
+## Why Derived Facts Matter
+
+Without derived facts, complex surveys tend to duplicate logic across:
+
+- Branching
+- Scoring
+- Recommendations
+- Reporting
+- Completion rules
+
+A derived-fact layer gives those systems a shared vocabulary.
+
+---
+
+## Derived Fact Requirements
+
+Derived facts should be:
+
+- Named
+- Typed where practical
+- Deterministic
+- Defined in the template
+- Calculated from answers, instance state, or other derived facts
+- Reusable by scoring, flow, completion, and recommendation rules
+
+Potential result types:
+
+```text
+Boolean
+Integer
+Decimal
+Category
+Ordinal
+```
+
+---
+
+## Derived Fact Example
+
+```text
+GovernanceReady =
+    GovernanceSectionScore >= 70
+    AND CriticalControlMissing = false
+```
+
+This could later be used by:
+
+- Survey scoring
+- Readiness classification
+- Recommendation logic
+- Group-level scoring
+- Reporting
+
+---
+
+# 3. Answer Validation
+
+Validation should be a first-class concept separate from scoring.
+
+Scoring answers tells us what they mean.
+
+Validation determines whether the answer state itself is allowed.
+
+---
+
+## Question-Level Validation
+
+Potential rules include:
+
+- Required answer
+- Minimum selection count
+- Maximum selection count
+- Exact selection count
+- Allowed value range
+- Ranking uniqueness
+- Allocation total
+- Mutually exclusive choices
+- Required companion answer
+- Prohibited combinations
+
+---
+
+## Examples
+
+### Multi-Select
+
+```text
+MinimumSelections = 1
+MaximumSelections = 3
+```
+
+### Allocation
+
+```text
+TotalMustEqual = 10
+```
+
+### Ranking
+
+```text
+Each item may appear once
+Top 3 positions required
+```
+
+### Mutually Exclusive Choice
+
+Example:
+
+```text
+None of the above
+```
+
+should not be allowed simultaneously with other selections.
+
+---
+
+## Cross-Question Validation
+
+The engine should support cross-question constraints where necessary.
+
+Example:
+
+```text
+If Q1 = Yes
+Then Q2 is required
+```
+
+or:
+
+```text
+StartYear <= EndYear
+```
+
+or:
+
+```text
+If "Other" is not available because long text is unsupported,
+ensure the selector cannot produce an unresolvable category.
+```
+
+Cross-question validation should remain declarative.
+
+---
+
+## Validation Timing
+
+Validation may occur:
+
+- Immediately when an answer changes
+- Before leaving a page
+- Before leaving a section
+- Before completing the survey
+
+The template should define the rule; the UI may determine the best moment to surface the error.
+
+---
+
+# 4. Completion Rules
+
+Survey completion should not be inferred simply from whether every possible question has a value.
+
+Completion should be explicitly defined.
+
+---
+
+## Completion Must Understand
+
+- Conditional questions
+- Conditional sections
+- Optional sections
+- N/A
+- Don't Know
+- Required answers
+- Validation state
+- Early termination
+- Group requirements
+
+---
+
+## Potential Completion Rules
+
+```text
+All applicable required questions answered
+All required sections valid
+Minimum 80% applicable questions answered
+No blocking validation errors
+Required survey dependencies completed
+```
+
+---
+
+## Completion Result
+
+The engine should be able to determine at least:
+
+```text
+Incomplete
+ValidAndCompletable
+Completed
+Invalid
+Terminated
+```
+
+The exact names may change, but completion should be explicit state.
+
+---
+
+# 5. Respondent, Subject, and Role Semantics
+
+The survey instance model should allow surveys to distinguish between:
+
+- The person completing the survey
+- The person or entity being assessed
+- The role the respondent has relative to the subject
+
+These concepts should remain optional because many surveys are anonymous or self-assessments.
+
+---
+
+## Potential Fields
+
+```text
+RespondentId
+SubjectId
+RespondentRole
+```
+
+These identifiers should not necessarily be placed in the URL.
+
+They can exist as survey-instance metadata where appropriate.
+
+---
+
+## RespondentRole
+
+Examples:
+
+```text
+Self
+Manager
+Peer
+DirectReport
+Customer
+Reviewer
+Auditor
+Observer
+```
+
+Custom role identifiers should also be possible.
+
+---
+
+## Why Role Matters
+
+In a 360-style assessment, multiple survey instances may share the same:
+
+```text
+SurveyGroupId
+SubjectId
+```
+
+but have different respondent roles.
+
+Example:
+
+```text
+Group: Leadership-360-001
+
+Instance A -> Self
+Instance B -> Manager
+Instance C -> Peer
+Instance D -> DirectReport
+```
+
+This becomes important for later aggregation and reporting.
+
+---
+
+# 6. Survey Group Semantics
+
+The group model should be stronger than a simple foreign key.
+
+A SurveyGroup should be capable of expressing relationships between multiple survey instances.
+
+---
+
+## Potential Group Properties
+
+```text
+SurveyGroupId
+SubjectId
+SurveyInstances
+InstanceRoles
+RequiredSurveys
+OptionalSurveys
+Ordering
+Dependencies
+GroupCompletionRules
+GroupScoring
+SharedMetadata
+```
+
+---
+
+## Group Dependencies
+
+Examples:
+
+```text
+Survey B may begin only after Survey A is complete
+```
+
+or:
+
+```text
+Group result requires at least:
+1 Self survey
+1 Manager survey
+3 Peer surveys
+```
+
+This allows the same engine to support multi-survey assessments and 360-style evaluations.
+
+---
+
+# 7. Template Provenance and Lineage
+
+Every published template should retain basic provenance.
+
+Potential fields:
+
+```text
+CreatedAt
+CreatedBy
+PublishedAt
+PublishedBy
+ParentTemplateVersion
+ParentTemplateHash
+TemplateSchemaVersion
+MinimumEngineVersion
+```
+
+---
+
+## Parent Version
+
+When a new template version is created from an existing published version, it should record its parent.
+
+Example:
+
+```text
+Survey v3
+Parent = Survey v2
+```
+
+This provides a clear lineage.
+
+---
+
+## Why Provenance Matters
+
+It supports:
+
+- Auditability
+- Debugging
+- Change history
+- Comparing template generations
+- Understanding why historical results differ
+- Reproducing old survey behavior
+
+---
+
+# 8. Template Schema Version
+
+The template format itself will evolve independently from individual surveys.
+
+Therefore, every published template should declare:
+
+```text
+TemplateSchemaVersion
+```
+
+Example:
+
+```text
+TemplateSchemaVersion = 2
+```
+
+This describes which version of the survey-definition format the template uses.
+
+It is separate from:
+
+```text
+Survey TemplateVersion
+```
+
+The distinction is:
+
+```text
+TemplateVersion
+    Version of this particular survey
+
+TemplateSchemaVersion
+    Version of the survey engine's template format
+```
+
+---
+
+# 9. Minimum Engine Version
+
+A published template should be able to declare the minimum engine version capable of interpreting it.
+
+Example:
+
+```text
+MinimumEngineVersion = 3
+```
+
+This becomes important when future templates use features such as:
+
+- Ranking
+- New scoring primitives
+- New expression operators
+- Group scoring
+- New selector types
+- Advanced branching
+- New encoding modes
+
+---
+
+## Compatibility Rule
+
+The engine must refuse to interpret a template whose required capabilities it does not understand.
+
+It should fail explicitly rather than silently ignoring unsupported features.
+
+Core rule:
+
+> Unsupported template behavior must produce an explicit compatibility failure, never a best-effort interpretation.
+
+---
+
+# 10. Capability Declarations
+
+Templates should optionally declare which advanced capabilities they use.
+
+Examples:
+
+```text
+UsesBranching
+UsesDerivedFacts
+UsesCustomScoring
+UsesRanking
+UsesAllocation
+UsesGroupScoring
+UsesConditionalSections
+UsesRecommendations
+UsesAdvancedValidation
+```
+
+---
+
+## Why Capability Declarations Help
+
+They allow:
+
+- Fast compatibility checking
+- Authoring validation
+- Easier debugging
+- Easier migration analysis
+- Better tooling
+- Feature-specific tests
+
+The engine should still validate actual template content; capability declarations should not be the sole source of truth.
+
+---
+
+# 11. Self-Contained Published Templates
+
+Published templates should not depend on mutable external definitions.
+
+This is a major requirement.
+
+---
+
+## Example Risk
+
+Suppose a template references:
+
+```text
+SelectorPreset = "StandardLikert5"
+```
+
+and the central definition of `StandardLikert5` later changes.
+
+An old published survey could then render or score differently even though its own template has not changed.
+
+That must not happen.
+
+---
+
+## Publish-Time Resolution
+
+Reusable definitions may be used during authoring.
+
+Examples:
+
+- Selector presets
+- Common scoring algorithms
+- Shared section templates
+- Common answer labels
+- Rule fragments
+- Localization resources
+
+But at publication time, anything required to interpret the response should either:
+
+- Be embedded into the immutable published template, or
+- Resolve to another immutable, content-addressed artifact
+
+The simplest default is to embed the resolved definition.
+
+---
+
+## Core Rule
+
+> A published template must contain, or immutably reference, everything required to decode, validate, score, and interpret a response.
+
+---
+
+# 12. URL Response Integrity
+
+Because answers are stored in a URL, the engine should distinguish between:
+
+1. Accidental corruption
+2. Deliberate tampering
+
+These are separate concerns.
+
+---
+
+## Corruption Detection
+
+A checksum or hash-derived verification value can detect accidental modification or truncation.
+
+Useful for:
+
+- Copy/paste errors
+- Broken links
+- URL truncation
+- Encoding mistakes
+
+---
+
+## Authenticity / Tamper Detection
+
+If the application needs to know that a response payload was issued or completed through a trusted workflow, a keyed signature should be used.
+
+Conceptually:
+
+```text
+payload
+signature = HMAC(secret, payload)
+```
+
+The exact implementation can be determined later.
+
+---
+
+## Policy Should Be Survey-Specific
+
+Not all surveys require tamper resistance.
+
+Potential policies:
+
+```text
+None
+Checksum
+Signed
+```
+
+A public self-assessment may not care whether a respondent manipulates their own answer URL.
+
+A compliance, qualification, or externally submitted survey may care significantly.
+
+---
+
+# 13. URL Payload Version
+
+The encoded response format itself should have a version.
+
+Example:
+
+```text
+ResponseEncodingVersion
+```
+
+This is distinct from:
+
+- Survey TemplateVersion
+- TemplateSchemaVersion
+- EngineVersion
+
+The engine may later improve compression or encoding while still supporting old response URLs.
+
+---
+
+## Example
+
+```text
+SurveyTemplateVersion = 4
+TemplateSchemaVersion = 2
+ResponseEncodingVersion = 3
+```
+
+Each represents a different compatibility concern.
+
+---
+
+# 14. Submission and Replay Policy
+
+The engine should explicitly define what happens when the same survey instance is submitted multiple times.
+
+Potential policies:
+
+```text
+Reusable
+SingleSubmission
+ReplacePrevious
+AppendRevision
+LockedAfterCompletion
+```
+
+---
+
+## Questions to Support
+
+- Can the same instance be submitted more than once?
+- Does completion lock it?
+- Can a respondent reopen the same URL?
+- Can the answers be changed after completion?
+- Is a second submission a correction or a duplicate?
+- Should prior submissions be retained?
+
+These should be instance/template policy decisions rather than accidental implementation behavior.
+
+---
+
+# 15. Response Revision Semantics
+
+If completed responses can be edited, the engine should explicitly model revisions.
+
+Potential fields:
+
+```text
+ResponseRevision
+PreviousResponseHash
+ModifiedAt
+```
+
+This is especially important if the system later supports auditable assessments.
+
+If editing after completion is not needed initially, default to immutable completed responses.
+
+---
+
+# 16. Randomization
+
+Question or option randomization is potentially dangerous because the compact response encoding relies on the template to interpret answer positions.
+
+Therefore, randomization must be carefully constrained.
+
+---
+
+## Recommended V1 Policy
+
+Prefer:
+
+```text
+Randomization = Disabled
+```
+
+for the initial engine.
+
+---
+
+## If Randomization Is Added Later
+
+It must be deterministic.
+
+Potential strategy:
+
+```text
+PresentationOrder =
+DeterministicShuffle(
+    TemplateOrder,
+    InstanceSeed
+)
+```
+
+The instance must contain or derive a stable seed.
+
+The engine must always be able to reconstruct the presentation order.
+
+Never allow uncontrolled client-side randomization that changes the semantic meaning of answer positions.
+
+---
+
+# 17. Localization
+
+Localization should be designed so translated presentation text does not alter answer meaning.
+
+A question should retain the same stable semantic identity across languages.
+
+Example:
+
+```text
+QuestionId = governance-01
+
+en-US:
+"How consistently is this practice followed?"
+
+fr-FR:
+"À quelle fréquence cette pratique est-elle suivie ?"
+```
+
+The answer encoding remains the same.
+
+---
+
+## Localization Principles
+
+Localization should affect:
+
+- Question text
+- Instructions
+- Section titles
+- Answer labels
+- Result labels
+- Recommendation text
+
+Localization should not affect:
+
+- Question identity
+- Option identity/order
+- Scoring
+- Answer cardinality
+- Template semantics
+
+---
+
+## Translation and Versioning
+
+A translation correction that does not change meaning may be treated differently from a semantic survey change.
+
+However, because the published artifact is immutable, even display-language changes should normally create a new immutable localized artifact or localization version.
+
+The engine should never silently mutate text belonging to an already published template.
+
+---
+
+# 18. Accessibility
+
+Accessibility should be treated as part of the presentation contract.
+
+The engine should support at minimum:
+
+- Keyboard navigation
+- Screen-reader-friendly question labels
+- Proper grouping of answer choices
+- Focus management across pages
+- Visible focus indicators
+- Error messages connected to the relevant question
+- No reliance on color alone
+- Clear selection states
+- Adequate tap targets
+- Logical heading/section structure
+
+Accessibility metadata should be template-driven where necessary but implemented consistently by the UI engine.
+
+---
+
+# 19. Recommendation and Action Rules
+
+Recommendations should not be hard-coded into the reporting layer.
+
+They should be defined as outputs of survey interpretation.
+
+Examples:
+
+```text
+If GovernanceScore < 50
+Then Recommendation = StrengthenGovernance
+
+If CriticalRisk = true
+Then Action = ImmediateReview
+
+If MaturityLevel = 2
+Then Recommendation = EstablishRepeatableProcess
+```
+
+---
+
+## Recommendation Definition
+
+A recommendation could include:
+
+```text
+RecommendationId
+TriggerRule
+Priority
+Title
+Description
+Category
+RelatedSection
+RelatedQuestion
+```
+
+---
+
+## Action Definition
+
+Actions may be stronger than informational recommendations.
+
+Example:
+
+```text
+ActionId
+TriggerRule
+Severity
+Required
+```
+
+This allows the engine to distinguish:
+
+- Informational recommendation
+- Suggested next step
+- Required remediation
+- Critical escalation
+
+---
+
+## Recommendations Are Not Reports
+
+The reporting layer decides how recommendations are displayed.
+
+The survey engine determines which recommendations apply.
+
+This keeps business logic out of report rendering.
+
+---
+
+# 20. Rule Evaluation Order
+
+As the engine gains:
+
+- Flow rules
+- Derived facts
+- Validation
+- Scoring
+- Completion rules
+- Recommendation rules
+
+the evaluation order must be explicit.
+
+Recommended conceptual sequence:
+
+```text
+1. Decode response state
+2. Validate primitive answer values
+3. Determine applicability / flow
+4. Calculate derived facts needed for validation
+5. Run cross-question validation
+6. Determine completion state
+7. Calculate question scores
+8. Calculate section scores
+9. Calculate survey score/result
+10. Calculate group result where applicable
+11. Calculate recommendations/actions
+```
+
+Some derived facts may need multiple evaluation phases.
+
+The important requirement is that evaluation dependencies are deterministic and detectable.
+
+---
+
+# 21. Rule Dependency Validation
+
+Rules should not be allowed to create uncontrolled circular dependencies.
+
+Example of invalid logic:
+
+```text
+FactA depends on FactB
+FactB depends on FactA
+```
+
+The template validator should detect cycles before publication.
+
+The same applies to:
+
+- Derived facts
+- Conditional scoring
+- Flow dependencies
+- Recommendation rules
+
+Where possible, the rule system should form a directed acyclic dependency graph.
+
+---
+
+# 22. Publication Validation
+
+Before a template can move from Validated to Published / Locked, it should pass comprehensive validation.
+
+Potential checks:
+
+## Identity
+
+- SurveyIdentifier exists
+- TemplateVersion is unique
+- Hash can be generated
+
+## Questions
+
+- Question IDs are unique
+- Answer types are supported
+- Cardinality is known
+- Option IDs are unique
+- Required configuration exists
+
+## Sections
+
+- Section IDs are unique
+- Question references are valid
+- Ordering is deterministic
+
+## Flow
+
+- Referenced questions/sections exist
+- No invalid forward dependencies where prohibited
+- Flow logic can be evaluated
+- No unreachable required content
+
+## Validation
+
+- Rules reference valid values
+- Allocation totals are valid
+- Selection constraints are consistent
+
+## Scoring
+
+- Algorithms are supported
+- Weights are valid
+- Section references are valid
+- Thresholds are valid
+- Normalization ranges are valid
+
+## Rules
+
+- No dependency cycles
+- All referenced facts exist
+
+## Compatibility
+
+- TemplateSchemaVersion supported
+- MinimumEngineVersion valid
+- Capabilities known
+
+## Encoding
+
+- Response layout can be calculated
+- All answer cardinalities can be encoded
+- Encoding is deterministic
+
+Only after these checks succeed should the template become immutable.
+
+---
+
+# 23. Recommended New Template-Level Fields
+
+The current template model should consider adding:
+
+```text
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+
+TemplateSchemaVersion
+MinimumEngineVersion
+ResponseEncodingVersion
+
+Lifecycle
+ParentTemplateVersion
+ParentTemplateHash
+
+Capabilities
+
+Sections
+Questions
+DerivedFacts
+FlowRules
+ValidationRules
+Scoring
+CompletionRules
+RecommendationRules
+
+Presentation
+Localization
+```
+
+---
+
+# 24. Recommended New Survey-Instance Fields
+
+Consider:
+
+```text
+SurveyInstanceId
+SurveyGroupId
+
+SurveyIdentifier
+TemplateVersion
+TemplateHash
+
+SubjectId
+RespondentId
+RespondentRole
+
+CreatedAt
+ExpiresAt
+Status
+
+Locale
+
+AllowResume
+AllowBackNavigation
+AllowChangesAfterCompletion
+SubmissionPolicy
+IntegrityPolicy
+
+RandomizationSeed
+```
+
+Not every field must be present for every survey.
+
+The model should allow them without making them mandatory unless the chosen survey capabilities require them.
+
+---
+
+# 25. Recommended New Survey-Group Fields
+
+Consider:
+
+```text
+SurveyGroupId
+SubjectId
+
+SurveyInstances
+RequiredInstanceRules
+RoleRequirements
+Dependencies
+
+CompletionRules
+Scoring
+Results
+```
+
+This supports:
+
+- Multi-survey diagnostics
+- 360 assessments
+- Related surveys for one subject
+- Composite assessment programs
+
+---
+
+# 26. Additional Critical Invariants
+
+1. Flow logic is immutable after publication.
+2. Validation logic is immutable after publication.
+3. Derived facts are part of template semantics.
+4. Unsupported template capabilities must fail explicitly.
+5. Published templates cannot depend on mutable shared configuration.
+6. Response encoding has its own version.
+7. Randomization must never make answer interpretation ambiguous.
+8. N/A, Don't Know, unanswered, and not-applicable-by-flow remain distinct.
+9. Completion is explicitly calculated.
+10. Respondent and subject are distinct concepts.
+11. Group role semantics must be representable.
+12. Recommendations are engine outputs, not report-rendering logic.
+13. Rule dependencies must be deterministic and cycle-free.
+14. Publication requires full structural, scoring, rule, and encoding validation.
+15. The same template + instance state + answers must always produce the same interpretation.
+
+---
+
+# Recommended Priority Before Reporting
+
+The highest-priority additions are:
+
+## Priority 1 – Flow / Branching
+
+Because it affects:
+
+- What is answered
+- Response encoding
+- Completion
+- Scoring
+
+This becomes difficult to retrofit later.
+
+---
+
+## Priority 2 – Validation
+
+Because valid response state must be defined before scoring and reporting can be trusted.
+
+---
+
+## Priority 3 – Compatibility and Versioning
+
+Specifically:
+
+```text
+TemplateSchemaVersion
+MinimumEngineVersion
+ResponseEncodingVersion
+```
+
+These prevent future engine evolution from silently breaking old surveys.
+
+---
+
+## Priority 4 – Derived Facts and Rule Dependencies
+
+These provide a shared foundation for:
+
+- Flow
+- Scoring
+- Completion
+- Recommendations
+- Reporting
+
+---
+
+## Priority 5 – Respondent / Subject / Role Semantics
+
+Important before building more sophisticated group assessments such as 360 surveys.
+
+---
+
+# Overall Architectural Principle
+
+The survey engine should be deterministic from immutable inputs.
+
+Conceptually:
+
+```text
+Published Template
++
+Survey Instance
++
+Encoded Answers
+=
+Deterministic Survey State and Results
+```
+
+Everything needed to interpret the response should be versioned, immutable, and reproducible.
+
+Reporting can then consume the engine's outputs without needing to recreate survey business logic.

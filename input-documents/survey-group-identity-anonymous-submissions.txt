@@ -1,0 +1,363 @@
+Survey Engine – Survey Group Identity and Anonymous Submission Model
+
+Purpose
+
+This document defines how survey groups, survey instances, administrator identity mapping, and anonymous submissions should work.
+
+The design goal is to keep the survey engine focused on survey instances and submissions rather than storing personal identity information.
+
+1. Core Principle
+
+The survey engine identifies survey instances, not people.
+
+The administrator is responsible for knowing which person is associated with each identified survey instance.
+
+The survey system should not need to store names, email addresses, employee IDs, or other personal identifiers in the survey URL.
+
+2. Survey Group
+
+A SurveyGroup represents a set of related survey instances.
+
+Recommended core fields:
+
+SurveyGroup
+    SurveyGroupId
+    ExpectedSurveyCount
+    SurveyInstances[]
+
+ExpectedSurveyCount is defined by the administrator when the group is created.
+
+3. Survey Instance
+
+Each survey sent to a respondent has its own instance identity.
+
+SurveyInstance
+    SurveyInstanceId
+    SurveyGroupId
+    SurveyIdentifier
+    TemplateVersion
+    TemplateFingerprint
+
+4. Administrator Responsibility
+
+The administrator maintains the external mapping between SurveyInstanceId and person.
+
+This mapping does not need to live inside the survey engine.
+
+The survey engine only needs the instance identity.
+
+5. Identified Survey Flow
+
+Invitation URL contains:
+
+SurveyInstanceId
+SurveyGroupId
+SurveyIdentifier / Template Reference
+
+Completed submission contains:
+
+SurveyInstanceId
+SurveyGroupId
+EncodedAnswers
+Template Reference
+Encoding Version
+Integrity Information
+
+The administrator matches SurveyInstanceId to the person using their own external mapping.
+
+6. Anonymous Survey Requirement
+
+Anonymous surveys must prevent the completed submission from being linked back to the original invitation.
+
+The original SurveyInstanceId may be needed while the survey is being distributed or completed, but it must not survive into the returned anonymous submission.
+
+Core anonymity invariant:
+
+In anonymous mode, no identifier capable of linking the returned submission to the original invitation may survive into the completed URL.
+
+This includes:
+- SurveyInstanceId
+- Reversible tokens derived from SurveyInstanceId
+- Hidden metadata that preserves the mapping
+- Other stable invitation identifiers
+
+7. Anonymous Submission Identity
+
+Anonymous submissions should use a new identifier that is not linkable to the invitation.
+
+Recommended field:
+
+AnonymousSubmissionId
+
+The completed anonymous submission contains:
+
+AnonymousSubmissionId
+SurveyGroupId
+EncodedAnswers
+Template Reference
+Encoding Version
+Integrity Information
+
+The original SurveyInstanceId is removed before the final submission URL is produced.
+
+8. Why Use AnonymousSubmissionId
+
+Using no identifier at all would maximize anonymity, but it would make it difficult to:
+- Distinguish multiple anonymous submissions
+- Detect duplicate imports
+- Maintain submission records
+- Count unique returned artifacts
+
+A new unlinkable AnonymousSubmissionId preserves these operational capabilities without revealing which invitation produced the submission.
+
+9. Anonymous Group Behavior
+
+The SurveyGroupId remains in the anonymous submission.
+
+This allows the administrator to aggregate anonymous responses by group.
+
+Example:
+
+SurveyGroupId = G55
+ExpectedSurveyCount = 20
+Received anonymous submissions = 17
+
+The administrator can know that 17 responses were received for group G55, but cannot determine which original invitations produced those 17 responses.
+
+10. Privacy Tradeoff
+
+Under the strongest anonymous model, the administrator cannot reliably determine which specific invitees have not responded.
+
+They can know:
+
+Expected = 20
+Received = 17
+
+They cannot know which three people are missing if the returned submissions are truly unlinkable to the invitations.
+
+11. Identity Modes
+
+Recommended domain model:
+
+IdentityMode
+    IdentifiedInstance
+    AnonymousInstance
+
+IdentifiedInstance:
+- Submission preserves SurveyInstanceId
+- Administrator can map submission to person
+
+AnonymousInstance:
+- Submission removes SurveyInstanceId
+- Submission generates AnonymousSubmissionId
+- Administrator can group/count responses
+- Administrator cannot link submission to invitee
+
+12. Suggested Submission Shapes
+
+Identified submission:
+
+SurveySubmission
+    SurveyInstanceId
+    SurveyGroupId
+    TemplateReference
+    ResponseEncodingVersion
+    EncodedAnswers
+    IntegrityValue
+
+Anonymous submission:
+
+AnonymousSurveySubmission
+    AnonymousSubmissionId
+    SurveyGroupId
+    TemplateReference
+    ResponseEncodingVersion
+    EncodedAnswers
+    IntegrityValue
+
+13. What Should Not Be in the URL
+
+Unless there is a compelling requirement, do not include:
+- Name
+- Email address
+- Employee number
+- Username
+- Phone number
+- Human-readable subject identity
+- Other personally identifying data
+
+If identity is required, the administrator should maintain it outside the survey engine.
+
+14. Survey Group Counts
+
+The group should support at least:
+
+ExpectedSurveyCount
+
+After administrator import, the receiving system may derive:
+
+ReceivedSubmissionCount
+
+ReceivedSubmissionCount is derived from imported submissions and does not need to be stored in the respondent-facing URL.
+
+15. Duplicate Detection
+
+For identified submissions, duplicate detection may use:
+
+SurveyInstanceId
+plus
+SubmissionHash
+
+For anonymous submissions, duplicate detection may use:
+
+AnonymousSubmissionId
+plus
+SubmissionHash
+
+A SubmissionHash can be calculated by the administrator-side import system and does not necessarily need to be stored in the URL.
+
+16. Administrator Import Behavior
+
+Identified import:
+
+Receive URL
+-> Read SurveyInstanceId
+-> Read SurveyGroupId
+-> Resolve template
+-> Decode answers
+-> Associate instance with administrator's person mapping
+-> Score/report
+
+Anonymous import:
+
+Receive URL
+-> Read AnonymousSubmissionId
+-> Read SurveyGroupId
+-> Resolve template
+-> Decode answers
+-> Do not attempt to resolve original respondent
+-> Aggregate/score/report
+
+17. Privacy Boundary
+
+Administrator system:
+    Person <-> SurveyInstanceId mapping
+
+Survey engine:
+    SurveyInstanceId / AnonymousSubmissionId
+    SurveyGroupId
+    Template
+    Answers
+    Results
+
+This keeps identity concerns outside the core survey engine.
+
+18. Template or Group Configuration
+
+The immutable survey template or survey-group configuration should specify the identity mode.
+
+IdentityMode = IdentifiedInstance
+
+or
+
+IdentityMode = AnonymousInstance
+
+This behavior must be fixed before survey distribution.
+
+19. Anonymous Conversion Point
+
+Recommended sequence:
+
+Anonymous Invitation
+-> Respondent completes survey
+-> Validate survey
+-> Generate new AnonymousSubmissionId
+-> Remove SurveyInstanceId
+-> Encode final submission URL
+-> Return/send URL to administrator
+
+The final URL must be tested to ensure the invitation identity does not remain anywhere in the payload.
+
+20. Random Anonymous Identifier
+
+AnonymousSubmissionId should be generated using a sufficiently large random identifier.
+
+It should not be:
+- Sequential
+- Derived from SurveyInstanceId
+- Derived from respondent identity
+- Reversible
+- Predictable
+
+21. Strong Anonymous Invariant
+
+AnonymousSubmissionId cannot be deterministically derived from SurveyInstanceId.
+
+This prevents administrators or other parties from reconstructing the link.
+
+22. Reporting Implication
+
+Reporting should understand whether a group is identified or anonymous.
+
+For anonymous groups, reports must not imply respondent identity exists.
+
+Group-level reporting may include:
+- Number expected
+- Number received
+- Completion rate
+- Aggregate scores
+- Section distributions
+- Group recommendations
+
+But not respondent-level identity.
+
+23. Core Requirements
+
+1. Every survey instance has a SurveyInstanceId.
+2. Related survey instances share a SurveyGroupId.
+3. The administrator defines ExpectedSurveyCount for the group.
+4. The administrator maintains person-to-instance mapping externally.
+5. Personal identity should not be embedded in the survey URL.
+6. Identified submissions retain SurveyInstanceId.
+7. Anonymous submissions remove SurveyInstanceId.
+8. Anonymous submissions receive a new unlinkable AnonymousSubmissionId.
+9. Anonymous submissions retain SurveyGroupId for grouping and aggregation.
+10. AnonymousSubmissionId must not be derived from the invitation instance ID.
+11. No hidden or reversible invitation identifier may survive into an anonymous submission.
+12. The administrator can count anonymous submissions but cannot link them back to invitees.
+13. IdentityMode must be explicit.
+14. Anonymous behavior must be deterministic and testable.
+15. Duplicate detection may use submission identity and submission hashes after import.
+
+24. Canonical Identity Model
+
+Identified:
+
+Administrator:
+    Person <-> SurveyInstanceId
+
+Submission:
+    SurveyInstanceId
+    SurveyGroupId
+    Answers
+
+Anonymous:
+
+Invitation:
+    SurveyInstanceId
+    SurveyGroupId
+
+Submission:
+    AnonymousSubmissionId
+    SurveyGroupId
+    Answers
+
+No link between AnonymousSubmissionId and SurveyInstanceId is retained or recoverable by the survey engine.
+
+25. Guiding Principle
+
+The survey engine should know which survey artifact it is processing without needing to know who the respondent is.
+
+For identified surveys, the administrator owns identity mapping.
+
+For anonymous surveys, the completed submission intentionally breaks the link to the invitation while preserving enough anonymous identity to support grouping, counting, deduplication, scoring, and reporting.
