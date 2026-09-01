@@ -860,3 +860,23 @@ This retains the flexibility that motivated expression trees while
 fitting F# WebAssembly, strong typing, deterministic execution, and a
 survey format that can remain independent of the implementation
 language.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| AST-001 | §§1–5, Purpose through Why Not Use System.Linq.Expressions Directly | 9–175 | WI-0007, WI-0010 |
+| AST-002 | §§6–11, Typed Expression Model through Complexity Limits | 177–331 | WI-0007, WI-0010 |
+| AST-003 | §§12–17, Standard Scorer Registry through Separate Answer Selectors From Scoring | 333–490 | WI-0007 |
+| AST-004 | §§18–21, Custom Rule Example through Testing Strategy | 492–585 | WI-0007, WI-0010 |
+| AST-005 | §§22–28, Diagnostics and Explainability through What Not to Build | 587–726 | WI-0003, WI-0007, WI-0010 |
+| AST-006 | §§29–32, Proposed Architecture through Summary Decision | 728–862 | WI-0002, WI-0007, WI-0010 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md

@@ -1293,3 +1293,28 @@ Deterministic Survey State and Results
 Everything needed to interpret the response should be versioned, immutable, and reproducible.
 
 Reporting can then consume the engine's outputs without needing to recreate survey business logic.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| ACR-001 | §§1–4, Survey Flow and Branching through Completion Rules | 23–331 | WI-0006 |
+| ACR-002 | §§5–6, Respondent/Subject/Role and Survey Group Semantics | 333–449 | WI-0005 |
+| ACR-003 | §§7–11, Template Provenance through Self-Contained Published Templates | 451–653 | WI-0003 |
+| ACR-004 | §§12–13, URL Response Integrity and URL Payload Version | 655–742 | WI-0004, WI-0010 |
+| ACR-005 | §§14–15, Submission/Replay and Response Revision | 744–789 | WI-0008 |
+| ACR-006 | §§16–18, Randomization through Accessibility | 791–905 | WI-0003, WI-0010 |
+| ACR-007 | §§19–21, Recommendations through Rule Dependency Validation | 907–1034 | WI-0006 |
+| ACR-008 | §§22–25, Publication Validation and recommended fields | 1036–1200 | WI-0002, WI-0003, WI-0005 |
+| ACR-009 | §26, priorities, and Overall Architectural Principle | 1202–1295 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0010 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
+
+Modifying/constraint relationship: ACR-005 is retained as provenance but its respondent-side replay/revision assumptions are explicitly modified by URLC-001 and URLC-002 in survey-engine-url-submission-requirement-changes.txt.

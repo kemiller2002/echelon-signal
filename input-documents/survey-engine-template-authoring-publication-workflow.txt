@@ -1163,3 +1163,24 @@ Because published survey templates cannot be changed without creating a new vers
 The authoring system should make it easy to experiment while a survey is a draft and difficult to publish a survey whose behavior is ambiguous, untested, incompatible, too large for URL transport, privacy-violating, or internally inconsistent.
 
 A production template should be a validated, tested, deterministic, immutable artifact.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| AUT-001 | §§1–9, Core Authoring Principle through Parent Lineage | 13–220 | WI-0003 |
+| AUT-002 | §§10–19, Section Authoring through Presentation Authoring | 222–412 | WI-0003, WI-0004, WI-0006, WI-0007, WI-0009 |
+| AUT-003 | §§20–31, Preview Mode through PII-Like Prompt Warning | 414–597 | WI-0003, WI-0007, WI-0010 |
+| AUT-004 | §§32–43, Structural Validation through Canonicalization Preview | 599–726 | WI-0003, WI-0010 |
+| AUT-005 | §§44–55, Template Diff through Publication Confirmation | 728–919 | WI-0003, WI-0010 |
+| AUT-006 | §§56–70, Superseding through Deterministic Publication | 920–1101 | WI-0003, WI-0009, WI-0010 |
+| AUT-007 | §§71–73, Core Authoring Invariants through Guiding Principle | 1103–1165 | WI-0003, WI-0010 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md

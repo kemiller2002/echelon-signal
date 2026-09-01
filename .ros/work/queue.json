@@ -1,6 +1,187 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "echelon-signal",
-  "nextSeq": 1,
-  "items": []
+  "nextSeq": 2,
+  "items": [
+    {
+      "id": "WI-0001",
+      "title": "Migrate authoritative survey requirements from input-documents into traceable ROS work items",
+      "description": null,
+      "tags": [
+        "requirements",
+        "migration",
+        "survey"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:08:29.874Z",
+      "updatedAt": "2026-08-31T19:08:32.682Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0002",
+      "title": "Canonical survey domain contracts and F# module boundaries",
+      "description": "Define the canonical template, instance, response, submission, group, result contracts, invariants, and implementation boundaries.",
+      "tags": [
+        "domain",
+        "architecture",
+        "survey"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:58.921Z",
+      "updatedAt": "2026-08-31T19:10:58.921Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-canonical-architecture.txt"
+    },
+    {
+      "id": "WI-0003",
+      "title": "Template authoring, publication, versioning, and compatibility",
+      "description": "Implement draft authoring, validation, canonicalization, hashing, immutable publication, lineage, compatibility, localization, accessibility, and rollback/supersession workflows.",
+      "tags": [
+        "authoring",
+        "publication",
+        "versioning"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.031Z",
+      "updatedAt": "2026-08-31T19:10:59.031Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-template-authoring-publication-workflow.txt"
+    },
+    {
+      "id": "WI-0004",
+      "title": "Answer model, URL encoding, and live respondent lifecycle",
+      "description": "Implement typed answer states and selectors, deterministic compact encoding, portable submission envelopes, live URL synchronization, resume, integrity, and explicit decode errors.",
+      "tags": [
+        "answers",
+        "encoding",
+        "url-state"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.138Z",
+      "updatedAt": "2026-08-31T19:10:59.138Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-live-url-state-lifecycle.txt"
+    },
+    {
+      "id": "WI-0005",
+      "title": "Identity, anonymity, roles, and group semantics",
+      "description": "Implement identified and anonymous identities, unlinkable finalization, respondent/subject/role boundaries, group configuration, counts, and privacy invariants.",
+      "tags": [
+        "identity",
+        "privacy",
+        "groups"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.243Z",
+      "updatedAt": "2026-08-31T19:10:59.243Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-group-identity-anonymous-submissions.txt"
+    },
+    {
+      "id": "WI-0006",
+      "title": "Deterministic rules, validation, flow, completion, and recommendations",
+      "description": "Implement the shared typed rule model, dependencies, branching, derived facts, validation, completion, and recommendation evaluation.",
+      "tags": [
+        "rules",
+        "validation",
+        "flow"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.350Z",
+      "updatedAt": "2026-08-31T19:10:59.350Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-additional-core-requirements.txt"
+    },
+    {
+      "id": "WI-0007",
+      "title": "Scoring engine, result semantics, and explainability",
+      "description": "Implement standard and parameterized scoring, constrained custom expressions, section/survey/group result shapes, versioned semantics, diagnostics, and explicit error handling.",
+      "tags": [
+        "scoring",
+        "results",
+        "expressions"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.456Z",
+      "updatedAt": "2026-08-31T19:10:59.456Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-scoring-algorithms.txt"
+    },
+    {
+      "id": "WI-0008",
+      "title": "Administrator import, aggregation, and report-state persistence",
+      "description": "Implement accepted-submission import, deduplication, SurveyResult and SurveyGroupResult aggregation, AdminReportState projection, and embedded/external persistence.",
+      "tags": [
+        "admin",
+        "import",
+        "persistence"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.561Z",
+      "updatedAt": "2026-08-31T19:10:59.561Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-admin-result-persistence-model.txt"
+    },
+    {
+      "id": "WI-0009",
+      "title": "Reporting contract, privacy, comparisons, and renderers",
+      "description": "Implement versioned report definitions/data, audiences and blocks, privacy suppression, comparisons, localization, exports, snapshots, and deterministic renderers.",
+      "tags": [
+        "reporting",
+        "privacy",
+        "exports"
+      ],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.668Z",
+      "updatedAt": "2026-08-31T19:10:59.668Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-reporting-requirements-data-contract.txt"
+    },
+    {
+      "id": "WI-0010",
+      "title": "Cross-cutting test, performance, security, migration, and acceptance program",
+      "description": "Establish characterization, contract, property, compatibility, URL-budget, cross-device, privacy, security, explainability, and migration acceptance tests.",
+      "tags": [
+        "testing",
+        "performance",
+        "security"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-08-31T19:10:59.772Z",
+      "updatedAt": "2026-08-31T19:10:59.772Z",
+      "createdBy": "unknown",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/"
+    }
+  ]
 }

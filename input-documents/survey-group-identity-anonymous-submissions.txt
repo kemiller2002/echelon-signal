@@ -361,3 +361,23 @@ The survey engine should know which survey artifact it is processing without nee
 For identified surveys, the administrator owns identity mapping.
 
 For anonymous surveys, the completed submission intentionally breaks the link to the invitation while preserving enough anonymous identity to support grouping, counting, deduplication, scoring, and reporting.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| ID-001 | §§1–5, Core Principle through Identified Survey Flow | 9–67 | WI-0005 |
+| ID-002 | §§6–13, Anonymous Requirement through URL Exclusions | 68–190 | WI-0004, WI-0005 |
+| ID-003 | §§14–22, Group Counts through Reporting Implication | 191–313 | WI-0005, WI-0008, WI-0009, WI-0010 |
+| ID-004 | §§23–25, Core Requirements through Guiding Principle | 314–363 | WI-0005 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
+
+Modifying/constraint relationship: This source narrows the general portable-instance requirement: SurveyInstanceId remains for identified submissions and may remain in anonymous live/resume URLs, but must not survive anonymous finalization.

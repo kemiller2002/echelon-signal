@@ -1095,3 +1095,23 @@ Optional ComparisonData
 Rendered Report
 
 This separation allows the same authoritative survey results to support multiple audiences, formats, privacy modes, and comparison views without duplicating scoring logic.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| RPT-001 | §§1–10, Reporting Boundary through Core Report Blocks | 9–188 | WI-0002, WI-0009 |
+| RPT-002 | §§11–20, ReportHeader through Coverage and Confidence | 190–355 | WI-0009 |
+| RPT-003 | §§21–35, Comparisons through Audit Metadata Block | 357–582 | WI-0005, WI-0009 |
+| RPT-004 | §§36–47, Report Definition through No Hidden Recalculation | 584–742 | WI-0009 |
+| RPT-005 | §§48–61, Rounding Rules through Report Extensibility | 743–934 | WI-0009, WI-0010 |
+| RPT-006 | §§62–71, Initial V1 Report Types through Guiding Principle | 936–1097 | WI-0005, WI-0008, WI-0009 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md

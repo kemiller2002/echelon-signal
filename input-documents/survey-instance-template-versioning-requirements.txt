@@ -1132,3 +1132,26 @@ SurveyGroup
 > A published survey template is both an authored survey and the schema required to interpret every response created from it.
 
 That means production template immutability, exact version resolution, and deterministic hashing are correctness requirements, not merely administrative versioning features.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| VER-001 | Core Entities | 28–163 | WI-0002 |
+| VER-002 | Published Immutability through Compact Hash Reference | 165–364 | WI-0003 |
+| VER-003 | Survey Instance Runtime Information | 366–479 | WI-0002, WI-0003 |
+| VER-004 | Survey Template Information and Pagination | 481–604 | WI-0002, WI-0003 |
+| VER-005 | Sections and Section/Survey-Level Scoring | 606–859 | WI-0002, WI-0007 |
+| VER-006 | Survey Group through Result Shapes | 861–1052 | WI-0005, WI-0006, WI-0007 |
+| VER-007 | Survey Response through Guiding Principle | 1054–1134 | WI-0002, WI-0004 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
+
+Modifying/constraint relationship: VER-003 and VER-007 are preserved as earlier proposals. Their physical persistence, centrally stored status, completion-lock, resume, and anonymous identity assumptions are modified by URLC-001/URLC-002, LURL-001/LURL-002, and ID-002/ID-004.

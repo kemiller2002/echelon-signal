@@ -1110,3 +1110,21 @@ This keeps the normal authoring experience simple while allowing sophisticated s
 10. **Prefer declarative scoring definitions that can be interpreted and validated by F# WASM.**
 11. **Precompile common scoring algorithms for simplicity and performance.**
 12. **Use custom expressions or rule trees only as an escape hatch.**
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| ALG-001 | Purpose/Core Design and V1 Built-In Algorithms | 3–320 | WI-0007 |
+| ALG-002 | Advanced Built-In Algorithms | 322–777 | WI-0007 |
+| ALG-003 | Weakest-Link Scoring through Example Composition | 779–995 | WI-0007 |
+| ALG-004 | Precompiled Algorithms through Guiding Principles | 997–1112 | WI-0003, WI-0007, WI-0010 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md

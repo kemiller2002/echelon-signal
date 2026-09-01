@@ -995,3 +995,22 @@ The F# WASM application can then:
 8. **Use selector presets rather than multiplying engine-level question types.**
 9. **Declare answer cardinality so responses can be bit-packed efficiently.**
 10. **Make scoring semantics explicit in the survey definition.**
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| ANS-001 | Core Constraint through Special Answer States | 3–309 | WI-0004 |
+| ANS-002 | Recommended Selector Presets | 311–659 | WI-0004 |
+| ANS-003 | Default Scoring Strategies | 661–806 | WI-0007 |
+| ANS-004 | Recommended Defaults through N/A and Missing-State Encoding | 808–933 | WI-0004 |
+| ANS-005 | Scoring Should Be Explicit through Guiding Principles | 935–997 | WI-0002, WI-0004, WI-0007 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md

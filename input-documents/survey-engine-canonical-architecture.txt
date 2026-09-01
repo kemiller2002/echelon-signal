@@ -1256,3 +1256,27 @@ Recommend
 SurveyResult
 
 This architecture keeps the engine compact, testable, explainable, version-safe, and well suited to F# WebAssembly.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| CAN-001 | §§1–7, Architectural Model through Selectors | 7–248 | WI-0002, WI-0003, WI-0004 |
+| CAN-002 | §§8–14, Scoring through Evaluation Order | 250–511 | WI-0006, WI-0007 |
+| CAN-003 | §§15–19, Survey Instance through Template Reference in URL | 513–609 | WI-0002, WI-0004, WI-0005 |
+| CAN-004 | §§20–27, Answer Encoding through Submission Hash and Import | 611–769 | WI-0004, WI-0008, WI-0010 |
+| CAN-005 | §§28–29, Publication Validation and Canonicalization/Publishing | 771–891 | WI-0003, WI-0010 |
+| CAN-006 | §§30–38, Canonical Survey Result through Reporting Boundary | 893–1144 | WI-0002, WI-0007, WI-0008, WI-0009 |
+| CAN-007 | §§39–40, Implementation Order and Required Tests | 1145–1200 | WI-0010 |
+| CAN-008 | §§41–42, Core Invariants and Canonical Architectural Principle | 1201–1258 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
+
+Modifying/constraint relationship: The general SurveyInstance/submission identity shapes are narrowed by survey-group-identity-anonymous-submissions.txt and survey-engine-live-url-state-lifecycle.txt: finalized anonymous submissions must remove SurveyInstanceId and use a new unlinkable AnonymousSubmissionId.

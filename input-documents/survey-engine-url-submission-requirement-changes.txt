@@ -779,3 +779,24 @@ Persistent storage, duplicate detection, audit history, aggregation, and reporti
 > A valid survey submission URL plus its exact immutable published template must be sufficient to deterministically reconstruct, validate, score, and interpret the complete response.
 
 This should be treated as one of the foundational invariants of the rebuilt survey engine.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| URLC-001 | Core Submission Model and Requirements to Delete | 15–130 | WI-0004, WI-0008 |
+| URLC-002 | Requirements to Alter §§1–10 | 134–367 | WI-0004, WI-0008 |
+| URLC-003 | New Requirements §§1–15 | 371–633 | WI-0004, WI-0008, WI-0010 |
+| URLC-004 | Revised Domain/Data Ownership/Interpretation and unchanged requirements | 635–740 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007 |
+| URLC-005 | Architectural Changes and Core Invariant | 743–781 | WI-0002, WI-0004, WI-0008 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
+
+Modifying/constraint relationship: This source explicitly modifies the earlier server-side persistence/status/lock/replay/revision proposals in survey-instance-template-versioning-requirements.txt and survey-engine-additional-core-requirements.txt. The anonymous identity sources further narrow SurveyInstanceId persistence for finalized anonymous submissions.

@@ -4,7 +4,7 @@
   "repository": "echelon-signal",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-31T18:55:58.931Z",
-  "updatedAt": "2026-08-31T18:55:58.931Z",
+  "updatedAt": "2026-08-31T19:16:36.484Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -20,6 +20,24 @@
       ],
       "updatedAt": "2026-08-31T18:55:58.931Z",
       "completedAt": "2026-08-31T18:55:58.931Z"
+    },
+    {
+      "id": "WI-0001",
+      "type": "documentation",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/requirements/survey-engine-requirements-migration.md"
+        },
+        {
+          "type": "tests",
+          "path": "docs/requirements/survey-engine-requirements-migration-validation.md"
+        }
+      ],
+      "updatedAt": "2026-08-31T19:16:36.484Z",
+      "completedAt": "2026-08-31T19:16:36.484Z"
     }
   ]
 }

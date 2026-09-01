@@ -1001,3 +1001,23 @@ For small groups, that state stays embedded in the administrator URL.
 For large groups, the exact same logical state moves behind an external-store reference.
 
 The reporting layer should not care which persistence mechanism is used.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| ARP-001 | §§1–16, Core Administrator Pipeline through SurveyGroupResult | 21–295 | WI-0002, WI-0007, WI-0008 |
+| ARP-002 | §§17–31, ExpectedSurveyCount through Result Version | 296–486 | WI-0005, WI-0007, WI-0008 |
+| ARP-003 | §§32–40, AdminReportState through Submission Retention Policy | 487–609 | WI-0008, WI-0009, WI-0010 |
+| ARP-004 | §§41–57, Report Persistence through Compact Identity Fingerprints | 610–800 | WI-0004, WI-0008, WI-0010 |
+| ARP-005 | §§58–69, Import Errors through Core Invariants | 801–988 | WI-0005, WI-0008, WI-0009 |
+| ARP-006 | §70, Guiding Principle | 989–1003 | WI-0008 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md

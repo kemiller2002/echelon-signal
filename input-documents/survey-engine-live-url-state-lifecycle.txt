@@ -638,3 +638,22 @@ Current Survey State
 Current URL + Exact Immutable Template
 
 When the survey is complete, that same state representation becomes the portable submission sent to the administrator.
+
+---
+
+Requirements Migration Traceability (appended 2026-08-31)
+
+Requirements-definition status: COMPLETED
+
+The original source above is preserved verbatim. Original line references below use the pre-append file. Every actionable or normative statement, listed invariant, required field, validation rule, and test obligation in each range is represented by the mapped ROS work item(s). Implementation remains pending.
+
+| Requirement group | Exact source section/requirement | Original lines | ROS work item(s) |
+|---|---|---:|---|
+| LURL-001 | §§1–12, Core Principle through Stronger Canonical Statement | 9–201 | WI-0004 |
+| LURL-002 | §§13–20, Anonymous Survey Behavior through Anonymous Finalization | 202–345 | WI-0004, WI-0005 |
+| LURL-003 | §§21–28, Administrator Import through Anonymous Duplicate Limitation | 346–489 | WI-0005, WI-0008 |
+| LURL-004 | §§29–33, URL Encoding Infrastructure through Round-Trip Invariant | 491–560 | WI-0004, WI-0010 |
+| LURL-005 | §§34–36, Final Architecture through Guiding Principle | 561–640 | WI-0002, WI-0004, WI-0005, WI-0008, WI-0009 |
+
+Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
