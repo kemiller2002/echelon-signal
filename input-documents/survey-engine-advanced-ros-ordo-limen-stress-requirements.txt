@@ -742,6 +742,337 @@ The trial SHOULD produce a final retrospective answering:
 
 ---
 
+
+# ARX-013 – Timers, Forward-Only Progression, Pagination, and Content Banking
+
+Echelon Signal MUST support survey progression policies that are part of the immutable template and enforced by the F# state machine rather than by presentation code.
+
+## Items Per Page
+
+The existing ItemsPerPage capability is retained and strengthened.
+
+A template MAY define:
+
+- Survey-level default ItemsPerPage
+- Per-section ItemsPerPage override
+- Explicit page breaks
+- SectionStartsOnNewPage
+
+Pagination is presentation structure and MUST NOT change answer meaning or scoring.
+
+Bank selection and applicability MUST be resolved before page composition.
+
+A page MUST contain only questions that are selected and applicable for the current respondent state.
+
+Changing ItemsPerPage on a published survey requires a new template version, but SHOULD remain classifiable as presentation-only when it does not alter selection, answer meaning, scoring, timing semantics, or forward-only locking boundaries.
+
+## Forward-Only Navigation
+
+Question and section revisit behavior MUST be independently configurable.
+
+Recommended domain policies:
+
+QuestionRevisitPolicy
+    AllowPreviousQuestions
+    LockPreviousQuestionsAfterAdvance
+
+SectionRevisitPolicy
+    AllowPreviousSections
+    LockPreviousSectionsAfterExit
+
+This allows configurations such as:
+
+- Full back navigation
+- Previous questions locked but earlier sections still reviewable only where no locked question would be exposed
+- Questions within the current section reviewable, but completed sections locked
+- Fully forward-only survey
+
+The exact UI affordance MUST be derived from legal engine capability such as CanNavigateToQuestion or CanNavigateToSection.
+
+Browser Back/Forward MUST NOT bypass the policy. If browser navigation requests an illegal historical survey location, the engine MUST reject that semantic navigation and project the current legal location.
+
+For question-level locking with multiple items on one page, answers on the current page MAY remain editable until the page is advanced. After advance, all questions whose locking boundary was crossed become immutable.
+
+For section-level locking, leaving a section across its configured forward boundary makes the completed section immutable.
+
+Locked answers remain part of authoritative survey state but cannot be altered by later commands.
+
+Flow, validation, and completion analysis MUST account for forward-only policies. Publication SHOULD reject a template where a legal later path requires changing an answer that the configured navigation policy has already made immutable.
+
+Forward-only navigation MUST NOT cause an unanswered required item to be silently skipped. The transition across a locking boundary is legal only when the template's validation/completion policy permits it.
+
+## Timer Model
+
+Timers are optional template capabilities.
+
+Recommended timer scopes:
+
+TimerScope
+    Survey
+    Section
+    Page
+    Question
+
+A timer definition SHOULD include:
+
+- TimerId
+- Scope
+- Duration
+- StartPolicy
+- ResumePolicy
+- WarningThresholds
+- ExpiryAction
+- EnforcementMode
+
+Potential StartPolicy values:
+
+- OnSurveyStart
+- OnScopeFirstEnter
+- OnQuestionFirstDisplay
+
+Potential ResumePolicy values:
+
+- ContinueElapsed
+- RestartScope
+- ResumeNotAllowed
+
+ContinueElapsed SHOULD be the default when resume is permitted.
+
+Potential ExpiryAction values:
+
+- MarkTimedOutAndLock
+- AdvanceIfValid
+- FinalizeIfValid
+- TerminateSurvey
+- RequireExplicitContinue where policy permits an informational timer
+
+A timer MUST NOT invent answers, coerce unanswered values to zero, or bypass validation merely because time expired.
+
+## Timer Authority and Correctness
+
+Application code MUST NOT implement a timer by decrementing a mutable counter on JavaScript interval events.
+
+The F# engine owns timer meaning.
+
+Time enters the engine as explicit Clock evidence through Limen or another explicitly authorized boundary capability.
+
+Remaining time is derived from:
+
+Authoritative timer anchor
++
+current time evidence
++
+timer policy
+
+This prevents background-tab throttling, suspended rendering, and delayed interval callbacks from changing semantic elapsed time.
+
+Timer anchors and any non-reconstructable timer state required for resume MUST be represented in the live URL state when the timer policy allows resume.
+
+Timer state MUST be versioned as part of the response encoding contract if it affects interpretation or completion.
+
+A browser-clock timer can enforce application state locally, but it MUST NOT be described as tamper-resistant, proctored, or cryptographically trusted.
+
+If a future use case requires trusted timing, the template MUST declare a trusted-time capability and the engine MUST receive verifiable time evidence. Do not imply secure exam timing from an ordinary browser clock.
+
+Clock unavailability or invalid clock evidence MUST produce an explicit state/error according to the template's timer policy.
+
+## Timer and Navigation Interaction
+
+Timer expiry is a domain event.
+
+Examples:
+
+- A question timer expires -> current question becomes locked and the engine evaluates the configured next legal transition.
+- A section timer expires -> the section may lock and advance only if the expiry policy and completion rules permit it.
+- A survey timer expires -> the engine may finalize only when finalization is legal; otherwise it enters an explicit TimedOutIncomplete or equivalent state.
+
+Timer-driven advancement MUST obey the same legal transition, validation, capability, and obligation model as user-driven advancement.
+
+A timer MUST NOT create a hidden alternate navigation path.
+
+## Question / Item Banks
+
+The template MUST support reusable question banks.
+
+Recommended logical shape:
+
+QuestionBank
+    BankId
+    CandidateQuestionIds
+    SelectionCount
+    SelectionStrategy
+    SelectionConstraints
+    OrderPolicy
+
+Initial selection strategies SHOULD include:
+
+- ChooseN
+- ChooseNByStratum
+- IncludeRequiredThenChooseN
+
+Question selection is distinct from presentation order randomization.
+
+By default:
+
+- Selection is without replacement.
+- Duplicate selected QuestionIds are invalid.
+- Required bank members are selected before optional candidates.
+- Selection constraints are validated at publication.
+
+Potential strata/constraints may use non-PII template metadata such as:
+
+- Domain/tag
+- Difficulty
+- Competency
+- Category
+- Question type
+
+The banking system MUST NOT use respondent identity or PII as a selection input.
+
+## Section Banks
+
+The template MUST also support section banks.
+
+Recommended logical shape:
+
+SectionBank
+    BankId
+    CandidateSectionIds
+    SelectionCount
+    SelectionStrategy
+    SelectionConstraints
+    OrderPolicy
+
+A selected section brings its contained question model, rules, scoring, completion, and presentation behavior with it.
+
+The publisher MUST reject section-bank definitions whose required dependencies cannot be satisfied for every legal selection, unless the selection constraints themselves guarantee those dependencies.
+
+A rule outside a bank MUST NOT assume an optional banked question or section exists unless the expression model explicitly handles its absence.
+
+## Deterministic Bank Selection
+
+Bank selection occurs once for a survey instance and is immutable for that instance.
+
+The selection MUST be reproducible.
+
+The engine MUST NOT use ambient or implementation-default randomness.
+
+Recommended approach:
+
+1. Request cryptographically secure entropy through the explicit Limen Entropy capability.
+2. Produce a non-PII SelectionSeed.
+3. Store SelectionSeed in the live URL state.
+4. Derive the selected question/section set and ordering through a specified, versioned deterministic selection algorithm.
+
+Add:
+
+SelectionAlgorithmVersion
+SelectionSeed
+
+Exact immutable template + SelectionAlgorithmVersion + SelectionSeed MUST reconstruct the same selected content.
+
+For anonymous surveys, SelectionSeed MAY survive finalization because it is required to interpret the submission, but it MUST be generated independently of SurveyInstanceId and MUST NOT preserve invitation linkage.
+
+If the selected set cannot be reconstructed solely from the seed and immutable template, the compact SelectionManifest required for reconstruction MUST be carried in the submission instead.
+
+SelectionSeed or SelectionManifest is respondent state, not template meaning.
+
+## Banking and Encoding
+
+The response encoder MUST support templates where the selected question set varies by instance.
+
+The encoding layout for a concrete response MUST be derivable from:
+
+Immutable template
++
+SelectionAlgorithmVersion
++
+SelectionSeed or SelectionManifest
+
+Position alone MUST NOT replace stable semantic QuestionId/SectionId in domain interpretation.
+
+A banked survey submission reopened later MUST reconstruct:
+
+- The same selected sections
+- The same selected questions
+- The same question order where deterministic order is configured
+- The same answer-to-question mapping
+
+before answers are scored.
+
+## Banking and Scoring
+
+Scoring semantics MUST explicitly define how banked selection affects denominators and weighting.
+
+Supported policies SHOULD include:
+
+- Score only selected applicable items
+- Normalize to selected maximum
+- Fixed bank-level weighting independent of the number of selected items
+- Stratum-balanced weighting
+
+A larger candidate bank MUST NOT accidentally contribute more weight merely because it contains more unselected questions.
+
+Publication validation SHOULD calculate score bounds across legal bank selections where practical.
+
+If different legal selections can materially change score meaning or comparability, that must be explicit in template/report metadata rather than hidden by normalization.
+
+## Banking Authoring and Preview
+
+Authoring MUST support:
+
+- Create/edit question banks
+- Create/edit section banks
+- Preview a generated selection
+- Supply a fixed SelectionSeed for reproducible preview
+- Regenerate with a new seed
+- Display selected versus candidate content
+- Validate impossible selection constraints
+- Show URL-size impact of SelectionSeed/SelectionManifest
+- Run fixtures against fixed seeds
+
+Published test fixtures that exercise banking MUST pin the selection seed or selection manifest so expected results are reproducible.
+
+## Required Banking and Progression Tests
+
+At minimum test:
+
+- Same template + same selection seed -> same selected content
+- Different valid seeds can produce different legal selections
+- No duplicate selection when selection is without replacement
+- Required bank members always appear
+- Stratified counts are satisfied
+- Impossible bank constraints block publication
+- Banked response encoding round-trips
+- Anonymous finalization preserves reconstructability without invitation linkage
+- Scoring uses only the selected legal content
+- Forward-only question policy rejects attempts to edit locked questions
+- Forward-only section policy rejects attempts to reopen locked sections
+- Browser Back does not bypass engine navigation legality
+- Timer expiry follows the same transition rules as explicit user commands
+- Timer resume behavior matches ResumePolicy
+- Background-tab suspension does not extend a countdown semantically
+- ItemsPerPage composes correctly with bank selection, branching, and section boundaries
+
+## Stress-Trial Scenario – Timed Adaptive Banked Survey
+
+Add at least one trial fixture that combines:
+
+- Section bank choosing a subset of domains
+- Question banks inside selected sections
+- Stratified selection
+- Multiple items per page
+- Forward-only completed sections
+- Question- or section-level timer
+- Conditional branching
+- Weighted/normalized scoring
+- Anonymous finalization
+- Resume from live URL
+
+The fixture MUST be reproducible from template + portable URL state and MUST exercise real F# WASM/Limen Clock, Entropy, Navigation, and Clipboard paths.
+
+---
+
 # Cross-Cutting Acceptance Invariants
 
 1. Echelon Signal processes no PII.
@@ -875,5 +1206,6 @@ This extension was added after the original 2026-08-31 twelve-file migration. It
 | ARX-010 | Static Analysis of Survey Programs | WI-0003, WI-0006, WI-0007, WI-0010 |
 | ARX-011 | Adversarial, Differential, Model-Based, and Resource Testing | WI-0010 |
 | ARX-012 | Derivation Lineage, Reproducibility, and Trial Evidence | WI-0002, WI-0007, WI-0008, WI-0009, WI-0010 |
+| ARX-013 | Timers, Forward-Only Progression, Pagination, and Content Banking | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
 
 Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
