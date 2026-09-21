@@ -40,14 +40,14 @@ A thirteenth authoritative requirement source was added:
 
 `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt`
 
-It now contributes ARX-001 through ARX-013 and raises the accounted corpus from 72 to 85 requirement groups.
+It now contributes ARX-001 through ARX-014 and raises the accounted corpus from 72 to 86 requirement groups.
 
 ### Repository-API checks completed
 
 | Check | Observed result | Status |
 |---|---|---|
-| Advanced source present | 1 new source containing ARX-001 through ARX-013 | pass |
-| Central ledger mapping | All 13 ARX groups recorded in `docs/requirements/survey-engine-requirements-migration.md` | pass |
+| Advanced source present | 1 new source containing ARX-001 through ARX-014 | pass |
+| Central ledger mapping | All 14 ARX groups recorded in `docs/requirements/survey-engine-requirements-migration.md` | pass |
 | Reciprocal work-item mapping | Advanced references appended to each affected WI-0002 through WI-0010 detail record | pass |
 | No-PII boundary | New source explicitly forbids Echelon Signal from collecting, processing, persisting, logging, or exporting PII | pass |
 | Framework baseline discovery | Legacy ROS install identified; current ROS, Ordo/SDE, and Limen release baselines recorded as trial inputs | pass |
@@ -82,3 +82,21 @@ The advanced source now also defines timer, pagination/progression, and banking 
 | Question banking | Deterministic selection, constraints, seed/manifest reconstruction, authoring, scoring, and encoding behavior defined | pass |
 | Section banking | Deterministic section selection and dependency validation defined | pass |
 | Reciprocal traceability | ARX-013 mapped into WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, and WI-0010 | pass |
+
+
+### ARX-014 extension check — 2026-09-21
+
+The advanced source now explicitly requires live incremental scoring and typed custom scoring expressions.
+
+| Check | Observed result | Status |
+|---|---|---|
+| Incremental calculation | Authoritative F# score updates after every accepted answer and must equal full reference recomputation | pass |
+| Incremental display option | ScoreDisplayPolicy includes AfterEachResponse plus hidden/page/section/final policies | pass |
+| Partial score semantics | Provisional/final/unavailable status and explicit partial-response ScoreBasis defined | pass |
+| Browser authority | Limen/TypeScript may render but may not calculate or independently cache scoring meaning | pass |
+| Custom expression trees | Versioned serializable typed scoring AST required; arbitrary executable code and unrestricted System.Linq.Expressions payloads prohibited | pass |
+| Publication validation | Type, reference, phase, cycle, deterministic-operator, and resource checks required before publication | pass |
+| Incremental dependency graph | Custom expressions mechanically expose dependencies and participate in optimized invalidation | pass |
+| Expression versioning | Published template binds to ScoringExpressionLanguageVersion and result lineage records it | pass |
+| Differential verification | Reference, optimized, incremental, and serialized F# WASM scoring required to agree | pass |
+| Reciprocal traceability | ARX-014 mapped into WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, and WI-0010 | pass |
