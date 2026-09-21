@@ -4,6 +4,7 @@
 |---|---|---|---|---|
 | ECHELON-UPGRADE-2026-09-21 | Reconcile current Echelon engineering capabilities | complete | tooling,ordo,ros,limen | high |
 | ROS-INSTALL-1-2-1-main-16-1 | ROS-INSTALL-1-2-1-main-16-1 | complete |  |  |
+| SIGNAL-VERIFY-2026-09-21 | Align verification with current Echelon capability contracts | complete | ci,ordo,ros,sde | high |
 | WI-0001 | Migrate authoritative survey requirements from input-documents into traceable ROS work items | complete | requirements, migration, survey | high |
 | WI-0002 | Canonical survey domain contracts and F# module boundaries | captured | domain, architecture, survey | high |
 | WI-0003 | Template authoring, publication, versioning, and compatibility | captured | authoring, publication, versioning | high |

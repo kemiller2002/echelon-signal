@@ -198,6 +198,22 @@
       "createdBy": "agent:chatgpt",
       "source": "agent-discovery",
       "sourceReference": "public-repository-upgrade-2026-09-21"
+    },
+    {
+      "id": "SIGNAL-VERIFY-2026-09-21",
+      "title": "Align verification with current Echelon capability contracts",
+      "description": null,
+      "tags": [
+        "ci,ordo,ros,sde"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-21T18:47:45.978Z",
+      "updatedAt": "2026-09-21T18:47:48Z",
+      "createdBy": "agent:chatgpt",
+      "source": "agent-discovery",
+      "sourceReference": "capability-rollout-verification-repair"
     }
   ]
 }
