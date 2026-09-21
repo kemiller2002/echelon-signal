@@ -2,8 +2,9 @@
 
 | ID | Work | Status | Tags | Priority |
 |---|---|---|---|---|
+| ECHELON-UPGRADE-2026-09-21 | Reconcile current Echelon engineering capabilities | complete | tooling,ordo,ros,limen | high |
 | ROS-INSTALL-1-2-1-main-16-1 | ROS-INSTALL-1-2-1-main-16-1 | complete |  |  |
-| WI-0001 | Migrate authoritative survey requirements from input-documents into traceable ROS work items | active | requirements, migration, survey | high |
+| WI-0001 | Migrate authoritative survey requirements from input-documents into traceable ROS work items | complete | requirements, migration, survey | high |
 | WI-0002 | Canonical survey domain contracts and F# module boundaries | captured | domain, architecture, survey | high |
 | WI-0003 | Template authoring, publication, versioning, and compatibility | captured | authoring, publication, versioning | high |
 | WI-0004 | Answer model, URL encoding, and live respondent lifecycle | captured | answers, encoding, url-state | high |
