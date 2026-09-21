@@ -18,6 +18,8 @@ jobs:
     name: ROS Ordo Limen and repository verification
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      EVIDENCE_DIR: ${{ runner.temp }}/echelon-evidence
 
     steps:
       - name: Check out repository
@@ -29,9 +31,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
         continue-on-error: true
 
       - name: Set up .NET 10
@@ -44,7 +43,7 @@ jobs:
         shell: bash
         run: |
           set -u
-          mkdir -p .ci-evidence
+          mkdir -p "$EVIDENCE_DIR"
           {
             echo "commit=${GITHUB_SHA}"
             echo "ref=${GITHUB_REF}"
@@ -52,10 +51,10 @@ jobs:
             echo "node=$(node --version 2>/dev/null || echo unavailable)"
             echo "npm=$(npm --version 2>/dev/null || echo unavailable)"
             echo "dotnet=$(dotnet --version 2>/dev/null || echo unavailable)"
-          } | tee .ci-evidence/environment.txt
+          } | tee $EVIDENCE_DIR/environment.txt
 
-          git status --short | tee .ci-evidence/git-status-before.txt
-          git ls-files | sort > .ci-evidence/tracked-files.txt
+          git status --short | tee $EVIDENCE_DIR/git-status-before.txt
+          git ls-files | sort > $EVIDENCE_DIR/tracked-files.txt
 
           {
             echo "=== .NET entry points ==="
@@ -64,16 +63,17 @@ jobs:
             find . -type f \( -name 'package.json' -o -name 'package-lock.json' \) -not -path './.git/*' | sort
             echo "=== Echelon manifests ==="
             find . -maxdepth 3 -type f \( -path './.echelon/*' -o -name 'ros.json' -o -name 'sde.config.json' -o -name 'limen.config.json' \) | sort
-          } | tee .ci-evidence/entry-points.txt
+          } | tee $EVIDENCE_DIR/entry-points.txt
 
       - name: Repository whitespace check
         shell: bash
         run: |
+          mkdir -p "$EVIDENCE_DIR"
           set +e
-          git diff --check > .ci-evidence/git-diff-check.txt 2>&1
+          git diff --check > $EVIDENCE_DIR/git-diff-check.txt 2>&1
           code=$?
-          echo "$code" > .ci-evidence/git-diff-check.exit
-          cat .ci-evidence/git-diff-check.txt
+          echo "$code" > $EVIDENCE_DIR/git-diff-check.exit
+          cat $EVIDENCE_DIR/git-diff-check.txt
           exit 0
 
       - name: Legacy ROS snapshot validation
@@ -81,32 +81,32 @@ jobs:
         run: |
           set +e
           if [ ! -f ./ros ]; then
-            echo "UNAVAILABLE: ./ros launcher is absent" | tee .ci-evidence/legacy-ros.txt
-            echo "127" > .ci-evidence/legacy-ros-status.exit
-            echo "127" > .ci-evidence/legacy-ros-registry-check.exit
-            echo "127" > .ci-evidence/legacy-ros-registry-build.exit
-            echo "127" > .ci-evidence/legacy-ros-validate.exit
+            echo "UNAVAILABLE: ./ros launcher is absent" | tee $EVIDENCE_DIR/legacy-ros.txt
+            echo "127" > $EVIDENCE_DIR/legacy-ros-status.exit
+            echo "127" > $EVIDENCE_DIR/legacy-ros-registry-check.exit
+            echo "127" > $EVIDENCE_DIR/legacy-ros-registry-build.exit
+            echo "127" > $EVIDENCE_DIR/legacy-ros-validate.exit
             exit 0
           fi
 
           chmod +x ./ros
 
-          ./ros status > .ci-evidence/legacy-ros-status.txt 2>&1
-          echo "$?" > .ci-evidence/legacy-ros-status.exit
-          cat .ci-evidence/legacy-ros-status.txt
+          ./ros status > $EVIDENCE_DIR/legacy-ros-status.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/legacy-ros-status.exit
+          cat $EVIDENCE_DIR/legacy-ros-status.txt
 
-          ./ros registry check > .ci-evidence/legacy-ros-registry-check.txt 2>&1
-          echo "$?" > .ci-evidence/legacy-ros-registry-check.exit
-          cat .ci-evidence/legacy-ros-registry-check.txt
+          ./ros registry check > $EVIDENCE_DIR/legacy-ros-registry-check.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/legacy-ros-registry-check.exit
+          cat $EVIDENCE_DIR/legacy-ros-registry-check.txt
 
-          ./ros registry build > .ci-evidence/legacy-ros-registry-build.txt 2>&1
-          echo "$?" > .ci-evidence/legacy-ros-registry-build.exit
-          cat .ci-evidence/legacy-ros-registry-build.txt
+          ./ros registry build > $EVIDENCE_DIR/legacy-ros-registry-build.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/legacy-ros-registry-build.exit
+          cat $EVIDENCE_DIR/legacy-ros-registry-build.txt
 
-          ./ros validate --json > .ci-evidence/legacy-ros-validate.json 2> .ci-evidence/legacy-ros-validate.stderr
-          echo "$?" > .ci-evidence/legacy-ros-validate.exit
-          cat .ci-evidence/legacy-ros-validate.stderr
-          cat .ci-evidence/legacy-ros-validate.json
+          ./ros validate --json > $EVIDENCE_DIR/legacy-ros-validate.json 2> $EVIDENCE_DIR/legacy-ros-validate.stderr
+          echo "$?" > $EVIDENCE_DIR/legacy-ros-validate.exit
+          cat $EVIDENCE_DIR/legacy-ros-validate.stderr
+          cat $EVIDENCE_DIR/legacy-ros-validate.json
 
           exit 0
 
@@ -116,24 +116,24 @@ jobs:
           set +e
           PKG="@echelon-foundry/repository-operating-system@3.1.0"
 
-          npx --yes --package="$PKG" ros --version > .ci-evidence/ros-current-version.txt 2>&1
-          echo "$?" > .ci-evidence/ros-current-version.exit
-          cat .ci-evidence/ros-current-version.txt
+          npx --yes --package="$PKG" ros --version > $EVIDENCE_DIR/ros-current-version.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/ros-current-version.exit
+          cat $EVIDENCE_DIR/ros-current-version.txt
 
-          npx --yes --package="$PKG" ros status --json > .ci-evidence/ros-current-status.json 2> .ci-evidence/ros-current-status.stderr
-          echo "$?" > .ci-evidence/ros-current-status.exit
-          cat .ci-evidence/ros-current-status.stderr
-          cat .ci-evidence/ros-current-status.json
+          npx --yes --package="$PKG" ros status --json > $EVIDENCE_DIR/ros-current-status.json 2> $EVIDENCE_DIR/ros-current-status.stderr
+          echo "$?" > $EVIDENCE_DIR/ros-current-status.exit
+          cat $EVIDENCE_DIR/ros-current-status.stderr
+          cat $EVIDENCE_DIR/ros-current-status.json
 
-          npx --yes --package="$PKG" ros upgrade --dry-run --json > .ci-evidence/ros-upgrade-plan.json 2> .ci-evidence/ros-upgrade-plan.stderr
-          echo "$?" > .ci-evidence/ros-upgrade-plan.exit
-          cat .ci-evidence/ros-upgrade-plan.stderr
-          cat .ci-evidence/ros-upgrade-plan.json
+          npx --yes --package="$PKG" ros upgrade --dry-run --json > $EVIDENCE_DIR/ros-upgrade-plan.json 2> $EVIDENCE_DIR/ros-upgrade-plan.stderr
+          echo "$?" > $EVIDENCE_DIR/ros-upgrade-plan.exit
+          cat $EVIDENCE_DIR/ros-upgrade-plan.stderr
+          cat $EVIDENCE_DIR/ros-upgrade-plan.json
 
-          npx --yes --package="$PKG" ros verify --strict --json > .ci-evidence/ros-current-verify.json 2> .ci-evidence/ros-current-verify.stderr
-          echo "$?" > .ci-evidence/ros-current-verify.exit
-          cat .ci-evidence/ros-current-verify.stderr
-          cat .ci-evidence/ros-current-verify.json
+          npx --yes --package="$PKG" ros verify --strict --json > $EVIDENCE_DIR/ros-current-verify.json 2> $EVIDENCE_DIR/ros-current-verify.stderr
+          echo "$?" > $EVIDENCE_DIR/ros-current-verify.exit
+          cat $EVIDENCE_DIR/ros-current-verify.stderr
+          cat $EVIDENCE_DIR/ros-current-verify.json
 
           exit 0
 
@@ -143,24 +143,24 @@ jobs:
           set +e
           PKG="@echelon-foundry/sde@1.3.0"
 
-          npx --yes --package="$PKG" sde --version > .ci-evidence/sde-version.txt 2>&1
-          echo "$?" > .ci-evidence/sde-version.exit
-          cat .ci-evidence/sde-version.txt
+          npx --yes --package="$PKG" sde --version > $EVIDENCE_DIR/sde-version.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/sde-version.exit
+          cat $EVIDENCE_DIR/sde-version.txt
 
-          npx --yes --package="$PKG" sde status --json > .ci-evidence/sde-status.json 2> .ci-evidence/sde-status.stderr
-          echo "$?" > .ci-evidence/sde-status.exit
-          cat .ci-evidence/sde-status.stderr
-          cat .ci-evidence/sde-status.json
+          npx --yes --package="$PKG" sde status --json > $EVIDENCE_DIR/sde-status.json 2> $EVIDENCE_DIR/sde-status.stderr
+          echo "$?" > $EVIDENCE_DIR/sde-status.exit
+          cat $EVIDENCE_DIR/sde-status.stderr
+          cat $EVIDENCE_DIR/sde-status.json
 
-          npx --yes --package="$PKG" sde init --dry-run --json > .ci-evidence/sde-init-plan.json 2> .ci-evidence/sde-init-plan.stderr
-          echo "$?" > .ci-evidence/sde-init-plan.exit
-          cat .ci-evidence/sde-init-plan.stderr
-          cat .ci-evidence/sde-init-plan.json
+          npx --yes --package="$PKG" sde init --dry-run --json > $EVIDENCE_DIR/sde-init-plan.json 2> $EVIDENCE_DIR/sde-init-plan.stderr
+          echo "$?" > $EVIDENCE_DIR/sde-init-plan.exit
+          cat $EVIDENCE_DIR/sde-init-plan.stderr
+          cat $EVIDENCE_DIR/sde-init-plan.json
 
-          npx --yes --package="$PKG" sde verify --strict --json > .ci-evidence/sde-verify.json 2> .ci-evidence/sde-verify.stderr
-          echo "$?" > .ci-evidence/sde-verify.exit
-          cat .ci-evidence/sde-verify.stderr
-          cat .ci-evidence/sde-verify.json
+          npx --yes --package="$PKG" sde verify --strict --json > $EVIDENCE_DIR/sde-verify.json 2> $EVIDENCE_DIR/sde-verify.stderr
+          echo "$?" > $EVIDENCE_DIR/sde-verify.exit
+          cat $EVIDENCE_DIR/sde-verify.stderr
+          cat $EVIDENCE_DIR/sde-verify.json
 
           exit 0
 
@@ -170,24 +170,24 @@ jobs:
           set +e
           PKG="@echelon-foundry/typescript-wasm-kernel@0.6.1"
 
-          npx --yes --package="$PKG" limen --version > .ci-evidence/limen-version.txt 2>&1
-          echo "$?" > .ci-evidence/limen-version.exit
-          cat .ci-evidence/limen-version.txt
+          npx --yes --package="$PKG" limen --version > $EVIDENCE_DIR/limen-version.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/limen-version.exit
+          cat $EVIDENCE_DIR/limen-version.txt
 
-          npx --yes --package="$PKG" limen status --json > .ci-evidence/limen-status.json 2> .ci-evidence/limen-status.stderr
-          echo "$?" > .ci-evidence/limen-status.exit
-          cat .ci-evidence/limen-status.stderr
-          cat .ci-evidence/limen-status.json
+          npx --yes --package="$PKG" limen status --json > $EVIDENCE_DIR/limen-status.json 2> $EVIDENCE_DIR/limen-status.stderr
+          echo "$?" > $EVIDENCE_DIR/limen-status.exit
+          cat $EVIDENCE_DIR/limen-status.stderr
+          cat $EVIDENCE_DIR/limen-status.json
 
-          npx --yes --package="$PKG" limen init --dry-run --json > .ci-evidence/limen-init-plan.json 2> .ci-evidence/limen-init-plan.stderr
-          echo "$?" > .ci-evidence/limen-init-plan.exit
-          cat .ci-evidence/limen-init-plan.stderr
-          cat .ci-evidence/limen-init-plan.json
+          npx --yes --package="$PKG" limen init --dry-run --json > $EVIDENCE_DIR/limen-init-plan.json 2> $EVIDENCE_DIR/limen-init-plan.stderr
+          echo "$?" > $EVIDENCE_DIR/limen-init-plan.exit
+          cat $EVIDENCE_DIR/limen-init-plan.stderr
+          cat $EVIDENCE_DIR/limen-init-plan.json
 
-          npx --yes --package="$PKG" limen verify --strict --json > .ci-evidence/limen-verify.json 2> .ci-evidence/limen-verify.stderr
-          echo "$?" > .ci-evidence/limen-verify.exit
-          cat .ci-evidence/limen-verify.stderr
-          cat .ci-evidence/limen-verify.json
+          npx --yes --package="$PKG" limen verify --strict --json > $EVIDENCE_DIR/limen-verify.json 2> $EVIDENCE_DIR/limen-verify.stderr
+          echo "$?" > $EVIDENCE_DIR/limen-verify.exit
+          cat $EVIDENCE_DIR/limen-verify.stderr
+          cat $EVIDENCE_DIR/limen-verify.json
 
           exit 0
 
@@ -199,29 +199,29 @@ jobs:
           mapfile -t projects < <(find . -maxdepth 5 -type f \( -name '*.fsproj' -o -name '*.csproj' \) -not -path './.git/*' | sort)
 
           if [ "${#solutions[@]}" -eq 0 ] && [ "${#projects[@]}" -eq 0 ]; then
-            echo "UNAVAILABLE: no .NET solution/project exists yet" | tee .ci-evidence/dotnet.txt
-            echo "0" > .ci-evidence/dotnet-build.exit
-            echo "0" > .ci-evidence/dotnet-test.exit
-            echo "not-present" > .ci-evidence/dotnet.state
+            echo "UNAVAILABLE: no .NET solution/project exists yet" | tee $EVIDENCE_DIR/dotnet.txt
+            echo "0" > $EVIDENCE_DIR/dotnet-build.exit
+            echo "0" > $EVIDENCE_DIR/dotnet-test.exit
+            echo "not-present" > $EVIDENCE_DIR/dotnet.state
             exit 0
           fi
 
-          echo "present" > .ci-evidence/dotnet.state
+          echo "present" > $EVIDENCE_DIR/dotnet.state
           target=""
           if [ "${#solutions[@]}" -gt 0 ]; then
             target="${solutions[0]}"
           else
             target="${projects[0]}"
           fi
-          echo "target=$target" | tee .ci-evidence/dotnet-target.txt
+          echo "target=$target" | tee $EVIDENCE_DIR/dotnet-target.txt
 
-          dotnet build "$target" --configuration Release --nologo > .ci-evidence/dotnet-build.txt 2>&1
-          echo "$?" > .ci-evidence/dotnet-build.exit
-          cat .ci-evidence/dotnet-build.txt
+          dotnet build "$target" --configuration Release --nologo > $EVIDENCE_DIR/dotnet-build.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/dotnet-build.exit
+          cat $EVIDENCE_DIR/dotnet-build.txt
 
-          dotnet test "$target" --configuration Release --no-build --nologo > .ci-evidence/dotnet-test.txt 2>&1
-          echo "$?" > .ci-evidence/dotnet-test.exit
-          cat .ci-evidence/dotnet-test.txt
+          dotnet test "$target" --configuration Release --no-build --nologo > $EVIDENCE_DIR/dotnet-test.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/dotnet-test.exit
+          cat $EVIDENCE_DIR/dotnet-test.txt
 
           exit 0
 
@@ -230,26 +230,26 @@ jobs:
         run: |
           set +e
           if [ ! -f package.json ]; then
-            echo "UNAVAILABLE: no root package.json exists yet" | tee .ci-evidence/node-application.txt
-            echo "0" > .ci-evidence/node-install.exit
-            echo "0" > .ci-evidence/node-test.exit
-            echo "not-present" > .ci-evidence/node.state
+            echo "UNAVAILABLE: no root package.json exists yet" | tee $EVIDENCE_DIR/node-application.txt
+            echo "0" > $EVIDENCE_DIR/node-install.exit
+            echo "0" > $EVIDENCE_DIR/node-test.exit
+            echo "not-present" > $EVIDENCE_DIR/node.state
             exit 0
           fi
 
-          echo "present" > .ci-evidence/node.state
+          echo "present" > $EVIDENCE_DIR/node.state
 
           if [ -f package-lock.json ]; then
-            npm ci > .ci-evidence/node-install.txt 2>&1
+            npm ci > $EVIDENCE_DIR/node-install.txt 2>&1
           else
-            npm install --ignore-scripts > .ci-evidence/node-install.txt 2>&1
+            npm install --ignore-scripts > $EVIDENCE_DIR/node-install.txt 2>&1
           fi
-          echo "$?" > .ci-evidence/node-install.exit
-          cat .ci-evidence/node-install.txt
+          echo "$?" > $EVIDENCE_DIR/node-install.exit
+          cat $EVIDENCE_DIR/node-install.txt
 
-          npm test > .ci-evidence/node-test.txt 2>&1
-          echo "$?" > .ci-evidence/node-test.exit
-          cat .ci-evidence/node-test.txt
+          npm test > $EVIDENCE_DIR/node-test.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/node-test.exit
+          cat $EVIDENCE_DIR/node-test.txt
 
           exit 0
 
@@ -257,18 +257,18 @@ jobs:
         shell: bash
         run: |
           set +e
-          git diff --check > .ci-evidence/git-diff-check-after.txt 2>&1
-          echo "$?" > .ci-evidence/git-diff-check-after.exit
+          git diff --check > $EVIDENCE_DIR/git-diff-check-after.txt 2>&1
+          echo "$?" > $EVIDENCE_DIR/git-diff-check-after.exit
 
-          git status --short > .ci-evidence/git-status-after.txt
-          cat .ci-evidence/git-status-after.txt
+          git status --short > $EVIDENCE_DIR/git-status-after.txt
+          cat $EVIDENCE_DIR/git-status-after.txt
 
-          if [ -s .ci-evidence/git-status-after.txt ]; then
-            echo "1" > .ci-evidence/git-clean.exit
-            git diff > .ci-evidence/repository-drift.diff
+          if [ -s $EVIDENCE_DIR/git-status-after.txt ]; then
+            echo "1" > $EVIDENCE_DIR/git-clean.exit
+            git diff > $EVIDENCE_DIR/repository-drift.diff
           else
-            echo "0" > .ci-evidence/git-clean.exit
-            : > .ci-evidence/repository-drift.diff
+            echo "0" > $EVIDENCE_DIR/git-clean.exit
+            : > $EVIDENCE_DIR/repository-drift.diff
           fi
 
           exit 0
@@ -279,8 +279,8 @@ jobs:
         run: |
           set -u
           read_code() {
-            if [ -f ".ci-evidence/$1.exit" ]; then
-              cat ".ci-evidence/$1.exit"
+            if [ -f "$EVIDENCE_DIR/$1.exit" ]; then
+              cat "$EVIDENCE_DIR/$1.exit"
             else
               echo "missing"
             fi
@@ -315,16 +315,16 @@ jobs:
             echo
             echo "A missing framework installation is a failed required capability, not a pass."
             echo "Absent application build entry points are recorded as not-present until implementation begins."
-          } | tee .ci-evidence/summary.md
+          } | tee $EVIDENCE_DIR/summary.md
 
-          cat .ci-evidence/summary.md >> "$GITHUB_STEP_SUMMARY"
+          cat $EVIDENCE_DIR/summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload verification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: echelon-verification-evidence
-          path: .ci-evidence/
+          path: $EVIDENCE_DIR/
           if-no-files-found: error
           retention-days: 30
 
@@ -337,7 +337,7 @@ jobs:
 
           require_zero() {
             name="$1"
-            file=".ci-evidence/$2.exit"
+            file="$EVIDENCE_DIR/$2.exit"
             if [ ! -f "$file" ]; then
               echo "::error::$name did not produce an exit record"
               failures=$((failures + 1))
