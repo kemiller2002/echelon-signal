@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      EVIDENCE_DIR: ${{ runner.temp }}/echelon-evidence
+      EVIDENCE_DIR: /tmp/echelon-evidence
 
     steps:
       - name: Check out repository
@@ -324,7 +324,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: echelon-verification-evidence
-          path: ${{ runner.temp }}/echelon-evidence/
+          path: /tmp/echelon-evidence/
           if-no-files-found: error
           retention-days: 30
 
