@@ -13,7 +13,7 @@ Original source content is preserved. Each source received only an appended migr
 
 ## Complete corpus coverage
 
-No file under `input-documents/` was excluded. All 12 files were relevant and reviewed completely.
+No file under `input-documents/` is excluded. The original 12-file corpus was reviewed completely on 2026-08-31; the advanced ROS/Ordo/Limen stress-trial extension was added and reviewed on 2026-09-21, bringing the authoritative corpus to 13 files.
 
 | Authoritative source | Migration status | Requirement groups | ROS work items |
 |---|---|---|---|
@@ -29,6 +29,7 @@ No file under `input-documents/` was excluded. All 12 files were relevant and re
 | `input-documents/survey-engine-url-submission-requirement-changes.txt` | requirements-definition completed | URLC-001, URLC-002, URLC-003, URLC-004, URLC-005 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0010 |
 | `input-documents/survey-group-identity-anonymous-submissions.txt` | requirements-definition completed | ID-001, ID-002, ID-003, ID-004 | WI-0004, WI-0005, WI-0008, WI-0009, WI-0010 |
 | `input-documents/survey-instance-template-versioning-requirements.txt` | requirements-definition completed | VER-001, VER-002, VER-003, VER-004, VER-005, VER-006, VER-007 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007 |
+| `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt` | requirements-definition completed | ARX-001 through ARX-012 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
 
 ## Work-item decomposition
 
@@ -123,6 +124,35 @@ Each row below is a requirement group. The mapping applies to every actionable/n
 | VER-006 | `input-documents/survey-instance-template-versioning-requirements.txt` | Survey Group through Result Shapes | 861–1052 | Group ordering/requirements/completion/scoring, explicit completion/validation, and scalar/categorical/profile/composite results. | WI-0005, WI-0006, WI-0007 |
 | VER-007 | `input-documents/survey-instance-template-versioning-requirements.txt` | Survey Response through Guiding Principle | 1054–1134 | Minimal response/model and fifteen invariants, with physical persistence and anonymous identity refined by URLC/LURL/ID groups. | WI-0002, WI-0004 |
 
+
+## 2026-09-21 advanced ROS / Ordo / Limen extension
+
+The thirteenth authoritative source was added after the original migration specifically to turn Echelon Signal into an engineering-system stress trial. These requirements are additive and have reciprocal references in the existing WI-0002 through WI-0010 detail records.
+
+| Requirement group | Exact source section | Accounted requirement | ROS work items |
+|---|---|---|---|
+| ARX-001 | Engineering-System Trial Baseline | Current verified ROS/Ordo/Limen lifecycle baseline, CI verification, and durable framework-friction evidence. | WI-0010 |
+| ARX-002 | Ordo State, Capability, Obligation, and Knowledge Model | Explicit legal state/transitions, derived capabilities, obligations, unknown effects, and scoped negative knowledge. | WI-0002, WI-0006, WI-0010 |
+| ARX-003 | Limen as the Only Browser Authority Boundary | F# application authority, serialized F# WASM boundary, no TypeScript domain fallback, and full used-capability conformance. | WI-0002, WI-0004, WI-0010 |
+| ARX-004 | Required New Browser Capabilities | Generic focus, cryptographic entropy, and explicit clock evidence when time-based policy is activated. | WI-0004, WI-0005, WI-0010 |
+| ARX-005 | Publication-Time Execution Plan and Incremental Evaluation | Reproducible execution plan, reference/optimized equivalence, dependency invalidation, and full/incremental equivalence. | WI-0003, WI-0006, WI-0007, WI-0010 |
+| ARX-006 | Deterministic Numeric, Canonicalization, and Hash Semantics | Exact numeric/byte semantics, golden canonical vectors, and layered semantic/encoding/presentation/report/execution hashes. | WI-0003, WI-0007, WI-0010 |
+| ARX-007 | URL Confidentiality, Browser History, and Concurrent Sessions | Fragment-first answer state, leakage controls, history semantics, multi-tab divergence, and stale-effect rejection. | WI-0004, WI-0005, WI-0010 |
+| ARX-008 | Transactional Import, Idempotency, and Unknown External Effects | Explicit import acceptance state machine, idempotency, optimistic concurrency, and OutcomeUnknown reconciliation. | WI-0008, WI-0010 |
+| ARX-009 | No-PII Privacy Hardening and Anonymous Inference Protection | System-wide no-PII enforcement, differencing-aware anonymity, and answer-free telemetry. | WI-0005, WI-0008, WI-0009, WI-0010 |
+| ARX-010 | Static Analysis of Survey Programs | Reachability, contradictions, dead rules, score bounds, impossible categories, phase legality, and branch coverage. | WI-0003, WI-0006, WI-0007, WI-0010 |
+| ARX-011 | Adversarial, Differential, Model-Based, and Resource Testing | Differential/model/property/malformed/resource/real-browser verification with explicit unavailable evidence. | WI-0010 |
+| ARX-012 | Derivation Lineage, Reproducibility, and Trial Evidence | Hash/version derivation chain, same-path explanations, reason codes, engineering telemetry, and retrospective outcomes. | WI-0002, WI-0007, WI-0008, WI-0009, WI-0010 |
+
+### No-PII scope clarification
+
+The extension strengthens the existing privacy language: Echelon Signal itself does not process external person-to-instance mappings. Opaque instance/group/submission identifiers remain permitted, but any personal identity mapping is outside this repository and outside the trial.
+
+### Framework-baseline observation
+
+At extension review time, the repository's installed ROS configuration identifies 1.2.1-main.16.1, while the current ROS source package is 3.1.0; the current Ordo/SDE distribution is 1.3.0 and the current Limen package is 0.6.1. The upgrade/install activity is therefore an explicit trial obligation under ARX-001 rather than an assumed prerequisite.
+
+
 ## Modifying, superseding, and constraining relationships
 
 - `URLC-001` and `URLC-002` explicitly modify the earlier server-oriented runtime, replay, revision, completion-lock, and response-persistence proposals in `ACR-005`, `VER-003`, and `VER-007`. The work items implement the URL-based/import-side semantics and retain the earlier text only as provenance.
@@ -134,10 +164,10 @@ Each row below is a requirement group. The mapping applies to every actionable/n
 
 ## Coverage verification
 
-- Relevant source files discovered: 12
-- Relevant source files reviewed completely: 12
+- Relevant source files discovered: 13
+- Relevant source files reviewed completely: 13
 - Relevant source files excluded: 0
-- Requirement groups recorded: 72
+- Requirement groups recorded: 84
 - New delivery work items: 9
 - Source appendices added: 12
 
