@@ -32,3 +32,38 @@ git diff --check
 ## Interpretation
 
 These checks establish migration accounting and reciprocal traceability. They do not establish implementation correctness for WI-0002 through WI-0010; those items remain captured and require their own evidence before completion.
+
+
+## Extension review — 2026-09-21
+
+A thirteenth authoritative requirement source was added:
+
+`input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt`
+
+It contributes ARX-001 through ARX-012 and raises the accounted corpus from 72 to 84 requirement groups.
+
+### Repository-API checks completed
+
+| Check | Observed result | Status |
+|---|---|---|
+| Advanced source present | 1 new source containing ARX-001 through ARX-012 | pass |
+| Central ledger mapping | All 12 ARX groups recorded in `docs/requirements/survey-engine-requirements-migration.md` | pass |
+| Reciprocal work-item mapping | Advanced references appended to each affected WI-0002 through WI-0010 detail record | pass |
+| No-PII boundary | New source explicitly forbids Echelon Signal from collecting, processing, persisting, logging, or exporting PII | pass |
+| Framework baseline discovery | Legacy ROS install identified; current ROS, Ordo/SDE, and Limen release baselines recorded as trial inputs | pass |
+| ROS live/projection consistency | `.ros/context/current.json` reports WI-0001 complete while `.ros/work/queue.md` reports active and `.ros/work/queue.json` retains ready | finding |
+
+### Validation still required in a runnable checkout
+
+The cloud GitHub connector can inspect and update repository files but cannot execute the repository's local lifecycle commands. Therefore the following are **not claimed as completed** by this extension review:
+
+```bash
+./ros registry build
+./ros validate
+./ros verify
+git diff --check
+```
+
+ARX-001 intentionally requires upgrading the repository to the current ROS lifecycle before relying on legacy generated projections. After that upgrade, the stale WI-0001 projection observed above should be used as a concrete migration/repair test.
+
+A skipped local command is unavailable evidence, not a pass.
