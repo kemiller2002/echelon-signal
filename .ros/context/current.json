@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
   "repository": "echelon-signal",
-  "actor": "ros-bootstrap",
+  "actor": "agent:chatgpt",
   "startedAt": "2026-08-31T18:55:58.931Z",
-  "updatedAt": "2026-08-31T19:16:36.484Z",
+  "updatedAt": "2026-09-21T18:47:48Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -38,6 +38,30 @@
       ],
       "updatedAt": "2026-08-31T19:16:36.484Z",
       "completedAt": "2026-08-31T19:16:36.484Z"
+    },
+    {
+      "id": "ECHELON-UPGRADE-2026-09-21",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [],
+      "updatedAt": "2026-09-21T15:45:48Z",
+      "telemetryExecutionIds": [
+        "EXE-20260921T154547323Z-6410d99c"
+      ],
+      "completedAt": "2026-09-21T15:45:48Z"
+    },
+    {
+      "id": "SIGNAL-VERIFY-2026-09-21",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [],
+      "updatedAt": "2026-09-21T18:47:48Z",
+      "telemetryExecutionIds": [
+        "EXE-20260921T184747441Z-b1539864"
+      ],
+      "completedAt": "2026-09-21T18:47:48Z"
     }
   ]
 }
