@@ -29,7 +29,7 @@ No file under `input-documents/` is excluded. The original 12-file corpus was re
 | `input-documents/survey-engine-url-submission-requirement-changes.txt` | requirements-definition completed | URLC-001, URLC-002, URLC-003, URLC-004, URLC-005 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0010 |
 | `input-documents/survey-group-identity-anonymous-submissions.txt` | requirements-definition completed | ID-001, ID-002, ID-003, ID-004 | WI-0004, WI-0005, WI-0008, WI-0009, WI-0010 |
 | `input-documents/survey-instance-template-versioning-requirements.txt` | requirements-definition completed | VER-001, VER-002, VER-003, VER-004, VER-005, VER-006, VER-007 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007 |
-| `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt` | requirements-definition completed | ARX-001 through ARX-012 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
+| `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt` | requirements-definition completed | ARX-001 through ARX-013 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
 
 ## Work-item decomposition
 
@@ -143,6 +143,7 @@ The thirteenth authoritative source was added after the original migration speci
 | ARX-010 | Static Analysis of Survey Programs | Reachability, contradictions, dead rules, score bounds, impossible categories, phase legality, and branch coverage. | WI-0003, WI-0006, WI-0007, WI-0010 |
 | ARX-011 | Adversarial, Differential, Model-Based, and Resource Testing | Differential/model/property/malformed/resource/real-browser verification with explicit unavailable evidence. | WI-0010 |
 | ARX-012 | Derivation Lineage, Reproducibility, and Trial Evidence | Hash/version derivation chain, same-path explanations, reason codes, engineering telemetry, and retrospective outcomes. | WI-0002, WI-0007, WI-0008, WI-0009, WI-0010 |
+| ARX-013 | Timers, Forward-Only Progression, Pagination, and Content Banking | Timer scopes and authority, strengthened ItemsPerPage semantics, independent question/section revisit locks, deterministic question/section banking, selection seeds/manifests, bank-aware encoding/scoring, and combined stress fixtures. | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
 
 ### No-PII scope clarification
 
@@ -167,7 +168,7 @@ At extension review time, the repository's installed ROS configuration identifie
 - Relevant source files discovered: 13
 - Relevant source files reviewed completely: 13
 - Relevant source files excluded: 0
-- Requirement groups recorded: 84
+- Requirement groups recorded: 85
 - New delivery work items: 9
 - Source appendices added: 12
 
