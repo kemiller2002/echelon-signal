@@ -1,0 +1,879 @@
+# Echelon Signal – Advanced ROS, Ordo, and Limen Stress-Trial Requirements
+
+Status: Authoritative requirements extension
+Added: 2026-09-21
+Purpose: Push Echelon Signal beyond ordinary survey-engine requirements so it becomes a demanding integration and evidence trial for ROS, Ordo / State-Directed Engineering, and Limen.
+
+## Non-Negotiable Constraint: No PII
+
+Echelon Signal MUST NOT collect, ingest, transmit, persist, log, display, join, or otherwise process personally identifiable information.
+
+This restriction applies to:
+
+- Survey questions and answers
+- Respondent and administrator URLs
+- Browser storage
+- External persistence
+- Diagnostics and telemetry
+- Report data and exports
+- Test fixtures
+- Example data
+- Research/evidence artifacts produced by this repository
+
+Opaque technical identifiers such as SurveyInstanceId, SurveyGroupId, AnonymousSubmissionId, ResultId, hashes, and correlation IDs are allowed only when they do not encode or permit recovery of personal identity.
+
+Any person-to-survey mapping belongs entirely outside Echelon Signal and is out of scope for this trial.
+
+Free-form text answer types are out of scope for the stress trial because they create an unnecessary path for PII and make compact deterministic URL transport substantially harder.
+
+---
+
+# ARX-001 – Engineering-System Trial Baseline
+
+Echelon Signal is both a product implementation and an engineering-system experiment.
+
+Before meaningful implementation begins, the repository SHOULD be brought to a current, verified engineering baseline:
+
+- Repository Operating System (ROS): current supported release, with 3.1.0 the observed current release at the time this requirement was written.
+- Ordo / State-Directed Engineering package: 1.3.0 or newer compatible release.
+- Limen: 0.6.1 or newer compatible release.
+
+The exact installed versions MUST be recorded in repository-owned installation manifests and MUST be reproducible in CI.
+
+The repository MUST use the lifecycle commands supplied by each tool rather than copying framework files manually.
+
+Required lifecycle properties:
+
+- Installation is idempotent.
+- Upgrade is planned before execution where the tool supports dry-run/check.
+- Tool-owned files are not silently overwritten when locally modified.
+- Verification runs in CI.
+- A repository left in a partially upgraded framework state MUST fail verification explicitly.
+- The version actually used in CI MUST be observable.
+
+Because this repository is a trial, framework defects and friction are evidence. They MUST be recorded rather than worked around invisibly.
+
+At minimum record:
+
+- Failed or ambiguous legal transitions
+- Stale generated projections
+- Missing capability or context declarations
+- False-positive and false-negative architecture checks
+- Upgrade conflicts
+- Context escalation caused by insufficient manifests
+- Work that could not be mechanically verified
+- Manual steps that should become framework capabilities
+
+The currently observed legacy ROS state is itself baseline evidence: live work context and generated/backlog projections can disagree. The trial MUST test whether the current ROS release detects, repairs, or prevents this class of stale projection.
+
+---
+
+# ARX-002 – Ordo State, Capability, Obligation, and Knowledge Model
+
+Application behavior MUST be modeled as explicit legal state and transitions, not as independent booleans or ad hoc event handlers.
+
+At minimum, define explicit state systems for:
+
+1. Template authoring and publication
+2. Respondent survey execution
+3. Anonymous finalization
+4. Administrator import
+5. Group aggregation
+6. External report-state persistence
+7. Report projection/snapshot generation
+
+Every state system MUST define:
+
+- Legal states
+- Legal commands/transitions
+- Guards
+- Capabilities available from each state
+- Obligations created by transitions
+- Evidence required to discharge obligations
+- Terminal or stable states
+- Explicit illegal-transition results
+
+Important capabilities SHOULD include concepts such as:
+
+- CanAnswer
+- CanNavigateBack
+- CanFinalize
+- CanCopySubmission
+- CanImportSubmission
+- CanPublishTemplate
+- CanPersistReportState
+- CanRetryEffect
+- CanReconcileEffect
+- CanRenderFinalReport
+
+Capabilities MUST be derived from authoritative state. HTML, CSS, TypeScript browser code, and report renderers MUST NOT re-derive business capability.
+
+Obligations MUST represent unresolved work rather than burying it in error text.
+
+Examples:
+
+- MissingRequiredAnswer
+- ResolveTemplate
+- ReconcileUnknownPersistenceOutcome
+- CompletePrivacyValidation
+- SupplyPublicationEvidence
+- ResolveUnsupportedCapability
+
+Unknown and negative knowledge MUST be represented explicitly.
+
+Examples:
+
+- Template lookup searched registry X at revision Y and did not find a matching template.
+- External write outcome is unknown, not failed.
+- A compatibility check has not yet established whether capability Z is present.
+
+Searched-not-found MUST NOT be generalized into global absence.
+
+---
+
+# ARX-003 – Limen as the Only Browser Authority Boundary
+
+The production respondent and administrator applications MUST use Limen as the browser/application authority boundary.
+
+Application meaning MUST live in F#.
+
+The expected shape is:
+
+Static semantic HTML + CSS
+    ↓
+Limen BrowserKernel
+    ↓
+JSON-serializable Limen protocol
+    ↓
+F#/.NET WebAssembly transport boundary
+    ↓
+F# domain state + transitions + capabilities + obligations + projection
+
+TypeScript MAY contain:
+
+- Limen kernel/runtime integration
+- WASM loader
+- Mechanical serialization transport
+- Static bootstrap
+- Browser-only mechanism owned by Limen
+
+TypeScript MUST NOT contain:
+
+- Survey scoring
+- Applicability rules
+- Completion rules
+- Privacy decisions
+- Import acceptance decisions
+- Duplicate rules
+- Recommendation logic
+- Group aggregation semantics
+- Domain retry/reconciliation policy
+
+No parallel TypeScript application engine may exist in production as a fallback.
+
+The WASM host shim MUST remain mechanical. If a C# JSExport shim is required by .NET, it MUST contain no application state or domain decisions.
+
+The trial MUST demonstrate every Limen capability it actually uses across the real F# serialization boundary, not merely through the TypeScript reference engine.
+
+At minimum Echelon Signal is expected to exercise:
+
+- Navigation/history
+- Clipboard write
+- HTTP
+- Storage, if storage is justified
+
+Storage MUST NOT contain survey answers, respondent URLs, completed submissions, or other sensitive survey state. The live URL remains the respondent state authority.
+
+The HTML/F# contract MUST be mechanically checked:
+
+- Every data-event emitted by HTML maps to a known F# event/command.
+- Every projected binding key required by mounted HTML exists in the F# projection vocabulary.
+- No domain vocabulary appears in the browser kernel/transport except opaque protocol values.
+- Protocol version mismatch fails explicitly.
+
+---
+
+# ARX-004 – Required New Browser Capabilities Exposed by the Survey Domain
+
+The survey requirements expose at least two browser mechanisms that the current Limen surface does not fully provide and therefore make this repository a deliberate Limen extension trial.
+
+## Focus
+
+Accessible multi-page survey behavior requires deterministic focus movement after semantic transitions such as:
+
+- Moving to a new page or section
+- Returning to a page containing a blocking error
+- Revealing a conditional section
+- Completing import and presenting an error summary
+
+Direct DOM focus calls from the F# engine are forbidden.
+
+If native HTML behavior is insufficient, Limen SHOULD gain a generic focus capability/effect whose request contains only mechanism-level target information.
+
+The engine decides *why* focus is needed.
+The Limen boundary performs *how* focus occurs.
+
+Focus failure MUST be explicit and MUST NOT corrupt application state.
+
+## Cryptographic Entropy
+
+Anonymous finalization requires a new unlinkable AnonymousSubmissionId.
+
+The F# state machine MUST NOT obtain ambient randomness.
+
+If an anonymous identifier is generated in the browser, entropy MUST be requested as an explicit effect and fulfilled using a cryptographically secure browser source. There MUST be no weak or deterministic fallback.
+
+Entropy results MUST include correlation identity and MUST be rejected when stale.
+
+If secure entropy is unavailable, anonymous finalization MUST fail closed.
+
+## Time, if Activated
+
+Clock-dependent behavior such as expiration MUST NOT read ambient current time inside pure transition/evaluation code.
+
+If time-based policies are implemented, current time MUST enter as explicit evidence/capability through a clock effect or a trusted import context.
+
+A template that requires a time capability MUST declare it.
+
+---
+
+# ARX-005 – Publication-Time Execution Plan and Incremental Evaluation
+
+A published template SHOULD compile into a deterministic validated execution plan in addition to retaining the canonical authored template.
+
+The execution plan is an implementation artifact, not a new source of semantic truth.
+
+It SHOULD contain:
+
+- Resolved question/section indexes
+- Encoding layout
+- Typed expression nodes
+- Dependency edges
+- Evaluation phases
+- Topological evaluation order
+- Static result types
+- Capability requirements
+- Maximum resource estimates
+- Stable node identifiers
+
+The plan MUST be reproducible from the exact immutable template.
+
+Add:
+
+ExecutionPlanHash
+
+The engine MUST be able to prove that the execution plan belongs to the template it is executing.
+
+## Reference and Optimized Evaluators
+
+Maintain a simple reference evaluator whose purpose is semantic correctness.
+
+The optimized runtime MAY use:
+
+- Precompiled built-in scorers
+- Topologically ordered rule execution
+- Cached derived facts
+- Incremental invalidation/recalculation
+- Precomputed encoding offsets
+
+For every supported feature:
+
+ReferenceEvaluator(template, state)
+=
+OptimizedEvaluator(plan, state)
+
+For every answer transition, the incremental evaluator MUST produce the same externally observable state as a full recomputation.
+
+A changed answer SHOULD invalidate only the dependency closure that can be affected by that answer.
+
+The engine MAY parallelize independent computation in the future, but output MUST NOT depend on scheduling order.
+
+The execution plan MUST NOT introduce executable code supplied by the template.
+
+---
+
+# ARX-006 – Deterministic Numeric, Canonicalization, and Hash Semantics
+
+Determinism MUST be specified below the level of “serialize consistently.”
+
+## Numeric Semantics
+
+Scoring MUST define:
+
+- Numeric type
+- Overflow behavior
+- Division behavior
+- Empty-aggregate behavior
+- Geometric/harmonic-domain restrictions
+- Normalization precision
+- Rounding mode
+- The exact stage at which rounding is allowed
+
+Canonical results SHOULD use decimal/fixed semantics rather than binary floating-point where cross-runtime ordering could affect reproducibility.
+
+Presentation rounding MUST remain separate from canonical scoring.
+
+NaN and Infinity MUST NOT be valid domain score states.
+
+## Text and Byte Canonicalization
+
+Canonicalization MUST define:
+
+- UTF-8 encoding
+- Unicode normalization policy
+- Property ordering
+- List ordering where semantics are unordered
+- Preservation of order where semantics are ordered
+- Decimal text representation
+- Boolean representation
+- Null/default handling
+- Newline handling
+- Hash algorithm identifier
+
+Golden canonical byte vectors MUST be retained.
+
+## Layered Hashes
+
+Keep the existing overall TemplateHash, but add narrower fingerprints where useful:
+
+- SemanticHash
+- EncodingLayoutHash
+- PresentationHash
+- LocalizationHash
+- ReportDefinitionHash
+- ExecutionPlanHash
+
+These hashes MUST NOT be used as an excuse to mutate a published template in place.
+
+Their purpose is to make comparisons and change impact more precise.
+
+Example:
+
+A help-text change may alter TemplateHash and PresentationHash while preserving SemanticHash and EncodingLayoutHash.
+
+A scoring change alters SemanticHash and should make result comparability fail unless an explicit compatibility rule proves otherwise.
+
+---
+
+# ARX-007 – URL Confidentiality, Browser History, and Concurrent Sessions
+
+No PII is present, but survey answers may still be confidential. URL transport therefore needs browser-specific confidentiality rules.
+
+## URL Placement
+
+The default respondent answer payload SHOULD live in the URL fragment rather than query/path state when compatible with the final routing design, because fragments are not sent to the origin server in ordinary HTTP requests.
+
+A different placement requires an explicit security/interop decision.
+
+Stateful survey pages MUST use a restrictive referrer policy, preferably no-referrer.
+
+Third-party analytics, tag managers, advertising scripts, and other unnecessary third-party JavaScript MUST NOT run on pages containing live or completed survey state.
+
+Diagnostics MUST remove or redact survey state from:
+
+- Exception messages
+- Request logs
+- Browser diagnostics
+- Telemetry
+- Copyable support bundles
+
+## History
+
+Answer changes use replacement semantics.
+
+Route/page changes may use push semantics when appropriate.
+
+Back/Forward MUST be tested with real browser controls.
+
+The browser history contract MUST distinguish:
+
+- Navigation history
+- Live answer-state replacement
+- Finalized submission state
+
+## Multiple Tabs and Branching State
+
+Opening the same live URL in two tabs creates two independent local branches.
+
+There is no hidden merge.
+
+If the two tabs diverge:
+
+- Each tab remains internally valid.
+- Each tab produces its own current URL.
+- Import/deduplication rules decide what happens if both finalized artifacts are submitted.
+- The browser runtime MUST NOT silently overwrite one tab with another.
+
+Late effect results from one logical state MUST NOT mutate a newer state; correlation IDs and expected-state guards are required.
+
+---
+
+# ARX-008 – Transactional Import, Idempotency, and Unknown External Effects
+
+Administrator import MUST be modeled as a state machine with an explicit acceptance boundary.
+
+Before acceptance, a submission may be:
+
+- Parsing
+- ResolvingTemplate
+- Verifying
+- Decoding
+- Validating
+- Evaluating
+- Duplicate
+- Rejected
+- ReadyToAccept
+
+After acceptance, its contribution becomes immutable input to group aggregation unless an explicit future correction model is designed.
+
+The same canonical submission imported repeatedly MUST be idempotent.
+
+## External Persistence
+
+When AdminReportState is stored externally, write operations MUST carry an idempotency identity derived from stable domain state, such as ResultId plus SurveyGroupResultHash or an equivalent explicit contract.
+
+If a write returns Limen OutcomeUnknown:
+
+- The engine MUST NOT treat it as failure.
+- The engine MUST NOT blindly repeat a non-idempotent write.
+- State MUST enter an explicit reconciliation-required state.
+- Retry capability is withheld until the domain has enough evidence to make retry safe.
+
+Reconciliation MAY use:
+
+- A read by ResultId
+- A content hash comparison
+- Store-provided ETag/version
+- Idempotency-key lookup
+
+Concurrent administrator tabs MUST NOT silently overwrite newer derived state.
+
+External persistence SHOULD use optimistic concurrency against an expected prior result hash/version.
+
+EmbeddedInUrl and ExternalStore modes MUST remain semantically equivalent even under retries and reconciliation.
+
+---
+
+# ARX-009 – No-PII Privacy Hardening and Anonymous Inference Protection
+
+No-PII validation is a hard publication/runtime boundary, not merely author guidance.
+
+The repository MUST provide test fixtures that attempt to introduce PII through:
+
+- Question definitions
+- Metadata
+- Localization
+- Report labels
+- Example submissions
+- Import metadata
+- External-store DTOs
+- Diagnostics
+
+Known PII schema fields MUST be rejected.
+
+PII-like prompt detection may remain heuristic, but direct schema support for PII is forbidden.
+
+## Anonymous Aggregation
+
+Minimum-count suppression MUST consider inference across multiple views, not only one rendered report.
+
+A sequence of partial reports can reveal a small subgroup through differencing even when each individual report passes a simple minimum-count rule.
+
+Anonymous report policy MUST therefore define behavior for:
+
+- Repeated snapshots as submissions arrive
+- Role/subgroup filters
+- Before/after comparisons
+- Exported reports
+- Small residual groups
+
+Where differencing can reveal a suppressed small group, the system MUST suppress, coarsen, delay, or freeze the relevant breakdown.
+
+Anonymous reports MUST NOT expose stable per-response ordering that permits longitudinal linkage.
+
+## Telemetry
+
+Observability MUST use structural metrics rather than answer content.
+
+Allowed examples:
+
+- Stage duration
+- Rule-node count
+- Invalidated-node count
+- URL length
+- Cache hit/miss
+- Error/reason code
+- Template/result hashes
+- Counts of special answer states
+
+Raw answer values and full stateful URLs MUST NOT be logged by default.
+
+---
+
+# ARX-010 – Static Analysis of Survey Programs
+
+Treat a published template as a small program and analyze it before publication.
+
+Beyond type checking and cycle detection, publication validation SHOULD attempt to identify:
+
+- Unreachable questions
+- Unreachable sections
+- Impossible completion paths
+- Dead rules
+- Recommendations that can never trigger
+- Contradictory validation rules
+- Shadowed or overlapping thresholds
+- Gaps in threshold coverage where total classification is required
+- Always-true / always-false conditions
+- Impossible answer comparisons
+- Phase-invalid dependencies
+- Scoring rules that reference inapplicable values without a policy
+- Group requirements that cannot be satisfied
+- Privacy rules that can never be satisfied for configured group size
+
+## Static Score Bounds
+
+Where practical, calculate conservative minimum/maximum ranges for:
+
+- Question contributions
+- Section scores
+- Survey scores
+- Group aggregates
+
+Use these ranges to detect:
+
+- Impossible thresholds
+- Unreachable maturity bands
+- Normalization errors
+- Overflow risks
+- Report definitions referencing impossible categories
+
+## Rule Coverage
+
+The authoring/test system SHOULD report which branches/rules are exercised by publication fixtures.
+
+Required critical branches MUST have a fixture.
+
+A template may publish with uncovered noncritical branches only when policy explicitly allows it and the uncovered paths are surfaced as evidence/unknowns.
+
+---
+
+# ARX-011 – Adversarial, Differential, Model-Based, and Resource Testing
+
+The verification program MUST treat templates and submission URLs as untrusted structured input.
+
+Required test families:
+
+## Differential
+
+- Reference evaluator vs optimized evaluator
+- Full recomputation vs incremental recomputation
+- Embedded admin state vs external-store round trip
+- Canonical template -> execution plan -> canonical result across repeated runs
+- F# direct domain dispatch vs actual serialized F# WASM boundary
+
+## Model-Based State Tests
+
+Generate legal and illegal command sequences for the major state systems.
+
+Verify:
+
+- Legal transitions reach expected state.
+- Illegal transitions do not mutate state.
+- Capabilities agree with legal transitions.
+- Obligations appear and disappear only through legal evidence.
+- Stale effect results cannot change authoritative state.
+
+## Property / Generative Tests
+
+At minimum:
+
+- decode(encode(response)) = response
+- canonicalize(canonicalize(x)) = canonicalize(x)
+- same semantic canonical input -> same hash
+- incremental(state, change) = fullRecompute(updatedState)
+- duplicate import does not change aggregate
+- reordering semantically unordered input does not change semantic hash
+- presentation-only change does not change SemanticHash
+- final anonymous artifact contains no invitation-linking identifier
+
+## Fuzzing / Malformed Corpus
+
+Maintain malformed fixtures for:
+
+- Truncated URLs
+- Invalid base64url
+- Extra trailing data
+- Wrong encoding version
+- Wrong template fingerprint
+- Cardinality overflow
+- Invalid ranking permutation
+- Invalid allocation total
+- Deep expression nesting
+- Huge aggregation lists
+- Unknown operators
+- Cyclic dependencies
+- Duplicate IDs
+- Unicode edge cases
+- Integer/decimal boundaries
+
+## Resource Budgets
+
+Publication and runtime MUST impose explicit limits for:
+
+- Maximum questions
+- Maximum options
+- Maximum expression nodes
+- Maximum expression depth
+- Maximum dependency edges
+- Maximum result/report blocks
+- Maximum decoded payload bytes
+- Maximum URL characters
+- Maximum evaluation steps
+- Maximum explanation-trace size
+
+Exceeding a limit MUST produce a typed explicit error, not a crash or partial result.
+
+Evaluation SHOULD be stack-safe for the maximum permitted expression depth.
+
+## Real Browser Proof
+
+Use real browser tests for:
+
+- Back/Forward
+- URL replacement
+- Clipboard copy
+- Focus behavior
+- Anonymous finalization
+- WASM startup and dispatch
+- Offline-after-load behavior where supported
+- Large but valid survey interaction
+- Mobile viewport and touch targets
+
+A skipped browser test is unavailable evidence, not a pass.
+
+---
+
+# ARX-012 – Derivation Lineage, Reproducibility, and Trial Evidence
+
+Every important derived artifact SHOULD be able to state exactly what produced it.
+
+Define a compact derivation manifest or equivalent lineage structure.
+
+For SurveyResult, include or be able to resolve:
+
+- TemplateHash
+- SemanticHash
+- ExecutionPlanHash
+- ResponseEncodingVersion
+- Canonical SubmissionHash
+- Engine/application version
+- Scorer/rule-language versions
+- ResultSchemaVersion
+- SurveyResultHash
+
+For SurveyGroupResult:
+
+- Ordered or canonically sorted accepted SurveyResult hashes
+- Group configuration hash
+- GroupResultSchemaVersion
+- SurveyGroupResultHash
+
+For a formal report snapshot:
+
+- SurveyGroupResultHash
+- ReportDefinitionHash/version
+- Localization version/hash
+- Comparison/benchmark reference and version when used
+- ReportSnapshotHash
+
+Explanation output MUST come from the same evaluation path that produced the result.
+
+Do not maintain a separate “explanation implementation” that can disagree with scoring.
+
+Stable reason codes SHOULD explain:
+
+- Why content was applicable/inapplicable
+- Why an answer was excluded
+- Why a score contribution exists
+- Why a capability was unavailable
+- Why a recommendation triggered
+- Why an import was rejected
+- Why a report value was suppressed
+
+## Trial Metrics
+
+Because Echelon Signal is intended to test the engineering system, collect available non-PII engineering telemetry per work item:
+
+- Files/context artifacts read before first correct edit
+- Context escalation count
+- Compiler-directed repair count
+- Architecture/boundary violations detected
+- Behavioral defects detected after mechanical checks
+- Rework caused by missed dependencies
+- Work-item state-transition violations
+- Unknown effects encountered and reconciled
+- Negative-knowledge records created
+- Test counts by category
+- Build/test duration
+- Agent/provider tokens and cost when available from ROS adapters
+- Human decisions required
+- Semantic outcome and operational outcome at retrospective
+
+Metrics MUST distinguish:
+
+- Zero
+- Unknown
+- Unavailable
+- Not collected
+
+Do not fabricate missing telemetry.
+
+The trial SHOULD produce a final retrospective answering:
+
+1. What defects did ROS, Ordo, and Limen prevent or expose?
+2. What defects escaped their mechanical checks?
+3. Where did the frameworks create unnecessary ceremony?
+4. Where did the frameworks reduce context search or rework?
+5. Which capabilities had to be added to Limen?
+6. Which Ordo states/capabilities/obligations were most useful?
+7. Did current ROS prevent the stale-projection issue observed in the legacy installation?
+8. What should change in the reusable frameworks before the next application trial?
+
+---
+
+# Cross-Cutting Acceptance Invariants
+
+1. Echelon Signal processes no PII.
+2. Application meaning has exactly one authority: the F# engine.
+3. Browser mechanisms cross Limen only as explicit serializable protocol data.
+4. External effects are explicit and outcome-typed.
+5. Unknown external outcomes remain unknown until reconciled.
+6. Capabilities come from authoritative state.
+7. Obligations represent unresolved work explicitly.
+8. Negative knowledge is scoped to what was actually searched/observed.
+9. A published template remains immutable.
+10. Publication produces deterministic hashes and a reproducible execution plan.
+11. Optimized and incremental execution are observationally equivalent to the reference evaluator.
+12. Same immutable inputs produce the same canonical result.
+13. No browser timing, locale, scheduling, or tab behavior may silently alter survey meaning.
+14. Anonymous finalization requires secure unlinkable entropy.
+15. Stateful URLs do not leak through application logging or unnecessary third-party requests.
+16. Duplicate import is idempotent.
+17. Unknown persistence outcomes require reconciliation.
+18. Static analysis blocks provably impossible or internally inconsistent published templates where the engine can establish the contradiction.
+19. Resource exhaustion from bounded hostile input fails explicitly.
+20. Every formal result/report can be traced to immutable inputs and versioned interpretation logic.
+21. Explanations observe the authoritative evaluation path.
+22. Framework/test gaps discovered by the project become durable evidence, not undocumented workarounds.
+
+---
+
+# Recommended Stress Scenarios
+
+The test corpus SHOULD include scenarios deliberately chosen to exercise combinations rather than isolated features.
+
+## Scenario A – Branch Cascade
+
+A 150+ question survey where one answer changes:
+
+- multiple derived facts,
+- applicability in several later sections,
+- completion requirements,
+- section weighting,
+- recommendations,
+- progress display,
+- URL encoding.
+
+Verify incremental invalidation is materially smaller than full graph evaluation and semantically identical.
+
+## Scenario B – Maturity With Gates and Weakest Links
+
+Use prerequisite levels, minimum-domain constraints, reverse-scored questions, Don't Know handling, N/A, and category output.
+
+Verify static score bounds and maturity reachability.
+
+## Scenario C – Anonymous Finalization
+
+Live URL contains opaque invitation instance identity.
+
+Finalization:
+
+- requests secure entropy,
+- removes invitation identity,
+- produces anonymous ID,
+- rewrites URL,
+- copies URL to clipboard,
+- proves no invitation identifier exists in final serialized bytes.
+
+## Scenario D – Unknown Admin Persistence
+
+Import a valid submission, produce a group result, request external persistence, then inject OutcomeUnknown after dispatch.
+
+Verify:
+
+- blind retry is unavailable,
+- reconciliation obligation exists,
+- stale results are ignored,
+- authoritative read resolves the state,
+- duplicate contribution never occurs.
+
+## Scenario E – Browser Navigation and Multi-Tab Divergence
+
+Open the same partial URL in two tabs.
+
+Change different answers.
+
+Verify independent valid states, deterministic URLs, no hidden merge, correct Back/Forward behavior, and safe import semantics if both are later finalized.
+
+## Scenario F – Hostile Published Template Candidate
+
+Create a draft containing:
+
+- deep rules,
+- a cycle,
+- unreachable required content,
+- contradictory validation,
+- impossible threshold,
+- oversized response budget,
+- undeclared capability,
+- PII-like field,
+- privacy-unsafe report block.
+
+Publication must fail with stable reason codes and no partial immutable artifact.
+
+## Scenario G – Cross-Version Compatibility
+
+Load:
+
+- a legacy encoding,
+- a current template,
+- a superseded template,
+- a template requiring an unsupported future capability.
+
+Verify supported legacy data remains reproducible and unsupported future behavior fails explicitly rather than degrading.
+
+---
+
+# Requirements Migration Traceability
+
+Requirements-definition status: COMPLETED
+
+This extension was added after the original 2026-08-31 twelve-file migration. It intentionally preserves the earlier sources and adds new stress-trial obligations.
+
+| Requirement group | Section | ROS work item(s) |
+|---|---|---|
+| ARX-001 | Engineering-System Trial Baseline | WI-0010 |
+| ARX-002 | Ordo State, Capability, Obligation, and Knowledge Model | WI-0002, WI-0006, WI-0010 |
+| ARX-003 | Limen as the Only Browser Authority Boundary | WI-0002, WI-0004, WI-0010 |
+| ARX-004 | Required New Browser Capabilities | WI-0004, WI-0005, WI-0010 |
+| ARX-005 | Publication-Time Execution Plan and Incremental Evaluation | WI-0003, WI-0006, WI-0007, WI-0010 |
+| ARX-006 | Deterministic Numeric, Canonicalization, and Hash Semantics | WI-0003, WI-0007, WI-0010 |
+| ARX-007 | URL Confidentiality, Browser History, and Concurrent Sessions | WI-0004, WI-0005, WI-0010 |
+| ARX-008 | Transactional Import, Idempotency, and Unknown External Effects | WI-0008, WI-0010 |
+| ARX-009 | No-PII Privacy Hardening and Anonymous Inference Protection | WI-0005, WI-0008, WI-0009, WI-0010 |
+| ARX-010 | Static Analysis of Survey Programs | WI-0003, WI-0006, WI-0007, WI-0010 |
+| ARX-011 | Adversarial, Differential, Model-Based, and Resource Testing | WI-0010 |
+| ARX-012 | Derivation Lineage, Reproducibility, and Trial Evidence | WI-0002, WI-0007, WI-0008, WI-0009, WI-0010 |
+
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
