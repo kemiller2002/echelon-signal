@@ -1,0 +1,370 @@
+name: Echelon Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: echelon-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: ROS Ordo Limen and repository verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+        continue-on-error: true
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+        continue-on-error: true
+
+      - name: Capture baseline
+        shell: bash
+        run: |
+          set -u
+          mkdir -p .ci-evidence
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "ref=${GITHUB_REF}"
+            echo "runner=${RUNNER_OS}/${RUNNER_ARCH}"
+            echo "node=$(node --version 2>/dev/null || echo unavailable)"
+            echo "npm=$(npm --version 2>/dev/null || echo unavailable)"
+            echo "dotnet=$(dotnet --version 2>/dev/null || echo unavailable)"
+          } | tee .ci-evidence/environment.txt
+
+          git status --short | tee .ci-evidence/git-status-before.txt
+          git ls-files | sort > .ci-evidence/tracked-files.txt
+
+          {
+            echo "=== .NET entry points ==="
+            find . -type f \( -name '*.sln' -o -name '*.slnx' -o -name '*.fsproj' -o -name '*.csproj' \) -not -path './.git/*' | sort
+            echo "=== Node manifests ==="
+            find . -type f \( -name 'package.json' -o -name 'package-lock.json' \) -not -path './.git/*' | sort
+            echo "=== Echelon manifests ==="
+            find . -maxdepth 3 -type f \( -path './.echelon/*' -o -name 'ros.json' -o -name 'sde.config.json' -o -name 'limen.config.json' \) | sort
+          } | tee .ci-evidence/entry-points.txt
+
+      - name: Repository whitespace check
+        shell: bash
+        run: |
+          set +e
+          git diff --check > .ci-evidence/git-diff-check.txt 2>&1
+          code=$?
+          echo "$code" > .ci-evidence/git-diff-check.exit
+          cat .ci-evidence/git-diff-check.txt
+          exit 0
+
+      - name: Legacy ROS snapshot validation
+        shell: bash
+        run: |
+          set +e
+          if [ ! -f ./ros ]; then
+            echo "UNAVAILABLE: ./ros launcher is absent" | tee .ci-evidence/legacy-ros.txt
+            echo "127" > .ci-evidence/legacy-ros-status.exit
+            echo "127" > .ci-evidence/legacy-ros-registry-check.exit
+            echo "127" > .ci-evidence/legacy-ros-registry-build.exit
+            echo "127" > .ci-evidence/legacy-ros-validate.exit
+            exit 0
+          fi
+
+          chmod +x ./ros
+
+          ./ros status > .ci-evidence/legacy-ros-status.txt 2>&1
+          echo "$?" > .ci-evidence/legacy-ros-status.exit
+          cat .ci-evidence/legacy-ros-status.txt
+
+          ./ros registry check > .ci-evidence/legacy-ros-registry-check.txt 2>&1
+          echo "$?" > .ci-evidence/legacy-ros-registry-check.exit
+          cat .ci-evidence/legacy-ros-registry-check.txt
+
+          ./ros registry build > .ci-evidence/legacy-ros-registry-build.txt 2>&1
+          echo "$?" > .ci-evidence/legacy-ros-registry-build.exit
+          cat .ci-evidence/legacy-ros-registry-build.txt
+
+          ./ros validate --json > .ci-evidence/legacy-ros-validate.json 2> .ci-evidence/legacy-ros-validate.stderr
+          echo "$?" > .ci-evidence/legacy-ros-validate.exit
+          cat .ci-evidence/legacy-ros-validate.stderr
+          cat .ci-evidence/legacy-ros-validate.json
+
+          exit 0
+
+      - name: Current ROS 3.1.0 verification and upgrade plan
+        shell: bash
+        run: |
+          set +e
+          PKG="@echelon-foundry/repository-operating-system@3.1.0"
+
+          npx --yes --package="$PKG" ros --version > .ci-evidence/ros-current-version.txt 2>&1
+          echo "$?" > .ci-evidence/ros-current-version.exit
+          cat .ci-evidence/ros-current-version.txt
+
+          npx --yes --package="$PKG" ros status --json > .ci-evidence/ros-current-status.json 2> .ci-evidence/ros-current-status.stderr
+          echo "$?" > .ci-evidence/ros-current-status.exit
+          cat .ci-evidence/ros-current-status.stderr
+          cat .ci-evidence/ros-current-status.json
+
+          npx --yes --package="$PKG" ros upgrade --dry-run --json > .ci-evidence/ros-upgrade-plan.json 2> .ci-evidence/ros-upgrade-plan.stderr
+          echo "$?" > .ci-evidence/ros-upgrade-plan.exit
+          cat .ci-evidence/ros-upgrade-plan.stderr
+          cat .ci-evidence/ros-upgrade-plan.json
+
+          npx --yes --package="$PKG" ros verify --strict --json > .ci-evidence/ros-current-verify.json 2> .ci-evidence/ros-current-verify.stderr
+          echo "$?" > .ci-evidence/ros-current-verify.exit
+          cat .ci-evidence/ros-current-verify.stderr
+          cat .ci-evidence/ros-current-verify.json
+
+          exit 0
+
+      - name: Ordo SDE 1.3.0 verification
+        shell: bash
+        run: |
+          set +e
+          PKG="@echelon-foundry/sde@1.3.0"
+
+          npx --yes --package="$PKG" sde --version > .ci-evidence/sde-version.txt 2>&1
+          echo "$?" > .ci-evidence/sde-version.exit
+          cat .ci-evidence/sde-version.txt
+
+          npx --yes --package="$PKG" sde status --json > .ci-evidence/sde-status.json 2> .ci-evidence/sde-status.stderr
+          echo "$?" > .ci-evidence/sde-status.exit
+          cat .ci-evidence/sde-status.stderr
+          cat .ci-evidence/sde-status.json
+
+          npx --yes --package="$PKG" sde init --dry-run --json > .ci-evidence/sde-init-plan.json 2> .ci-evidence/sde-init-plan.stderr
+          echo "$?" > .ci-evidence/sde-init-plan.exit
+          cat .ci-evidence/sde-init-plan.stderr
+          cat .ci-evidence/sde-init-plan.json
+
+          npx --yes --package="$PKG" sde verify --strict --json > .ci-evidence/sde-verify.json 2> .ci-evidence/sde-verify.stderr
+          echo "$?" > .ci-evidence/sde-verify.exit
+          cat .ci-evidence/sde-verify.stderr
+          cat .ci-evidence/sde-verify.json
+
+          exit 0
+
+      - name: Limen 0.6.1 verification
+        shell: bash
+        run: |
+          set +e
+          PKG="@echelon-foundry/typescript-wasm-kernel@0.6.1"
+
+          npx --yes --package="$PKG" limen --version > .ci-evidence/limen-version.txt 2>&1
+          echo "$?" > .ci-evidence/limen-version.exit
+          cat .ci-evidence/limen-version.txt
+
+          npx --yes --package="$PKG" limen status --json > .ci-evidence/limen-status.json 2> .ci-evidence/limen-status.stderr
+          echo "$?" > .ci-evidence/limen-status.exit
+          cat .ci-evidence/limen-status.stderr
+          cat .ci-evidence/limen-status.json
+
+          npx --yes --package="$PKG" limen init --dry-run --json > .ci-evidence/limen-init-plan.json 2> .ci-evidence/limen-init-plan.stderr
+          echo "$?" > .ci-evidence/limen-init-plan.exit
+          cat .ci-evidence/limen-init-plan.stderr
+          cat .ci-evidence/limen-init-plan.json
+
+          npx --yes --package="$PKG" limen verify --strict --json > .ci-evidence/limen-verify.json 2> .ci-evidence/limen-verify.stderr
+          echo "$?" > .ci-evidence/limen-verify.exit
+          cat .ci-evidence/limen-verify.stderr
+          cat .ci-evidence/limen-verify.json
+
+          exit 0
+
+      - name: Build and test .NET when present
+        shell: bash
+        run: |
+          set +e
+          mapfile -t solutions < <(find . -maxdepth 4 -type f \( -name '*.sln' -o -name '*.slnx' \) -not -path './.git/*' | sort)
+          mapfile -t projects < <(find . -maxdepth 5 -type f \( -name '*.fsproj' -o -name '*.csproj' \) -not -path './.git/*' | sort)
+
+          if [ "${#solutions[@]}" -eq 0 ] && [ "${#projects[@]}" -eq 0 ]; then
+            echo "UNAVAILABLE: no .NET solution/project exists yet" | tee .ci-evidence/dotnet.txt
+            echo "0" > .ci-evidence/dotnet-build.exit
+            echo "0" > .ci-evidence/dotnet-test.exit
+            echo "not-present" > .ci-evidence/dotnet.state
+            exit 0
+          fi
+
+          echo "present" > .ci-evidence/dotnet.state
+          target=""
+          if [ "${#solutions[@]}" -gt 0 ]; then
+            target="${solutions[0]}"
+          else
+            target="${projects[0]}"
+          fi
+          echo "target=$target" | tee .ci-evidence/dotnet-target.txt
+
+          dotnet build "$target" --configuration Release --nologo > .ci-evidence/dotnet-build.txt 2>&1
+          echo "$?" > .ci-evidence/dotnet-build.exit
+          cat .ci-evidence/dotnet-build.txt
+
+          dotnet test "$target" --configuration Release --no-build --nologo > .ci-evidence/dotnet-test.txt 2>&1
+          echo "$?" > .ci-evidence/dotnet-test.exit
+          cat .ci-evidence/dotnet-test.txt
+
+          exit 0
+
+      - name: Build and test Node application when present
+        shell: bash
+        run: |
+          set +e
+          if [ ! -f package.json ]; then
+            echo "UNAVAILABLE: no root package.json exists yet" | tee .ci-evidence/node-application.txt
+            echo "0" > .ci-evidence/node-install.exit
+            echo "0" > .ci-evidence/node-test.exit
+            echo "not-present" > .ci-evidence/node.state
+            exit 0
+          fi
+
+          echo "present" > .ci-evidence/node.state
+
+          if [ -f package-lock.json ]; then
+            npm ci > .ci-evidence/node-install.txt 2>&1
+          else
+            npm install --ignore-scripts > .ci-evidence/node-install.txt 2>&1
+          fi
+          echo "$?" > .ci-evidence/node-install.exit
+          cat .ci-evidence/node-install.txt
+
+          npm test > .ci-evidence/node-test.txt 2>&1
+          echo "$?" > .ci-evidence/node-test.exit
+          cat .ci-evidence/node-test.txt
+
+          exit 0
+
+      - name: Detect generated or unexpected repository drift
+        shell: bash
+        run: |
+          set +e
+          git diff --check > .ci-evidence/git-diff-check-after.txt 2>&1
+          echo "$?" > .ci-evidence/git-diff-check-after.exit
+
+          git status --short > .ci-evidence/git-status-after.txt
+          cat .ci-evidence/git-status-after.txt
+
+          if [ -s .ci-evidence/git-status-after.txt ]; then
+            echo "1" > .ci-evidence/git-clean.exit
+            git diff > .ci-evidence/repository-drift.diff
+          else
+            echo "0" > .ci-evidence/git-clean.exit
+            : > .ci-evidence/repository-drift.diff
+          fi
+
+          exit 0
+
+      - name: Write verification summary
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          read_code() {
+            if [ -f ".ci-evidence/$1.exit" ]; then
+              cat ".ci-evidence/$1.exit"
+            else
+              echo "missing"
+            fi
+          }
+
+          {
+            echo "# Echelon verification"
+            echo
+            echo "| Check | Exit/result |"
+            echo "|---|---:|"
+            echo "| git diff --check (before) | $(read_code git-diff-check) |"
+            echo "| legacy ROS status | $(read_code legacy-ros-status) |"
+            echo "| legacy ROS registry check | $(read_code legacy-ros-registry-check) |"
+            echo "| legacy ROS registry build | $(read_code legacy-ros-registry-build) |"
+            echo "| legacy ROS validate | $(read_code legacy-ros-validate) |"
+            echo "| ROS 3.1.0 version probe | $(read_code ros-current-version) |"
+            echo "| ROS 3.1.0 status | $(read_code ros-current-status) |"
+            echo "| ROS 3.1.0 upgrade dry-run | $(read_code ros-upgrade-plan) |"
+            echo "| ROS 3.1.0 verify strict | $(read_code ros-current-verify) |"
+            echo "| SDE 1.3.0 status | $(read_code sde-status) |"
+            echo "| SDE 1.3.0 init dry-run | $(read_code sde-init-plan) |"
+            echo "| SDE 1.3.0 verify strict | $(read_code sde-verify) |"
+            echo "| Limen 0.6.1 status | $(read_code limen-status) |"
+            echo "| Limen 0.6.1 init dry-run | $(read_code limen-init-plan) |"
+            echo "| Limen 0.6.1 verify strict | $(read_code limen-verify) |"
+            echo "| .NET build | $(read_code dotnet-build) |"
+            echo "| .NET test | $(read_code dotnet-test) |"
+            echo "| Node install | $(read_code node-install) |"
+            echo "| Node test | $(read_code node-test) |"
+            echo "| git diff --check (after) | $(read_code git-diff-check-after) |"
+            echo "| working tree clean after checks | $(read_code git-clean) |"
+            echo
+            echo "A missing framework installation is a failed required capability, not a pass."
+            echo "Absent application build entry points are recorded as not-present until implementation begins."
+          } | tee .ci-evidence/summary.md
+
+          cat .ci-evidence/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: echelon-verification-evidence
+          path: .ci-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce verification gate
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          failures=0
+
+          require_zero() {
+            name="$1"
+            file=".ci-evidence/$2.exit"
+            if [ ! -f "$file" ]; then
+              echo "::error::$name did not produce an exit record"
+              failures=$((failures + 1))
+              return
+            fi
+            code="$(cat "$file")"
+            if [ "$code" != "0" ]; then
+              echo "::error::$name failed with exit $code"
+              failures=$((failures + 1))
+            fi
+          }
+
+          require_zero "Repository whitespace check" "git-diff-check"
+          require_zero "Legacy ROS validation" "legacy-ros-validate"
+          require_zero "Current ROS strict verification" "ros-current-verify"
+          require_zero "SDE strict verification" "sde-verify"
+          require_zero "Limen strict verification" "limen-verify"
+          require_zero ".NET build when present" "dotnet-build"
+          require_zero ".NET tests when present" "dotnet-test"
+          require_zero "Node install when present" "node-install"
+          require_zero "Node tests when present" "node-test"
+          require_zero "Repository whitespace check after tooling" "git-diff-check-after"
+          require_zero "Clean working tree after verification" "git-clean"
+
+          if [ "$failures" -ne 0 ]; then
+            echo "::error::$failures required verification gate(s) failed. See the uploaded evidence artifact and step summary."
+            exit 1
+          fi
+
+          echo "All required verification gates passed."
