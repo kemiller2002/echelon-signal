@@ -1073,6 +1073,373 @@ The fixture MUST be reproducible from template + portable URL state and MUST exe
 
 ---
 
+
+# ARX-014 – Live Incremental Scoring and Typed Custom Scoring Expressions
+
+Echelon Signal MUST support scoring after every accepted answer transition and MUST allow the template to control whether that current score is displayed to the respondent.
+
+Incremental scoring is an evaluation capability.
+Incremental score display is a presentation policy.
+They MUST NOT be conflated.
+
+## Incremental Score Evaluation
+
+After every accepted answer change, the authoritative F# engine MUST update all scoring outputs whose dependency closure was affected by that answer.
+
+The implementation SHOULD use the publication-time execution plan and dependency graph defined by ARX-005 so that only affected score nodes, derived facts, applicability nodes, recommendation nodes, completion state, and dependent projections are recomputed.
+
+The following invariant applies after every accepted response transition:
+
+IncrementalScore(updatedState)
+=
+FullReferenceScore(updatedState)
+
+The score shown immediately after an answer MUST come from the same authoritative evaluation result that would be used if the survey were finalized at that state under the applicable completion policy.
+
+The browser, Limen kernel, HTML, and TypeScript MUST NOT independently calculate, estimate, interpolate, or cache a competing score.
+
+## Score Display Policy
+
+A published template MUST be able to configure score visibility.
+
+Recommended shape:
+
+ScoreDisplayPolicy
+    Hidden
+    AfterEachResponse
+    AfterPageAdvance
+    AfterSectionComplete
+    FinalOnly
+
+AfterEachResponse is the explicit incremental-display option requested by this requirement.
+
+The policy MAY be configured separately for:
+
+- Overall survey score
+- Section/domain scores
+- Category/maturity result
+- Profile dimensions
+- Progress/completeness indicators
+
+A template MAY expose some result components incrementally while keeping others hidden until completion.
+
+Score visibility MUST be domain projection state emitted by F#.
+The browser MUST render the projected score but MUST NOT decide whether a score is allowed to be visible.
+
+Forward-only navigation, timers, banking, and branching MUST NOT create alternate score-visibility rules outside this policy.
+
+## Provisional Versus Final Results
+
+A score displayed before legal survey completion MUST be explicitly represented as provisional unless the scoring model can prove that no unanswered or future-applicable content can change it.
+
+The result model SHOULD distinguish:
+
+ScoreStatus
+    Provisional
+    Final
+    Unavailable
+
+A provisional score SHOULD also expose non-PII interpretation metadata where relevant, such as:
+
+- AnsweredScorableCount
+- ApplicableScorableCountKnown
+- RequiredRemainingCount
+- CompletenessRatio
+- ScoreBasis
+- Range or uncertainty metadata when the scoring model supports it
+
+The UI MUST NOT label a provisional result as final.
+
+## Partial-Response Score Basis
+
+Every scoring definition that can be displayed incrementally MUST define how unanswered and not-yet-applicable content affects the displayed result.
+
+Recommended ScoreBasis options include:
+
+AnsweredOnly
+    Compute against only currently answered applicable scoring inputs.
+
+FixedPublishedScale
+    Compute against the full published scoring scale, with unanswered values contributing no earned points but remaining explicitly incomplete.
+
+CurrentlyApplicableScale
+    Compute against currently known applicable scoring inputs.
+
+CustomExpressionDefined
+    The typed scoring expression explicitly determines partial-state behavior.
+
+The chosen basis is semantic template meaning and therefore participates in SemanticHash.
+
+The engine MUST distinguish:
+
+- Unanswered
+- NotApplicable
+- DontKnow
+- NotSelectedByBank
+- NotYetApplicable
+- TimedOut without answer where supported
+
+These states MUST NOT collapse into the same numeric value unless the scoring definition explicitly says they do.
+
+If an incremental score cannot be computed meaningfully with the information currently available, the engine MUST return Unavailable or an equivalent typed result rather than inventing a number.
+
+## Live Score Projection
+
+When ScoreDisplayPolicy permits display, the F# projection SHOULD expose a compact live-score view model containing only authorized presentation data.
+
+Examples:
+
+- Current numeric score
+- Maximum/minimum or scale when meaningful
+- Percentage when defined
+- Current category/maturity band
+- Section/domain score summaries
+- Provisional/final status
+- Completeness metadata
+- Stable explanation/reason references when enabled
+
+The projection MUST NOT expose hidden future answers, hidden answer keys, unpublished bank candidates, scoring internals that undermine the survey design, or any PII.
+
+A template MAY explicitly suppress detailed scoring explanations during survey execution while still showing the aggregate live score.
+
+## Typed Custom Scoring Expression Trees
+
+Custom scoring MUST be supported through the existing constrained typed scoring expression-tree model.
+
+"Expression tree" in Echelon Signal means a versioned, serializable, typed scoring AST owned by the survey schema.
+It MUST NOT mean persisted executable delegates, arbitrary .NET code, arbitrary F# quotations, raw C# expressions, JavaScript, reflection, or unrestricted System.Linq.Expressions payloads.
+
+The typed scoring expression tree SHOULD support a deliberately constrained vocabulary such as:
+
+Literals:
+- Decimal
+- Integer
+- Boolean
+- Category/token constants
+
+References:
+- Question answer
+- Question score
+- Section score
+- Derived fact
+- Bank/selection metadata that is explicitly scoring-safe
+- Current completeness metadata where permitted
+
+Numeric operators:
+- Add
+- Subtract
+- Multiply
+- Divide with explicit zero policy
+- Min
+- Max
+- Clamp
+- Abs
+
+Aggregates:
+- Sum
+- Average
+- WeightedAverage
+- Minimum
+- Maximum
+- Count
+- CountWhere
+
+Logic:
+- Equal
+- NotEqual
+- GreaterThan
+- GreaterThanOrEqual
+- LessThan
+- LessThanOrEqual
+- And
+- Or
+- Not
+
+Control:
+- IfThenElse
+- Coalesce/Default using explicit special-state policy
+- MapRange
+- Normalize
+- Threshold/category lookup
+
+Domain scoring primitives MAY be added as named, versioned built-ins where they provide strong semantics and reduce expression complexity.
+
+Every operator MUST have:
+
+- Stable operator identity
+- Version
+- Input type contract
+- Output type contract
+- Special-answer-state behavior
+- Overflow/division/error behavior
+- Deterministic evaluation semantics
+- Resource-cost accounting
+
+## Compile, Validate, Then Interpret
+
+At publication time, a custom scoring expression tree MUST be:
+
+1. Parsed/deserialized as data.
+2. Schema validated.
+3. Type checked.
+4. Reference resolved.
+5. Phase/dependency validated.
+6. Checked for cycles.
+7. Checked against resource limits.
+8. Checked for deterministic operator support.
+9. Added to the execution dependency graph.
+10. Assigned stable node identifiers.
+11. Included in the execution plan and hashes.
+
+Invalid custom expressions MUST prevent publication.
+
+At runtime, the F# engine evaluates the validated plan.
+Runtime MUST NOT dynamically compile arbitrary user-provided executable code.
+
+The optimized evaluator MAY transform the validated expression tree into an internal efficient representation, but the transformation MUST preserve reference-evaluator semantics.
+
+## Custom Expressions and Incremental Evaluation
+
+Every custom expression node MUST declare or mechanically expose its dependencies.
+
+When an answer changes, the engine MUST invalidate only custom-expression nodes reachable from the changed dependency plus their downstream consumers.
+
+A custom expression MAY contribute to:
+
+- Question score
+- Section score
+- Overall survey score
+- Derived scoring fact
+- Category/maturity result
+- Recommendation trigger where the existing phase model permits it
+
+Custom expressions MUST obey the same phase-ordering rules as built-in scorers.
+
+A custom scoring expression MUST NOT perform:
+
+- I/O
+- HTTP
+- Browser access
+- Storage access
+- Clock access
+- Entropy/random access
+- Logging of answer content
+- Mutation
+- Thread/scheduling-dependent behavior
+- Reflection
+- Dynamic assembly loading
+- Arbitrary method invocation
+
+The same immutable response state MUST always produce the same custom-expression result.
+
+## Built-In Versus Custom Scoring
+
+Simple and common scoring SHOULD continue to use precompiled/versioned built-in scorers.
+
+Examples include:
+
+- Direct numeric
+- Reverse scoring
+- Binary
+- Weighted
+- Mapped
+- Multi-select
+- Sum/average
+- Normalized
+- Weakest-link
+- Maturity/gated scoring
+
+Custom expression trees are for cases where composition of the built-ins is insufficient.
+
+The authoring system SHOULD prefer a named built-in when it is semantically equivalent because built-ins are easier to validate, optimize, explain, and compare.
+
+Both built-in and custom scorers MUST emit the same canonical result shapes and participate in the same explanation, lineage, hashing, incremental invalidation, and differential-test infrastructure.
+
+## Expression Versioning and Compatibility
+
+The template MUST identify the scoring-expression language version.
+
+Add or retain an explicit concept equivalent to:
+
+ScoringExpressionLanguageVersion
+
+Published templates remain bound to the operator semantics of that version.
+
+Adding or changing operator semantics requires a new compatible expression-language version rather than silently changing old results.
+
+A result lineage record MUST identify the scoring-expression language version used to produce it.
+
+## Authoring and Preview
+
+The authoring experience SHOULD provide:
+
+- Visual or structured expression editing
+- Operator/type guidance
+- Reference autocomplete from legal scoring dependencies
+- Immediate validation feedback
+- Dependency visualization
+- Reference-evaluator preview
+- Fixed fixture evaluation
+- Live incremental-score preview
+- Explanation trace
+- Estimated expression cost
+- Static min/max bounds where derivable
+- Warning when a custom expression can be replaced by a standard built-in
+
+Authoring MUST NOT require authors to write or upload executable code.
+
+## Required Tests
+
+At minimum verify:
+
+- AfterEachResponse updates after every accepted answer.
+- Hidden and FinalOnly policies never leak live scores.
+- Provisional score status becomes Final only through a legal finalization/completion transition.
+- Incremental result equals full reference recomputation after every answer in generated sequences.
+- Editing an answer invalidates only the required score dependency closure.
+- Built-in and semantically equivalent custom expressions return the same result.
+- Direct F# evaluation equals serialized F# WASM evaluation.
+- Custom expression type errors block publication.
+- Illegal phase dependencies block publication.
+- Cyclic expression dependencies block publication.
+- Unsupported operators fail explicitly.
+- Expression depth/node/resource limits fail explicitly.
+- Division/overflow/special-answer policies are deterministic.
+- Banking selection changes only the score inputs selected by the bank contract.
+- Forward-only locking cannot alter already locked inputs.
+- Timer expiry produces the same score transition semantics as the equivalent legal domain transition.
+- Resume from URL reconstructs the same live incremental score.
+- Final score equals the last provisional score when finalization itself does not alter score-bearing state.
+- Explanation output is derived from the same evaluated expression graph as the displayed score.
+
+## Stress-Trial Scenario – Live Custom Composite Score
+
+Create at least one published stress fixture where:
+
+- Several standard scorers feed section results.
+- A typed custom expression combines those section results.
+- One branch changes applicability and therefore the custom score dependency closure.
+- Question banking changes which legal inputs exist.
+- A timer can lock one scoring scope.
+- ScoreDisplayPolicy = AfterEachResponse.
+- The respondent sees overall and selected section scores update after every accepted response.
+- Every displayed score is marked provisional until completion.
+- The final result is reproduced after URL reload and again during administrator import.
+
+The fixture MUST prove equivalence among:
+
+Reference full evaluator
+=
+Optimized full evaluator
+=
+Incremental evaluator
+=
+Serialized F# WASM execution
+
+for both built-in and custom expression-tree scoring.
+
+---
+
 # Cross-Cutting Acceptance Invariants
 
 1. Echelon Signal processes no PII.
@@ -1097,6 +1464,11 @@ The fixture MUST be reproducible from template + portable URL state and MUST exe
 20. Every formal result/report can be traced to immutable inputs and versioned interpretation logic.
 21. Explanations observe the authoritative evaluation path.
 22. Framework/test gaps discovered by the project become durable evidence, not undocumented workarounds.
+23. Incremental score display uses the same authoritative F# evaluation result as final scoring.
+24. A displayed incomplete-survey score is explicitly provisional unless proven final.
+25. Custom scoring expressions are typed, serializable, deterministic data and never arbitrary executable code.
+26. Built-in and custom scoring participate in the same dependency graph, lineage, explanation, and differential verification.
+27. Incremental scoring after every accepted answer is observationally equivalent to full reference recomputation.
 
 ---
 
@@ -1207,5 +1579,6 @@ This extension was added after the original 2026-08-31 twelve-file migration. It
 | ARX-011 | Adversarial, Differential, Model-Based, and Resource Testing | WI-0010 |
 | ARX-012 | Derivation Lineage, Reproducibility, and Trial Evidence | WI-0002, WI-0007, WI-0008, WI-0009, WI-0010 |
 | ARX-013 | Timers, Forward-Only Progression, Pagination, and Content Banking | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
+| ARX-014 | Live Incremental Scoring and Typed Custom Scoring Expressions | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
 
 Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
