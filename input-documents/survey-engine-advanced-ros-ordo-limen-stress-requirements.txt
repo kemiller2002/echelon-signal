@@ -1449,7 +1449,7 @@ At minimum the implementation MUST reference:
 
 - `EchelonFoundry.Aegis.Core`
 
-Where Signal directly calls GitHub, it SHOULD use:
+Where Signal directly calls GitHub, it MUST use:
 
 - `EchelonFoundry.Aegis.Integration.GitHub`
 
