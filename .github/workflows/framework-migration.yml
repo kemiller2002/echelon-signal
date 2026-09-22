@@ -1,0 +1,123 @@
+name: Framework Migration
+
+on:
+  push:
+    branches:
+      - migration/current-ros-sde-limen
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: framework-migration-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Configure commit identity
+        run: |
+          git config user.name "echelon-framework-migration"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Upgrade ROS to 3.1.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/framework-migration
+          PKG="@echelon-foundry/repository-operating-system@3.1.4"
+
+          npx --yes --package="$PKG" ros --version | tee /tmp/framework-migration/ros-version.txt
+          npx --yes --package="$PKG" ros status --json | tee /tmp/framework-migration/ros-status-before.json
+          npx --yes --package="$PKG" ros upgrade --dry-run --json | tee /tmp/framework-migration/ros-upgrade-plan.json
+          npx --yes --package="$PKG" ros upgrade --json | tee /tmp/framework-migration/ros-upgrade.json
+          npx --yes --package="$PKG" ros verify --strict --json | tee /tmp/framework-migration/ros-verify.json
+
+      - name: Install Ordo SDE 1.3.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG="@echelon-foundry/sde@1.3.0"
+
+          npx --yes --package="$PKG" sde --version | tee /tmp/framework-migration/sde-version.txt
+          npx --yes --package="$PKG" sde init --dry-run --json | tee /tmp/framework-migration/sde-init-plan.json
+          npx --yes --package="$PKG" sde init --json | tee /tmp/framework-migration/sde-init.json
+          npx --yes --package="$PKG" sde verify --strict --json | tee /tmp/framework-migration/sde-verify.json
+
+      - name: Install Limen 0.6.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG="@echelon-foundry/typescript-wasm-kernel@0.6.2"
+
+          npx --yes --package="$PKG" limen --version | tee /tmp/framework-migration/limen-version.txt
+          npx --yes --package="$PKG" limen init --dry-run --json | tee /tmp/framework-migration/limen-init-plan.json
+          npx --yes --package="$PKG" limen init --json | tee /tmp/framework-migration/limen-init.json
+          npx --yes --package="$PKG" limen verify --strict --json | tee /tmp/framework-migration/limen-verify.json
+
+      - name: Update permanent verification pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's/ROS 3\.1\.0/ROS 3.1.4/g; s/repository-operating-system@3\.1\.0/repository-operating-system@3.1.4/g; s/Limen 0\.6\.1/Limen 0.6.2/g; s/typescript-wasm-kernel@0\.6\.1/typescript-wasm-kernel@0.6.2/g' .github/workflows/echelon-verification.yml
+
+      - name: Rebuild and validate ROS projections
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./ros registry build | tee /tmp/framework-migration/ros-registry-build.txt
+          ./ros registry check | tee /tmp/framework-migration/ros-registry-check.txt
+          ./ros validate --json | tee /tmp/framework-migration/ros-validate.json
+          ./ros verify --strict --json | tee /tmp/framework-migration/ros-final-verify.json
+
+      - name: Verify repository diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git status --short | tee /tmp/framework-migration/git-status.txt
+          git diff --stat | tee /tmp/framework-migration/git-diff-stat.txt
+
+      - name: Upload migration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-migration-evidence
+          path: /tmp/framework-migration/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commit generated framework state
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # The migration workflow is scaffolding for this one migration only.
+          # Remove it before committing so it has no net diff against main.
+          rm -f .github/workflows/framework-migration.yml
+
+          git add -A
+          git diff --cached --check
+
+          if git diff --cached --quiet; then
+            echo "No framework changes to commit."
+            exit 0
+          fi
+
+          git commit -m "WI-0010: migrate to current ROS SDE and Limen"
+          git push origin HEAD:${{ github.ref_name }}
