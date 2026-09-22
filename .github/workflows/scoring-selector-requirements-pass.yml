@@ -1,0 +1,58 @@
+name: Scoring Selector Requirements Pass
+
+on:
+  push:
+    branches:
+      - requirements/scoring-selector-completeness
+
+permissions:
+  contents: write
+
+jobs:
+  start:
+    if: "${{ github.event.head_commit.message != 'SIGNAL-SCORING-SELECTORS-2026-09-22: start requirements pass' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Start attributed ROS work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "echelon-requirements-pass"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          ./ros add "Complete scoring and selector requirements catalog" \
+            --id SIGNAL-SCORING-SELECTORS-2026-09-22 \
+            --tag requirements \
+            --tag scoring \
+            --tag selectors \
+            --tag web-components \
+            --priority high \
+            --description "Audit and complete basic/moderate scoring methods and closed-ended selector/question contracts, with explicit web-component handoff and no-PII constraints." \
+            --source agent-execution \
+            --source-reference scoring-selector-completeness-2026-09-22 \
+            --occurred-at 2026-09-22T13:16:00.000Z
+
+          ./ros work backlog-transition \
+            --id SIGNAL-SCORING-SELECTORS-2026-09-22 \
+            --action ready \
+            --occurred-at 2026-09-22T13:16:01.000Z
+
+          ./ros work start \
+            --id SIGNAL-SCORING-SELECTORS-2026-09-22 \
+            --type documentation \
+            --occurred-at 2026-09-22T13:16:02.000Z
+
+          ./ros work context SIGNAL-SCORING-SELECTORS-2026-09-22
+
+          git add .ros
+          git commit -m "SIGNAL-SCORING-SELECTORS-2026-09-22: start requirements pass"
+          git push origin HEAD:${{ github.ref_name }}
