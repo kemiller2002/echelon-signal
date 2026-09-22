@@ -30,7 +30,7 @@ No file under `input-documents/` is excluded. The original 12-file corpus was re
 | `input-documents/survey-group-identity-anonymous-submissions.txt` | requirements-definition completed | ID-001, ID-002, ID-003, ID-004 | WI-0004, WI-0005, WI-0008, WI-0009, WI-0010 |
 | `input-documents/survey-instance-template-versioning-requirements.txt` | requirements-definition completed | VER-001, VER-002, VER-003, VER-004, VER-005, VER-006, VER-007 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007 |
 | `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt` | requirements-definition completed | ARX-001 through ARX-014 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
-| `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt` | authoritative requirements captured; ROS migration pending | ADM-001 through ADM-040 | pending reconciliation |
+| `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt` | authoritative requirements captured; ROS migration pending | ADM-001 through ADM-054 | pending reconciliation |
 
 ## Work-item decomposition
 
@@ -158,7 +158,7 @@ At extension review time, the repository's installed ROS configuration identifie
 
 ## 2026-09-22 administrator console / storage / analytics / visualization extension
 
-The fourteenth authoritative source, `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt`, defines ADM-001 through ADM-040.
+The fourteenth authoritative source, `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt`, defines ADM-001 through ADM-054.
 
 It extends the existing administrator persistence and reporting contracts with:
 
@@ -183,7 +183,19 @@ It extends the existing administrator persistence and reporting contracts with:
 - read-only/degraded operation,
 - explicit schema evolution,
 - Limen/F# authority boundaries for the administrator application,
-- adversarial/property/model-based testing and explicit resource limits.
+- adversarial/property/model-based testing and explicit resource limits,
+- change-impact preview and obligation planning,
+- sandbox/simulation mode and deterministic synthetic/adversarial data generation,
+- a shared storage-provider conformance suite,
+- explicit retention/archive/deletion lifecycle semantics,
+- treating durable repository content as untrusted input,
+- portable configuration packages and versioned policy packs,
+- template-upgrade impact analysis,
+- report/visual regression verification,
+- semantic definition/state diffing,
+- transition-based undo, bookmarkable safe analysis views, and capability explanations,
+- operational/storage health diagnostics and localization preview,
+- an end-to-end derived-state invalidation graph from accepted submission through visualization and snapshot eligibility.
 
 ROS work-item migration is intentionally pending. Existing WI-0008, WI-0009, WI-0010 and related domain/UI work items are likely impacted, but no completed mapping is claimed until their detailed work-item records are reconciled.
 
@@ -203,7 +215,7 @@ ROS work-item migration is intentionally pending. Existing WI-0008, WI-0009, WI-
 - Relevant source files discovered: 14
 - Relevant source files reviewed completely: 14
 - Relevant source files excluded: 0
-- Requirement groups recorded: 126
+- Requirement groups recorded: 140
 - New delivery work items: 9
 - Source appendices added: 12
 - Sources fully migrated to ROS work items: 13
