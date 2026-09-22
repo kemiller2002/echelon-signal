@@ -1,0 +1,1011 @@
+# Echelon Signal - Scoring and Closed-Ended Selector Completeness Requirements
+
+Status: Authoritative requirements extension
+Added: 2026-09-22
+Scope: Basic and moderate scoring methods, closed-ended answer/selector types, authoring validation, encoding, accessibility, and web-component handoff
+Privacy boundary: No PII. No open-ended personal-data collection is introduced by this extension.
+
+## Purpose
+
+Echelon Signal already contains a strong scoring algebra and a compact answer model. This extension closes the ordinary-survey gaps so authors do not need custom expressions for common scoring or common closed-ended question styles.
+
+The design continues to separate:
+
+1. answer semantics,
+2. selector/presentation,
+3. validation,
+4. scoring,
+5. aggregation,
+6. interpretation,
+7. reporting.
+
+A visual selector MUST NOT imply a scoring algorithm. A scoring algorithm MUST NOT require a particular visual selector when the underlying answer semantics are compatible.
+
+This extension is additive to the existing CAN, ANS, ALG, AST, AUT, ARX, and ADM requirement groups.
+
+---
+
+# SCS-001 - Completeness Boundary and No-PII Rule
+
+Signal MUST provide built-in or parameterized support for ordinary basic and moderate scoring so that custom expression trees are an escape hatch rather than the default authoring path.
+
+Signal MUST provide a complete closed-ended selector catalog sufficient for ordinary surveys, assessments, quizzes, diagnostics, prioritization, maturity models, satisfaction studies, and structured preference collection.
+
+This completeness pass MUST NOT add:
+
+- unrestricted text entry,
+- comments,
+- names,
+- email addresses,
+- phone numbers,
+- postal addresses,
+- employee/customer identifiers,
+- signatures,
+- file uploads,
+- geolocation capture,
+- contact forms,
+- arbitrary HTML form fields intended to collect identifying data.
+
+A future bounded non-PII text capability would require a separate explicit requirement and privacy/URL-budget decision. It is not implied by this extension.
+
+Date/time entry, signatures, file uploads, free text, image uploads, and location capture are not part of the selector catalog defined here.
+
+---
+
+# SCS-002 - Required Basic Built-In Scoring Catalog
+
+The engine MUST expose stable named built-in scorers or stable parameterized equivalents for the following basic scoring patterns.
+
+## Non-scored and direct scoring
+
+- Unscored
+- DirectValue / IdentityScore
+- BooleanMap
+- MappedChoice
+- ProgressStateMap for states such as No / InProgress / Yes
+
+DirectValue means the stored numeric/ordinal value is the score after declared scale interpretation.
+
+BooleanMap and MappedChoice MUST allow explicit values rather than assuming Yes=1 or the first choice=0.
+
+ProgressStateMap MUST support explicitly configured values such as No=0, InProgress=0.5, Yes=1 or any other deterministic declared mapping.
+
+## Additive and count scoring
+
+- RawSum
+- CountAnswered
+- CountSelected
+- CountMatching
+- WeightedSum
+
+CountAnswered MUST count Answered values only unless a different special-state policy is explicitly configured.
+
+CountSelected applies to multi-choice answers.
+
+CountMatching counts conditions, choices, or answer-key matches that satisfy a declared predicate.
+
+## Average and central-value scoring
+
+- Mean / ArithmeticMean
+- WeightedMean
+- Median
+- Min
+- Max
+
+Median MUST define deterministic behavior for even cardinality and numeric precision.
+
+Min and Max MUST preserve explicit scoring direction rather than assuming that the highest numeric value is the best result.
+
+## Percentage and normalization scoring
+
+- PercentageOfMaximum
+- PercentageOfMinimumMaximumRange
+- PercentCorrect
+- LinearNormalize
+- LinearTransform
+
+PercentageOfMaximum MUST define the achievable denominator from applicable scored items, not from hidden or non-applicable items unless explicitly configured otherwise.
+
+PercentageOfMinimumMaximumRange MUST support scales whose minimum is not zero.
+
+LinearNormalize MUST support deterministic conversion between declared source and target ranges.
+
+LinearTransform MUST support the ordinary affine form:
+
+    output = (input * multiplier) + offset
+
+without requiring a custom expression tree.
+
+## Reversal, bounds, interpretation, and classification
+
+- Reverse
+- Clamp
+- Floor
+- Ceiling
+- Threshold / Banding
+- PassFail
+- SectionAggregate
+- DomainAggregate
+- Profile
+- CompositeResult
+
+Reverse MUST use the declared source scale bounds or explicit mapping.
+
+Clamp, Floor, and Ceiling MUST distinguish numeric transformation from interpretation rules that merely label a result.
+
+Threshold ranges MUST be validated for overlap, gaps when total coverage is required, inclusivity/exclusivity, and deterministic boundary behavior.
+
+PassFail MUST support both numeric threshold and boolean/rule-based pass conditions.
+
+SectionAggregate and DomainAggregate MUST be first-class built-ins rather than requiring custom code.
+
+Profile MUST support multiple independent dimensions without requiring a single overall score.
+
+CompositeResult MUST support multiple named result components, for example score + band + coverage + confidence.
+
+---
+
+# SCS-003 - Required Moderate Built-In Scoring Catalog
+
+The following moderate scoring methods MUST be representable without arbitrary custom executable code.
+
+## Robust and bounded aggregation
+
+- Mode as a categorical aggregate result
+- TrimmedMean with explicit trim percentage/count
+- BestOf / WorstOf
+- TopN
+- BottomN
+- CappedSum
+- BalancedDomain
+- WeightedDomain
+
+Mode MUST define tie behavior as an explicit multi-value/tie result or declared deterministic tie policy; the engine MUST NOT silently choose one tied value.
+
+TrimmedMean MUST reject trim settings that would remove all observations.
+
+BalancedDomain MUST give each included domain equal influence independent of item count.
+
+## Difference, ratio, index, and target scoring
+
+- DifferenceScore
+- AbsoluteDifference
+- RatioIndex
+- CompositeIndex
+- DistanceFromTarget
+- ProximityToTarget
+
+DifferenceScore MUST support A-B with declared direction.
+
+RatioIndex MUST define zero-denominator behavior explicitly and MUST never emit NaN or Infinity.
+
+CompositeIndex MUST support a deterministic weighted composition of already typed numeric component scores.
+
+DistanceFromTarget MUST support absolute distance and signed distance as distinct modes.
+
+ProximityToTarget MUST convert distance to an explicitly declared bounded score and MUST define behavior outside the target range.
+
+## Bonus and penalty scoring
+
+- BonusPoints
+- PenaltyPoints
+- BonusPenalty
+- NegativeMarking
+
+Bonus and penalty rules MUST be explicit contributions in the explanation trace.
+
+NegativeMarking MUST support correct/incorrect/blank or equivalent answer-state policies and MUST define whether the result may fall below zero.
+
+## Ordinal favorable/unfavorable scoring
+
+- TopBox
+- TopKBox
+- BottomBox
+- BottomKBox
+- FavorableRate
+- UnfavorableRate
+- NetFavorable
+
+TopKBox and BottomKBox MUST allow K to be configured and validated against the ordinal cardinality.
+
+FavorableRate and UnfavorableRate MUST use explicit category membership or cutoff rules.
+
+NetFavorable MUST be defined as a declared favorable rate minus declared unfavorable rate, preserving the neutral middle rather than forcing it into either side.
+
+## Net Promoter Score
+
+A named NPS scorer SHOULD be available because 0-10 recommendation scales are common and the calculation is stable.
+
+Default standard NPS classification:
+
+- 0 through 6 = Detractor
+- 7 through 8 = Passive
+- 9 through 10 = Promoter
+- score = percent Promoter - percent Detractor
+
+If authors are allowed to change the classification thresholds, the result MUST no longer be labeled standard NPS unless the standard thresholds remain intact.
+
+NPS is an aggregate/group metric. A single respondent may be classified as Detractor, Passive, or Promoter, but a single response MUST NOT be presented as an NPS value.
+
+---
+
+# SCS-004 - Quiz, Answer-Key, and Multi-Select Credit Scoring
+
+Signal MUST support ordinary assessment/quiz scoring without custom expressions.
+
+Required modes:
+
+- CorrectIncorrect
+- CorrectIncorrectBlank
+- ExactSetMatch
+- AnyCorrect
+- AllRequired
+- NoneForbidden
+- PartialCredit
+- PartialCreditWithPenalty
+- OptionWeighted
+- PercentageCorrect
+
+## Single-choice correctness
+
+A single-choice question MAY declare one or more scoring-key rules depending on its semantics.
+
+The common one-correct-answer case MUST be a built-in configuration.
+
+Incorrect and unanswered contributions MUST be independently configurable.
+
+## Multi-choice exact match
+
+ExactSetMatch MUST award credit only when the selected option set exactly equals the declared correct set after special-state handling.
+
+## Multi-choice partial credit
+
+PartialCredit MUST support at least:
+
+- points per correct selected option,
+- optional deduction per incorrect selected option,
+- optional floor,
+- optional cap,
+- optional normalization to a target range.
+
+The engine MUST prevent accidental positive credit for selecting every option when incorrect selections are meant to matter.
+
+## Any/all/none conditions
+
+AnyCorrect awards when at least one declared acceptable option is selected.
+
+AllRequired awards when all declared required options are selected, with explicit policy for extra selections.
+
+NoneForbidden evaluates whether no forbidden option is selected.
+
+## Explainability
+
+The result explanation MUST identify:
+
+- selected options,
+- correct/credited options,
+- incorrect/penalized options,
+- raw credit,
+- raw penalty,
+- caps/floors,
+- final contribution.
+
+Answer keys and scoring weights MUST remain part of the immutable template semantics.
+
+---
+
+# SCS-005 - Likert, Rating, and Common Survey Metric Presets
+
+Named authoring presets SHOULD exist for common semantics while compiling to the generic ordinal/mapped scoring primitives.
+
+Required scoring presets or equivalent authoring recipes:
+
+- LikertSum
+- LikertMean
+- WeightedLikert
+- FavorablePercent
+- TopBoxPercent
+- Top2BoxPercent
+- BottomBoxPercent
+- Bottom2BoxPercent
+- NetFavorable
+- NPS
+- CSAT-style favorable percentage
+- EffortMean
+- ConfidenceMean
+- MaturityMean
+- MaturityStage when stage gates are used
+
+These names are authoring conveniences. The canonical scoring model SHOULD resolve them to explicit primitives/parameters before or during publication so the runtime semantics remain inspectable.
+
+Top-box and favorable metrics MUST not assume that larger option index always means more favorable. Favorability MUST follow declared option semantics/direction.
+
+A reversed ordinal item MUST reverse before aggregate metrics are calculated.
+
+---
+
+# SCS-006 - Ranking, Allocation, Pairwise, and Best-Worst Scoring
+
+Ranking MUST support:
+
+- RankPoints
+- BordaCount
+- InverseRankPoints
+- TopKRankCredit
+- PositionWeightedRank
+
+BordaCount MUST define points from rank position and item count deterministically.
+
+TopKRankCredit MUST define whether positions within the top K receive equal or position-dependent credit.
+
+Allocation / constant-sum answers MUST support:
+
+- DirectAllocation
+- NormalizedAllocation
+- WeightedAllocation
+- AllocationSharePercent
+- DistanceFromTargetAllocation
+
+NormalizedAllocation MUST define the denominator and zero-total behavior.
+
+Pairwise comparison MUST support:
+
+- WinCount
+- WeightedWinCount
+- WinLossDifference
+
+Best-Worst / MaxDiff-style closed-ended questions MUST support at minimum:
+
+- BestCount
+- WorstCount
+- BestMinusWorst
+- normalized best-minus-worst when denominator is explicitly defined.
+
+More sophisticated statistical preference models may be added later, but basic count/difference scoring MUST not require a custom expression.
+
+---
+
+# SCS-007 - Benchmark and Standardized Moderate Scoring
+
+Where an immutable reference distribution is available, Signal SHOULD support moderate norm-referenced transformations without requiring custom expressions.
+
+Supported forms:
+
+- PercentileRank
+- ZScore
+- TScore
+
+The benchmark/reference distribution MUST be an immutable, versioned dependency identified by stable content identity/hash.
+
+A score MUST record which benchmark version produced it.
+
+PercentileRank MUST declare tie handling and interpolation policy.
+
+ZScore MUST define zero-standard-deviation behavior explicitly.
+
+TScore SHOULD use a declared linear transformation of ZScore, with defaults only when the template explicitly selects the conventional transform.
+
+Norm-referenced scores MUST NOT be silently mixed with criterion-referenced scores.
+
+If no valid benchmark is available, the result MUST be unavailable/unknown rather than fabricated.
+
+Advanced psychometric models such as IRT/Rasch latent-trait estimation are outside this basic/moderate completeness pass and require separate requirements.
+
+---
+
+# SCS-008 - Missing, Special-State, Denominator, and Rounding Semantics
+
+Every scoring strategy MUST declare or inherit an explicit policy for:
+
+- Unanswered,
+- NotApplicable,
+- DontKnow,
+- excluded-by-flow,
+- invalid answer state,
+- zero numeric answer,
+- denominator inclusion,
+- minimum coverage,
+- provisional versus final score.
+
+Special states MUST NOT silently become numeric zero.
+
+Supported ordinary missing/special-state policies SHOULD include:
+
+- ExcludeFromAggregate
+- ExcludeFromDenominator
+- CountAsZero when explicitly justified
+- BlockScore
+- ReturnUnavailable
+- PreserveSeparateCoverageMetric
+
+Imputation is NOT a default scoring behavior. If statistical imputation is ever introduced, it requires separate explicit requirements and provenance.
+
+Rounding MUST occur at declared output/interpretation boundaries, not repeatedly inside an aggregate unless a named scoring standard explicitly requires intermediate rounding.
+
+Every scorer MUST use the deterministic numeric rules in ARX-006.
+
+Incremental evaluation MUST produce the same externally observable result as full recomputation.
+
+---
+
+# SCS-009 - Canonical Closed-Ended Answer Primitive Catalog
+
+The canonical answer model MUST continue to avoid selector-type proliferation.
+
+Required primitive answer semantics:
+
+Existing:
+- Boolean
+- Ordinal(N)
+- SingleChoice(N)
+- MultiChoice(N)
+- BoundedInteger(min,max,step)
+- Ranking
+- Allocation
+
+Additions:
+- BoundedDecimal(min,max,step,precision)
+- BoundedRange(min,max,step,precision)
+
+BoundedDecimal MUST be quantized to an explicit step/precision so cardinality is finite and URL encoding is deterministic.
+
+BoundedRange represents an ordered lower/upper pair over the same finite bounded scale. Validation MUST enforce lower <= upper unless the template explicitly defines a different relation.
+
+Matrix/grid questions are composite repeated-answer structures, not a new scalar primitive.
+
+Best-Worst is a constrained multi-selection composite, not arbitrary free-form data.
+
+All primitive cardinalities MUST be known or bounded at publication.
+
+---
+
+# SCS-010 - Required Selector and Presentation Catalog
+
+The following closed-ended selectors/presets MUST be supported by requirements, even when multiple selectors reuse the same answer primitive.
+
+## Binary and three-state selectors
+
+- YesNo
+- YesNoNA
+- YesNoDontKnow
+- YesNoInProgress
+- TrueFalse
+- AgreeDisagree
+- BinaryToggle
+- BinaryButtons
+- ThreeWayChoice
+
+A binary toggle MUST preserve Unanswered separately from the visual off/false state. Loading an untouched toggle MUST NOT silently create a No/False answer.
+
+## Generic ordinal and Likert selectors
+
+- GenericOrdinalScale(N)
+- Likert3
+- Likert4
+- Likert5
+- Likert6
+- Likert7
+- Likert10
+- Likert11
+
+The generic ordinal scale MUST permit other bounded finite cardinalities within configured resource/accessibility limits.
+
+Even-point scales MUST not invent a neutral midpoint.
+
+Odd-point scales MAY define a neutral midpoint explicitly.
+
+Named semantic label presets SHOULD include:
+
+- Agreement
+- Frequency
+- Importance
+- Satisfaction
+- Confidence
+- Quality
+- Difficulty
+- Effort
+- Likelihood
+- Maturity
+- Severity
+- Priority
+- Probability
+- Familiarity
+
+These semantic presets MUST compile to explicit ordered labels and values rather than carrying hidden scoring meaning.
+
+## Bipolar / semantic differential
+
+- SemanticDifferential
+
+A semantic differential presents two declared endpoint concepts and an ordinal set of positions between them.
+
+Endpoints MUST have textual accessible labels even if visual treatment uses icons.
+
+## Numeric/rating selectors
+
+- NumericRating
+- NPS0To10
+- StarRating
+- IconRating
+- Slider
+- RangeSlider
+- NumericStepper
+
+StarRating and IconRating are presentation forms of a finite ordinal scale.
+
+IconRating MUST support text alternatives and MUST NOT rely on color, facial expression, or icon shape as the only semantic channel.
+
+Slider MUST have a discrete finite step in the canonical model.
+
+A slider MUST remain Unanswered until the respondent intentionally changes/accepts a value unless the template explicitly declares a default answer.
+
+RangeSlider MUST have an accessible non-drag alternative such as paired numeric/stepper controls.
+
+## Single-choice presentation variants
+
+- RadioList
+- Dropdown
+- SearchableSelect
+- SegmentedControl
+- ChoiceButtons
+- ChoiceCards
+- ImageChoiceSingle
+
+All are presentations of SingleChoice.
+
+Dropdown/SearchableSelect MUST NOT auto-select the first option as an answer.
+
+ImageChoiceSingle MUST include accessible text for each image choice and MUST remain fully operable without perceiving the image.
+
+## Multi-choice presentation variants
+
+- CheckboxList
+- MultiSelectChips
+- MultiSelectButtons
+- MultiSelectCards
+- ImageChoiceMulti
+
+All are presentations of MultiChoice.
+
+ImageChoiceMulti MUST satisfy the same accessible-label and non-image-only requirements as single image choice.
+
+---
+
+# SCS-011 - Multi-Choice Cardinality and Mutual-Exclusion Selectors
+
+Multi-choice authoring MUST support explicit validation configurations for:
+
+- SelectAny
+- SelectExactlyN
+- SelectAtLeastN
+- SelectAtMostN
+- SelectBetween(min,max)
+- MutuallyExclusiveOption
+- ExclusiveNoneOption
+- ExclusiveNotApplicableOption
+
+These are validation/selector configurations over MultiChoice rather than separate scoring types.
+
+Selecting an exclusive option MUST deterministically clear or reject incompatible selections according to declared policy.
+
+The UI MUST explain the required selection count before validation failure when practical.
+
+The encoded answer MUST represent the resulting semantic selection set, not transient invalid UI state.
+
+---
+
+# SCS-012 - Matrix, Grid, and Repeated-Scale Selectors
+
+Signal MUST support matrix/grid questions as a first-class composite authoring/presentation construct while retaining ordinary primitive answers per row/cell.
+
+Required matrix families:
+
+- MatrixSingleChoice
+- MatrixMultiChoice
+- MatrixLikert
+- MatrixSemanticDifferential
+- MatrixNumericRating
+
+Required optional constraints:
+
+- require all applicable rows,
+- require at least/at most N rows answered,
+- one response per row,
+- multiple responses per row,
+- optional one-use-per-column / forced-ranking constraint when semantically appropriate,
+- row-specific NotApplicable where enabled.
+
+Matrix scoring MUST be equivalent to scoring the same row answers individually and then applying the declared aggregate.
+
+Matrix components MUST support responsive decomposition into accessible per-row controls on narrow/mobile layouts.
+
+A matrix MUST NOT require horizontal scrolling as the only usable interaction on supported mobile layouts.
+
+Screen-reader semantics MUST expose the row prompt, column/choice label, current selection, and validation state without depending on visual grid position alone.
+
+Large matrices MUST be subject to publication warnings/resource limits because they increase response cardinality, URL size, cognitive load, and accessibility risk.
+
+---
+
+# SCS-013 - Ranking, Allocation, Pairwise, Best-Worst, and Hierarchical Selectors
+
+Required structured selectors:
+
+- ForcedChoice
+- Ranking
+- Allocation / ConstantSum
+- PairwiseComparison
+- BestWorst
+- HierarchicalSingleChoice / CascadingSelect
+
+Ranking MUST support a keyboard-accessible non-drag mechanism such as move up/down, position selector, or equivalent.
+
+Allocation MUST support deterministic total constraints, explicit step, minimum/maximum per item, and a visible remaining/assigned total.
+
+Allocation MUST NOT require drag controls; numeric/stepper entry MUST be available.
+
+PairwiseComparison presents exactly two choices for one comparison instance and records the chosen option with stable semantic identities.
+
+BestWorst presents a finite set and captures exactly one Best and one Worst choice unless the template explicitly defines another bounded variant. The same option cannot be both Best and Worst.
+
+HierarchicalSingleChoice selects one terminal or allowed node from a template-owned finite option tree. It MAY be presented as cascading dropdowns/tree navigation but canonicalizes to a stable option identity.
+
+Hierarchical selectors MUST NOT fetch mutable external option data during respondent scoring. Published option hierarchies are immutable template dependencies.
+
+---
+
+# SCS-014 - Selector Accessibility, Interaction, and State Semantics
+
+Every selector MUST satisfy keyboard, screen-reader, touch, zoom, reflow, low-vision, color-vision, and reduced-motion requirements defined by the design/accessibility standards.
+
+No selector may rely only on:
+
+- color,
+- position,
+- animation,
+- iconography,
+- drag-and-drop,
+- hover,
+- visual grid alignment.
+
+Every selector MUST have:
+
+- an accessible name,
+- visible focus,
+- programmatic current value/state,
+- programmatic required/invalid state,
+- associated help/error text,
+- deterministic reading/order semantics.
+
+Touch targets and spacing MUST remain usable at supported mobile sizes.
+
+Animation MAY reinforce state changes but MUST NOT be required to understand them and MUST respect reduced-motion preferences.
+
+Respondent input MUST be converted into a typed Signal event. F# domain state remains authoritative. Web components MUST NOT calculate authoritative scores, applicability, completion, or capabilities.
+
+A selector that cannot be represented/accessed in the current Limen/browser capability set MUST surface an explicit unavailable capability rather than silently falling back to semantically different behavior.
+
+---
+
+# SCS-015 - Selector-to-Scorer Compatibility Contract
+
+Publication MUST validate that a scorer is compatible with the answer semantics it consumes.
+
+At minimum:
+
+Boolean:
+- Direct/Map
+- Sum/Count
+- Correctness
+- Threshold/PassFail
+
+Ordinal/Likert/Rating:
+- Direct/Map
+- Reverse
+- Sum/Mean/Weighted
+- Median/Min/Max
+- Percentage/Normalize
+- Top/Bottom/Favorable
+- NPS only for the declared 0-10 NPS semantic preset
+
+SingleChoice:
+- Map
+- Correctness
+- CountMatching
+- rule/classification scoring
+
+MultiChoice:
+- CountSelected
+- OptionWeighted
+- ExactSetMatch
+- Any/All/None
+- PartialCredit
+- PartialCreditWithPenalty
+
+BoundedInteger/BoundedDecimal:
+- Direct
+- Map
+- Normalize
+- Difference
+- Ratio when paired/aggregated
+- Distance/Proximity
+- Threshold
+
+BoundedRange:
+- width,
+- midpoint,
+- lower/upper endpoint scoring,
+- distance/overlap against a declared target range.
+
+Ranking:
+- RankPoints
+- BordaCount
+- TopKRankCredit
+- PositionWeightedRank
+
+Allocation:
+- DirectAllocation
+- NormalizedAllocation
+- WeightedAllocation
+- DistanceFromTargetAllocation
+
+Pairwise:
+- WinCount
+- WeightedWinCount
+- WinLossDifference
+
+BestWorst:
+- BestCount
+- WorstCount
+- BestMinusWorst
+
+Matrix:
+- row/cell scorer compatible with each row answer primitive,
+- followed by an explicitly declared aggregate.
+
+Unsupported selector/scorer combinations MUST fail publication with a stable reason code.
+
+---
+
+# SCS-016 - Encoding and Cardinality Requirements for New Selectors
+
+Every new selector MUST have deterministic finite encoding semantics.
+
+Examples:
+
+- Ordinal(N): N answer values plus enabled special states.
+- SingleChoice(N): N option identities plus enabled special states.
+- MultiChoice(N): bounded selected-set state space subject to declared selection constraints.
+- BoundedInteger/Decimal: finite quantized tick count.
+- BoundedRange: finite valid ordered pairs over the quantized scale.
+- Ranking: full or partial permutations as declared.
+- Allocation: finite compositions over declared total/step/bounds.
+- Matrix: product/composition of row answer cardinalities, subject to global URL budget.
+- BestWorst: ordered pair of distinct selected option identities.
+- HierarchicalSingleChoice: one stable allowed option identity.
+
+Publication MUST calculate worst-case encoded size for every selector and composite question.
+
+Selector configuration that makes the URL-state budget impossible MUST fail publication or require an explicitly supported alternate architecture; it MUST NOT silently truncate answers.
+
+---
+
+# SCS-017 - Authoring, Preview, Validation, and Test Obligations
+
+The authoring system MUST expose ordinary built-in scorers before custom expression authoring.
+
+Authors MUST be able to preview every selector and scorer combination that publication accepts.
+
+Scoring preview MUST show:
+
+- raw answer,
+- mapped/direct contribution,
+- weighting,
+- reversal,
+- correct/incorrect/partial-credit reasoning,
+- numerator/denominator,
+- excluded special states,
+- intermediate aggregate where relevant,
+- bounds/caps/floors,
+- classification/band,
+- final value,
+- coverage/confidence sidecars.
+
+Required scorer fixtures SHOULD include when applicable:
+
+- minimum,
+- maximum,
+- midpoint/neutral,
+- reversed item,
+- unanswered,
+- N/A,
+- Don't Know,
+- exact correct,
+- all incorrect,
+- partial multi-select,
+- all-options multi-select attack case,
+- threshold boundary on both sides,
+- zero denominator,
+- tie case for median/mode/rank,
+- target exact/near/far,
+- NPS detractor/passive/promoter,
+- matrix row aggregation,
+- allocation total boundary,
+- ranking permutation,
+- benchmark unavailable/version mismatch.
+
+Required selector fixtures SHOULD include:
+
+- pointer/touch interaction,
+- keyboard-only interaction,
+- screen-reader semantics,
+- 200%/400% zoom and reflow where applicable,
+- mobile narrow layout,
+- reduced motion,
+- no-color interpretation,
+- initial Unanswered behavior,
+- special-state selection,
+- validation failure and recovery,
+- URL round trip,
+- browser Back/Forward/resume,
+- incremental/full score equality.
+
+---
+
+# SCS-018 - Web Component Handoff Contract
+
+The following component families are required or newly made explicit for the shared Echelon web-component/design-system work.
+
+These are UI component families, not new scoring authorities.
+
+Core component families:
+
+- signal-binary-choice
+- signal-single-choice
+- signal-multi-choice
+- signal-ordinal-scale
+- signal-semantic-differential
+- signal-numeric-rating
+- signal-slider
+- signal-range-slider
+- signal-numeric-stepper
+- signal-star-rating
+- signal-icon-rating
+- signal-matrix-single
+- signal-matrix-multi
+- signal-ranking
+- signal-allocation
+- signal-pairwise
+- signal-best-worst
+- signal-hierarchical-select
+
+Required variants of the shared single-choice family:
+
+- radio list
+- dropdown
+- searchable select
+- segmented control
+- buttons
+- cards
+- image choices
+
+Required variants of the shared multi-choice family:
+
+- checkbox list
+- chips
+- buttons
+- cards
+- image choices
+- exact/min/max/between selection-count guidance
+
+The component layer MUST emit semantic typed events and render engine-projected state.
+
+The component layer MUST NOT:
+
+- own authoritative answer state,
+- infer scoring,
+- calculate score,
+- decide applicability,
+- decide completion,
+- decide legal navigation,
+- fabricate defaults,
+- collapse Unanswered into a visible choice.
+
+The design system SHOULD implement semantic presets such as Likert, NPS, Agreement, Frequency, Satisfaction, Confidence, and Maturity as configuration/variants over the generic component families where possible rather than separate duplicated implementations.
+
+---
+
+# SCS-019 - Explicit Non-Goals for This Completeness Pass
+
+The following may be valuable later but are not required as basic/moderate built-ins by this extension:
+
+- Item Response Theory / Rasch / latent-trait estimation
+- adaptive psychometric item selection
+- conjoint utility estimation
+- multinomial/logistic models
+- Bradley-Terry/Thurstone preference estimation beyond simple pairwise counts
+- Bayesian scoring
+- machine-learned scoring
+- free-text/NLP scoring
+- image/audio/video interpretation
+- respondent identity inference
+- arbitrary executable scoring code
+
+The typed custom scoring AST may cover unusual deterministic formulas, but none of these advanced statistical/ML capabilities are implied merely because a custom AST exists.
+
+---
+
+# Cross-Cutting Invariants
+
+1. Selector is presentation; answer primitive is semantics; scorer is interpretation.
+2. Unanswered is never silently converted into a visible false/zero/first-option answer.
+3. N/A and Don't Know remain distinct from zero.
+4. Every scoring denominator is explicit and reproducible.
+5. Every built-in scorer is deterministic.
+6. Every score has explicit direction or neutral/domain-specific direction.
+7. Every scorer can produce an explanation trace from the same evaluation path.
+8. Every accepted selector/scorer pairing is publication-validated.
+9. Every selector has finite/bounded cardinality and deterministic URL encoding.
+10. Every composite selector respects the URL budget.
+11. Incremental scoring equals full recomputation.
+12. F# owns answer/scoring semantics.
+13. Limen/web components own browser mechanism only.
+14. No PII capability is added.
+15. Visual-only distinctions are insufficient for semantics or accessibility.
+16. Drag-only interaction is forbidden.
+17. Published answer keys, option weights, benchmarks, and scorer parameters are immutable semantics.
+18. Standard NPS is only labeled NPS when standard classification semantics are preserved.
+19. Benchmark-derived scores identify the exact benchmark artifact.
+20. Custom expressions remain unnecessary for ordinary basic/moderate cases listed here.
+
+---
+
+# Research Cross-Check Notes
+
+This completeness pass was cross-checked against common production survey patterns including:
+
+- single and multiple choice,
+- dropdowns and image choices,
+- matrix/rating scales,
+- stars/icons,
+- sliders,
+- ranking,
+- best/worst choice,
+- constant-sum allocation,
+- Likert/bipolar scales,
+- NPS,
+- top-box/top-two-box analysis.
+
+External product behavior is informative only. Echelon Signal's immutable template, no-PII, deterministic F# scoring, URL-state, Ordo, Limen, accessibility, and verification requirements remain authoritative.
+
+---
+
+# Requirements Migration Traceability
+
+Requirements-definition status: COMPLETED
+Added: 2026-09-22
+
+| Requirement group | Section | ROS work item(s) |
+|---|---|---|
+| SCS-001 | Completeness Boundary and No-PII Rule | WI-0003, WI-0004, WI-0007, WI-0010 |
+| SCS-002 | Required Basic Built-In Scoring Catalog | WI-0007 |
+| SCS-003 | Required Moderate Built-In Scoring Catalog | WI-0007 |
+| SCS-004 | Quiz, Answer-Key, and Multi-Select Credit Scoring | WI-0007, WI-0010 |
+| SCS-005 | Likert, Rating, and Common Survey Metric Presets | WI-0007 |
+| SCS-006 | Ranking, Allocation, Pairwise, and Best-Worst Scoring | WI-0007 |
+| SCS-007 | Benchmark and Standardized Moderate Scoring | WI-0007, WI-0010 |
+| SCS-008 | Missing, Special-State, Denominator, and Rounding Semantics | WI-0007, WI-0010 |
+| SCS-009 | Canonical Closed-Ended Answer Primitive Catalog | WI-0002, WI-0004 |
+| SCS-010 | Required Selector and Presentation Catalog | WI-0003, WI-0004 |
+| SCS-011 | Multi-Choice Cardinality and Mutual-Exclusion Selectors | WI-0003, WI-0004, WI-0010 |
+| SCS-012 | Matrix, Grid, and Repeated-Scale Selectors | WI-0003, WI-0004, WI-0007, WI-0010 |
+| SCS-013 | Ranking, Allocation, Pairwise, Best-Worst, and Hierarchical Selectors | WI-0003, WI-0004, WI-0007, WI-0010 |
+| SCS-014 | Selector Accessibility, Interaction, and State Semantics | WI-0003, WI-0004, WI-0010 |
+| SCS-015 | Selector-to-Scorer Compatibility Contract | WI-0003, WI-0007, WI-0010 |
+| SCS-016 | Encoding and Cardinality Requirements for New Selectors | WI-0004, WI-0010 |
+| SCS-017 | Authoring, Preview, Validation, and Test Obligations | WI-0003, WI-0007, WI-0010 |
+| SCS-018 | Web Component Handoff Contract | WI-0003, WI-0004, WI-0010 |
+| SCS-019 | Explicit Non-Goals for This Completeness Pass | WI-0007, WI-0010 |
+
+Reciprocal details are recorded in the mapped work-item files.
+Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
