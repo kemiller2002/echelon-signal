@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   migrate:
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message != 'WI-0011: migrate to current ROS SDE and Limen'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -254,6 +255,12 @@ jobs:
           rm -f .github/workflows/framework-migration.yml
 
           git add -A
+
+          # GitHub's Actions token may update repository contents but may not
+          # create or modify workflow files. Leave all workflow changes out of
+          # this commit; the repository API applies those exact changes after
+          # the framework state is pushed.
+          git restore --staged .github/workflows || true
 
           set +e
           git diff --cached --check > /tmp/framework-migration/staged-whitespace.txt 2>&1
