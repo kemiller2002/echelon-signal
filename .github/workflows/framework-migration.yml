@@ -108,6 +108,47 @@ jobs:
           npx --yes --package="$PKG" limen --version | tee /tmp/framework-migration/limen-version.txt
           npx --yes --package="$PKG" limen init --dry-run --json | tee /tmp/framework-migration/limen-init-plan.json
           npx --yes --package="$PKG" limen init --json | tee /tmp/framework-migration/limen-init.json
+
+          mkdir -p src/Echelon.Signal.Engine src/Echelon.Signal.Browser
+
+          cat > limen.config.json <<'JSON'
+          {
+            "configurationVersion": 1,
+            "boundary": {
+              "engine": [
+                "src/Echelon.Signal.Engine"
+              ],
+              "kernel": [
+                "src/Echelon.Signal.Browser"
+              ]
+            }
+          }
+          JSON
+
+          cat > src/Echelon.Signal.Engine/README.md <<'EOF'
+          # Echelon Signal Engine Boundary
+
+          This directory owns application meaning for Echelon Signal.
+
+          Production domain state, legal transitions, scoring, validation, privacy rules,
+          capabilities, obligations, effects-as-data, and view projection belong on this
+          side of the Limen boundary. The production implementation is F#/.NET WebAssembly.
+
+          Browser APIs and DOM authority do not belong here.
+          EOF
+
+          cat > src/Echelon.Signal.Browser/README.md <<'EOF'
+          # Echelon Signal Browser Boundary
+
+          This directory is the thin browser-facing side of the Limen boundary.
+
+          Code here may perform mechanical loading, serialization, transport wiring, and
+          browser integration through Limen. It must not own or re-derive Signal domain
+          decisions, scoring, validation, privacy rules, capabilities, or application state.
+
+          The generic browser kernel itself is supplied by Limen.
+          EOF
+
           npx --yes --package="$PKG" limen verify --strict --json | tee /tmp/framework-migration/limen-verify.json
 
       - name: Update permanent verification pins
@@ -155,6 +196,7 @@ jobs:
           - ROS 3.1.0 had reported ten legacy files as blocking unmanaged conflicts; the 3.1.2+ legacy-adoption path eliminated those false conflicts by using the recorded legacy hashes.
           - The current ROS 3.1.4 executable requires `work backlog-transition --action ready --id ID --occurred-at TIMESTAMP` for backlog mutation, while the current upstream `docs/work-backlog-guide.md` still demonstrates `work ready ID`. The executable contract was followed and the documentation mismatch is retained as ROS trial evidence.
           - SDE strict structural review initially flagged `tools/ros_cli.mjs` (1,085 lines). That file is retained as ROS legacy compatibility tooling and is narrowly excluded from Signal product-code structural review rather than deleting it or disabling structural review globally.
+          - Limen's generated default boundary names `src/engine` and `src/kernel`, which did not yet exist. Signal replaces those placeholders with explicit `src/Echelon.Signal.Engine` and `src/Echelon.Signal.Browser` boundaries rather than weakening strict verification or reshaping the application around Limen's defaults.
 
           ## Evidence authority
 
