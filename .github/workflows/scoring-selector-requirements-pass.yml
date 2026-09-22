@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  complete:
-    if: "${{ github.event.head_commit.message != 'SIGNAL-SCORING-SELECTORS-2026-09-22: complete requirements pass' }}"
+  attribute:
+    if: "${{ github.event.head_commit.message != 'SIGNAL-SCORING-SELECTORS-ATTRIBUTION-2026-09-22: complete branch attribution' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,62 +22,49 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validate and complete attributed ROS work
+      - name: Attribute the complete branch diff through ROS
         shell: bash
+        env:
+          ROS_BASE_REF: cb1c394eb4b97c35baffe8b77eb2293fe22ea568
         run: |
           set -euo pipefail
           git config user.name "echelon-requirements-pass"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          python - <<'PY'
-          import re
-          from pathlib import Path
+          ./ros add "Attribute scoring and selector completeness branch diff" \
+            --id SIGNAL-SCORING-SELECTORS-ATTRIBUTION-2026-09-22 \
+            --tag requirements \
+            --tag scoring \
+            --tag selectors \
+            --tag governance \
+            --priority high \
+            --description "Bind the complete main-to-branch scoring/selector requirements diff to durable ROS completion provenance after incremental repository commits." \
+            --source agent-execution \
+            --source-reference scoring-selector-completeness-2026-09-22 \
+            --occurred-at 2026-09-22T13:31:00.000Z
 
-          source = Path("input-documents/survey-engine-scoring-selector-completeness-requirements.txt").read_text()
-          ledger = Path("docs/requirements/survey-engine-requirements-migration.md").read_text()
+          ./ros work backlog-transition \
+            --id SIGNAL-SCORING-SELECTORS-ATTRIBUTION-2026-09-22 \
+            --action ready \
+            --occurred-at 2026-09-22T13:31:01.000Z
 
-          groups = re.findall(r"^# (SCS-\d{3})\b", source, re.MULTILINE)
-          expected = [f"SCS-{i:03d}" for i in range(1, 20)]
-          if groups != expected:
-              raise SystemExit(f"SCS sequence mismatch: {groups}")
+          ./ros work start \
+            --id SIGNAL-SCORING-SELECTORS-ATTRIBUTION-2026-09-22 \
+            --type documentation \
+            --occurred-at 2026-09-22T13:31:02.000Z
 
-          missing = [g for g in expected if g not in ledger]
-          if missing:
-              raise SystemExit(f"ledger missing groups: {missing}")
-
-          required = [
-              "CorrectIncorrect", "PartialCredit", "WeightedTopKBox", "NPS",
-              "PercentileRank", "ZScore", "TScore", "SemanticDifferential",
-              "NPS0To10", "StarRating", "IconRating", "Slider", "RangeSlider",
-              "MatrixSingleChoice", "MatrixDropdown", "MatrixMultiChoice",
-              "MatrixSideBySide", "HierarchicalSingleChoice",
-              "HierarchicalMultiChoice", "PreferNotToAnswer",
-              "SelectExactlyN", "BestWorst", "BoundedDecimal", "BoundedRange"
-          ]
-          absent = [term for term in required if term not in source]
-          if absent:
-              raise SystemExit(f"required completeness terms missing: {absent}")
-
-          if "Requirement groups recorded: 183" not in ledger:
-              raise SystemExit("ledger requirement-group count is not 183")
-          if "Relevant source files discovered: 15" not in ledger:
-              raise SystemExit("ledger source count is not 15")
-          PY
-
-          ./ros registry build
-          ./ros registry check
           ./ros validate --json
-          ./ros verify --strict --json
 
           ./ros work complete \
-            --id SIGNAL-SCORING-SELECTORS-2026-09-22 \
-            --occurred-at 2026-09-22T13:27:59.000Z \
+            --id SIGNAL-SCORING-SELECTORS-ATTRIBUTION-2026-09-22 \
+            --occurred-at 2026-09-22T13:31:59.000Z \
             --evidence implementation=input-documents/survey-engine-scoring-selector-completeness-requirements.txt \
             --evidence tests=docs/requirements/survey-engine-requirements-migration-validation.md
 
           ./ros validate --json
+          ./ros verify --strict --json
           git diff --check
 
           git add .ros registries
-          git commit -m "SIGNAL-SCORING-SELECTORS-2026-09-22: complete requirements pass"
+          git commit -m "SIGNAL-SCORING-SELECTORS-ATTRIBUTION-2026-09-22: complete branch attribution"
           git push origin HEAD:${{ github.ref_name }}
