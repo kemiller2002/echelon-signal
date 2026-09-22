@@ -462,6 +462,22 @@
       "createdBy": "unknown",
       "source": "agent-execution",
       "sourceReference": "scoring-selector-completeness-2026-09-22"
+    },
+    {
+      "id": "GH-5",
+      "title": "Prepare Signal implementation baseline",
+      "description": null,
+      "tags": [
+        "readiness,bootstrap"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-22T22:12:02.322Z",
+      "updatedAt": "2026-09-22T22:12:02.000Z",
+      "createdBy": "agent:chatgpt",
+      "source": "github-issue",
+      "sourceReference": "https://github.com/kemiller2002/echelon-signal/issues/5"
     }
   ]
 }
