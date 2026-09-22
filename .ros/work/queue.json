@@ -424,6 +424,25 @@
       "createdBy": "unknown",
       "source": "agent-execution",
       "sourceReference": "ARX-001"
+    },
+    {
+      "id": "SIGNAL-SCORING-SELECTORS-2026-09-22",
+      "title": "Complete scoring and selector requirements catalog",
+      "description": "Audit and complete basic/moderate scoring methods and closed-ended selector/question contracts, with explicit web-component handoff and no-PII constraints.",
+      "tags": [
+        "requirements",
+        "scoring",
+        "selectors",
+        "web-components"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-22T13:16:00.000Z",
+      "updatedAt": "2026-09-22T13:16:01.000Z",
+      "createdBy": "unknown",
+      "source": "agent-execution",
+      "sourceReference": "scoring-selector-completeness-2026-09-22"
     }
   ]
 }
