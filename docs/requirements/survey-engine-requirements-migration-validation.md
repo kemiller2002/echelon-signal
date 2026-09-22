@@ -100,3 +100,85 @@ The advanced source now explicitly requires live incremental scoring and typed c
 | Expression versioning | Published template binds to ScoringExpressionLanguageVersion and result lineage records it | pass |
 | Differential verification | Reference, optimized, incremental, and serialized F# WASM scoring required to agree | pass |
 | Reciprocal traceability | ARX-014 mapped into WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, and WI-0010 | pass |
+
+
+## Scoring and selector completeness review — 2026-09-22
+
+A fifteenth authoritative requirement source was added:
+
+`input-documents/survey-engine-scoring-selector-completeness-requirements.txt`
+
+It contributes SCS-001 through SCS-019 and raises the accounted corpus to 183 requirement groups across 15 authoritative sources.
+
+### Completeness checks
+
+| Check | Observed result | Status |
+|---|---|---|
+| SCS group sequence | 19 unique groups, exactly SCS-001 through SCS-019, contiguous with no duplicates | pass |
+| Central ledger mapping | Every SCS group appears in the central migration ledger | pass |
+| Reciprocal work-item mapping | SCS requirements mapped into affected WI-0002, WI-0003, WI-0004, WI-0007, and WI-0010 detail records | pass |
+| Basic scoring catalog | Direct/map/progress, sum/count, mean/weighted/median/min/max, percentage/normalization, reverse/bounds, threshold/pass-fail, section/domain/profile/composite included | pass |
+| Moderate scoring catalog | Robust aggregates, difference/ratio/index/target, bonus/penalty/negative marking, top/bottom/favorable/net favorable, NPS, ranking/allocation/pairwise/best-worst, benchmark standardization included | pass |
+| Assessment scoring | Correct/incorrect, blank policy, exact set, any/all/none, option weights, partial credit and penalty modes included | pass |
+| Special-state semantics | Unanswered, N/A, Don't Know, Prefer Not to Answer/Declined and flow exclusion remain distinct | pass |
+| Selector primitives | Existing primitives retained; finite BoundedDecimal and BoundedRange added without proliferating visual selector types into domain primitives | pass |
+| Common selector families | Binary/tri-state, generic Likert, semantic differential, numeric/NPS/star/icon/slider, single/multi choice variants included | pass |
+| Structured selectors | Matrix/grid, ranking, constant-sum allocation, pairwise, best-worst, hierarchical single/multi included | pass |
+| Multi-choice constraints | exact/at-least/at-most/between and mutually exclusive/none/N-A options included | pass |
+| Matrix variants | single, dropdown, multi, Likert, semantic differential, numeric rating and side-by-side included | pass |
+| Accessibility contract | no drag-only, no visual-only semantics, explicit keyboard/screen-reader/touch/zoom/reflow/reduced-motion requirements | pass |
+| UI/domain boundary | Web components emit typed events and render projected state; F# retains scoring/answer/applicability/completion authority | pass |
+| Encoding | finite cardinality, deterministic encoding and worst-case URL-budget checks required for every new selector | pass |
+| No-PII boundary | No free-text/contact/signature/upload/geolocation/identity primitive added | pass |
+| Advanced-boundary clarity | IRT/Rasch, Bayesian/ML, advanced preference estimation, NLP and other advanced scoring explicitly remain separate requirements | pass |
+
+### Automated repository-content assertions
+
+The repository API validation used the new source and ledger to assert:
+
+- exactly 19 SCS group headings,
+- first group SCS-001,
+- last group SCS-019,
+- contiguous numbering,
+- all 19 groups present in the central ledger,
+- central ledger source count = 15,
+- central ledger requirement-group count = 183,
+- required completeness terms present for correctness/partial-credit, weighted top-box, NPS, percentile/Z/T, semantic differential, star/icon/slider, matrix/dropdown/side-by-side, hierarchical single/multi, selection cardinality, best-worst, Prefer Not to Answer, BoundedDecimal, and BoundedRange.
+
+No assertion failed.
+
+### External taxonomy cross-check
+
+The completeness pass was cross-checked against current mainstream survey-platform question/scoring taxonomies for:
+
+- multiple/single choice and dropdowns,
+- checkbox/multiple response,
+- matrix/rating scales and bipolar matrices,
+- star/icon ratings and sliders,
+- ranking,
+- best-worst choice,
+- constant-sum allocation,
+- generic Likert scales,
+- NPS,
+- top-box/top-two-box and related favorable metrics.
+
+Those products are comparison inputs only. Signal's deterministic F# semantics, immutable templates, no-PII policy, URL-state model, accessibility constraints, Ordo/Limen boundaries, and publication validation remain authoritative.
+
+### Interpretation
+
+This review establishes requirement-catalog completeness for basic and moderate scoring and closed-ended selector/question styles. It does not claim implementation exists. The mapped delivery work items remain responsible for implementation and acceptance evidence.
+
+
+### ROS 3.1.4 attribution-policy migration finding
+
+During completion of `SIGNAL-SCORING-SELECTORS-2026-09-22`, the first post-completion validation reported the work item's own finalized telemetry execution as an unattributed meaningful change.
+
+Investigation confirmed that the current ROS 3.1.4 greenfield `ros.json` template excludes machine-owned:
+
+- `.ros/telemetry/**`,
+- `.ros/locks/**`,
+- `.echelon/**`
+
+from work-attribution checks, while Echelon Signal's older shared `ros.json` still excluded only context/events/work/registries.
+
+Signal's attribution exclusions were aligned to the current ROS 3.1.4 policy. This does not exempt product, requirement, test, or application files from attribution; it prevents ROS machine-generated lifecycle metadata from recursively requiring its own work attribution.

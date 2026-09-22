@@ -4,7 +4,7 @@
   "repository": "echelon-signal",
   "actor": "agent:chatgpt",
   "startedAt": "2026-08-31T18:55:58.931Z",
-  "updatedAt": "2026-09-22T09:00:59.000Z",
+  "updatedAt": "2026-09-22T13:31:59.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -83,6 +83,48 @@
         "EXE-20260922T090357179Z-7836eccb"
       ],
       "completedAt": "2026-09-22T09:00:59.000Z"
+    },
+    {
+      "id": "SIGNAL-SCORING-SELECTORS-2026-09-22",
+      "type": "documentation",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "input-documents/survey-engine-scoring-selector-completeness-requirements.txt"
+        },
+        {
+          "type": "tests",
+          "path": "docs/requirements/survey-engine-requirements-migration-validation.md"
+        }
+      ],
+      "updatedAt": "2026-09-22T13:27:59.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20260922T131942076Z-a0f00c95"
+      ],
+      "completedAt": "2026-09-22T13:27:59.000Z"
+    },
+    {
+      "id": "SIGNAL-SCORING-SELECTORS-ATTRIBUTION-2026-09-22",
+      "type": "documentation",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "input-documents/survey-engine-scoring-selector-completeness-requirements.txt"
+        },
+        {
+          "type": "tests",
+          "path": "docs/requirements/survey-engine-requirements-migration-validation.md"
+        }
+      ],
+      "updatedAt": "2026-09-22T13:31:59.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20260922T133237027Z-99c63622"
+      ],
+      "completedAt": "2026-09-22T13:31:59.000Z"
     }
   ]
 }
