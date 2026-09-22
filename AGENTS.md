@@ -92,3 +92,24 @@ Before producing consequential communication, read:
 
 Treat research maturity as a constraint. Do not turn provisional findings into universal rules, optimize persuasion at the expense of user autonomy, or substitute style for proof obligations.
 <!-- echelon:communication-engineering:end -->
+
+## Aegis operational failure handling
+
+Echelon Signal requires Aegis. Implementation work MUST import and actively use `EchelonFoundry.Aegis.Core` at architectural operational-failure boundaries; merely referencing the package is not sufficient.
+
+Because phase-1 administrator storage uses GitHub, use `EchelonFoundry.Aegis.Integration.GitHub` for GitHub failure translation where applicable. If Aegis lifecycle/fault events are persisted in GitHub, use `EchelonFoundry.Aegis.Store.GitHub` rather than creating a Signal-specific event format.
+
+Before implementing fault handling, read the current Aegis consumer guidance in `kemiller2002/aegis`, especially `docs/aegis/AGENT-INTEGRATION.md`.
+
+Apply these boundaries:
+
+- Aegis handles unexpected operational failures at network, storage, registry, file/browser interop, backup/restore, migration, and future service boundaries.
+- Signal/Ordo typed domain outcomes remain domain outcomes; do not route validation, duplicate, privacy, comparability, sealed-state, capability, or legal-transition results through Aegis.
+- Aegis recovery may propose a transition; Ordo/SDE authorizes it.
+- Unknown writes remain `OutcomeUnknown` and require reconciliation; Aegis must not turn them into blind retries.
+- Limen renders Aegis presentation intent; it does not create a parallel operational-fault taxonomy.
+- Fault context/events/sinks must contain no credentials, PII, respondent URL answer state, or suppressed data.
+- Programming defects fail loudly under Aegis policy.
+- Tests must prove declared boundaries actually use Aegis and use replaceable/collector sinks for deterministic assertions.
+
+The authoritative repository-wide requirement is ARX-015. The administrator-specific requirement is ADM-077.
