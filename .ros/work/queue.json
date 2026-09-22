@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "echelon-signal",
-  "nextSeq": 2,
+  "nextSeq": 21,
   "items": [
     {
       "id": "WI-0001",
@@ -214,6 +214,196 @@
       "createdBy": "agent:chatgpt",
       "source": "agent-discovery",
       "sourceReference": "capability-rollout-verification-repair"
+    },
+    {
+      "id": "WI-0011",
+      "title": "Administrator application state, group management, and Limen UX",
+      "description": "Build the administrator application lifecycle, group management, information architecture, Limen boundary, saved analysis, capability explanations, and operational diagnostics.",
+      "tags": [
+        "admin",
+        "ordo",
+        "limen",
+        "ux"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0012",
+      "title": "Storage provider contract and GitHub repository provider",
+      "description": "Define the provider-neutral storage contract and implement the GitHub repository provider, manifest, integrity, rate-limit/scale behavior, and provider conformance.",
+      "tags": [
+        "admin",
+        "storage",
+        "github",
+        "provider"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0013",
+      "title": "Administrator import, concurrency, durable aggregation, and indexes",
+      "description": "Implement import intake, idempotent concurrent acceptance, OutcomeUnknown reconciliation, immutable accepted results, incremental aggregation, and rebuildable indexes.",
+      "tags": [
+        "admin",
+        "import",
+        "aggregation",
+        "concurrency"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0014",
+      "title": "Administrator analytics, comparisons, lineage, and dependency invalidation",
+      "description": "Implement deterministic analysis/statistics, semantic comparisons, drill-down, lineage, change impact, semantic diffs, and end-to-end dependency invalidation.",
+      "tags": [
+        "admin",
+        "analytics",
+        "lineage",
+        "dependencies"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0015",
+      "title": "Typed visualization grammar, dashboards, and accessibility",
+      "description": "Implement the typed visualization grammar, chart suitability validation, accessible rendering semantics, responsive dashboards, and visualization regression verification.",
+      "tags": [
+        "admin",
+        "visualization",
+        "accessibility",
+        "dashboard"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0016",
+      "title": "Report builder, snapshots, exports, configuration packages, and policy packs",
+      "description": "Implement report authoring/versioning, immutable snapshots, exports, portable configuration packages, and reusable versioned policy packs.",
+      "tags": [
+        "admin",
+        "reporting",
+        "snapshots",
+        "configuration"
+      ],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0017",
+      "title": "Administrator privacy, security, audit, retention, and deletion lifecycle",
+      "description": "Implement disclosure controls, differencing protection, no-PII audit, storage security constraints, retention/archive/delete semantics, and privacy policy enforcement.",
+      "tags": [
+        "admin",
+        "privacy",
+        "security",
+        "lifecycle"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0018",
+      "title": "Storage migration, backup, schema evolution, and operational recovery",
+      "description": "Implement provider migration, backup/restore, schema adapters, degraded/read-only recovery, and operational health diagnostics.",
+      "tags": [
+        "admin",
+        "migration",
+        "backup",
+        "recovery"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0019",
+      "title": "Administrator sandbox, synthetic data, advanced analytics extensions, and phase boundary",
+      "description": "Implement isolated simulation, seeded synthetic/adversarial data, preserve phase-1 no-server scope, and keep future probabilistic analytics non-authoritative.",
+      "tags": [
+        "admin",
+        "sandbox",
+        "synthetic-data",
+        "experiments"
+      ],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "WI-0020",
+      "title": "Administrator cross-cutting verification, performance, and acceptance program",
+      "description": "Gate administrator delivery with stress, property/model-based, provider, accessibility, privacy, resource-limit, migration, and incremental-equivalence verification.",
+      "tags": [
+        "admin",
+        "testing",
+        "performance",
+        "acceptance"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-22T01:04:51.105Z",
+      "updatedAt": "2026-09-22T01:04:51.105Z",
+      "createdBy": "agent:chatgpt",
+      "source": "requirements-migration",
+      "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
     }
   ]
 }
