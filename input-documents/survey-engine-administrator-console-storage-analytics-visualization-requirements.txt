@@ -2145,6 +2145,764 @@ This requirement intentionally pushes Ordo, ROS, Limen, evidence lineage, negati
 ---
 
 
+
+# ADM-055 - Template Registry and Exact Template Resolution
+
+The administrator application MUST have an explicit template-resolution subsystem rather than treating exact-template lookup as an incidental import operation.
+
+The subsystem SHOULD support:
+
+- One or more configured template registries
+- Exact lookup by SurveyIdentifier, TemplateVersion, TemplateHash, or other canonical reference already permitted by the survey contract
+- Local verified template cache
+- Cache freshness and provenance
+- Registry capability discovery
+- Registry priority/order when multiple sources exist
+- Explicit pinning to an exact immutable artifact
+- Offline use of a previously verified exact template
+- Recovery of a missing template from an alternate trusted registry
+- Detection of conflicting artifacts claiming the same logical identity
+
+A cached template MUST remain bound to its verified canonical hash.
+
+A registry response that claims the correct version but produces the wrong hash MUST fail resolution.
+
+The resolver MUST distinguish:
+
+- ResolvedExact
+- NotFoundInRegistry
+- RegistryUnavailable
+- RegistryUnauthorized
+- HashMismatch
+- ConflictingArtifacts
+- UnsupportedTemplateVersion
+- CachedVerifiedCopyAvailable
+- ResolutionUnknown
+
+Negative knowledge MUST remain scoped to the registry/revision actually searched.
+
+The application MUST NOT silently replace an exact required template with "latest" or a merely compatible version.
+
+Template registry credentials MUST follow the same secret-handling rules as storage-provider credentials.
+
+---
+
+# ADM-056 - Credential Lifecycle and Capability Revalidation
+
+External-provider credentials MUST have an explicit lifecycle independent of domain data.
+
+The administrator application MUST handle:
+
+- Credential acquisition
+- Validation
+- Expiration
+- Revocation
+- Rotation
+- Replacement
+- Permission reduction
+- Permission expansion
+- Provider/account switching
+- Logout/disconnection
+- Revalidation after provider errors
+
+Credential material MUST NOT be serialized into durable Signal domain state.
+
+The application SHOULD derive a credential capability snapshot containing only non-secret capability evidence needed for state decisions.
+
+A previously valid credential becoming invalid or less privileged MUST cause relevant write/read capabilities to be recomputed.
+
+Credential failure MUST NOT mutate canonical survey/group/report data.
+
+Credential replacement MUST NOT silently change the storage dataset being addressed.
+
+Switching to a credential that resolves the same configured locator to a different repository/provider identity MUST require explicit administrator resolution.
+
+The UI SHOULD distinguish:
+
+- CredentialMissing
+- CredentialExpired
+- CredentialRejected
+- PermissionInsufficient
+- ProviderIdentityMismatch
+- CredentialValidReadOnly
+- CredentialValidReadWrite
+
+---
+
+# ADM-057 - Multiple Storage Profiles
+
+The administrator application SHOULD support multiple storage profiles.
+
+A storage profile SHOULD bind:
+
+- StorageProvider type/version
+- Provider locator
+- Dataset/root namespace
+- Branch or equivalent provider routing
+- Non-secret capability/configuration settings
+- Local display label
+- Credential reference/slot
+- Verification state
+
+A profile display label MUST NOT be treated as authoritative domain identity and SHOULD remain local presentation metadata where practical.
+
+Groups and datasets SHOULD reference a stable StorageProfileId or resolved provider locator contract rather than embedding credentials.
+
+Changing a group's storage destination after authoritative data exists MUST use the storage-migration workflow.
+
+The UI MUST NOT implement migration by simply editing a repository/path field on an existing authoritative dataset.
+
+Profile deletion MUST be blocked while active datasets still depend on it unless those dependencies are migrated, archived under an explicit policy, or otherwise resolved.
+
+---
+
+# ADM-058 - GitHub Repository Growth, Rollover, and Compaction Strategy
+
+The GitHub provider MUST account for long-term repository growth.
+
+Signal SHOULD track or estimate:
+
+- Current object count
+- Current logical Signal dataset size
+- Derived/index object size
+- Snapshot growth
+- Immutable-result growth
+- Commit/write frequency attributable to Signal
+- Partition depth
+- Repository health thresholds
+
+The provider architecture SHOULD support:
+
+- Deterministic sharding
+- Archive repositories
+- Dataset rollover to a successor repository
+- Compaction or replacement of rebuildable derived projections
+- Removal of obsolete rebuildable caches from the active tree
+- Provider migration when GitHub is no longer operationally appropriate
+
+Compaction MUST NOT rewrite or discard immutable authoritative results merely to reduce size unless an explicit retention/deletion policy permits it.
+
+Compacting rebuildable indexes/projections MUST preserve the authoritative hash set from which they can be reconstructed.
+
+A repository rollover MUST use migration semantics and explicit destination activation.
+
+Signal SHOULD provide warnings before repository scale is likely to make ordinary GitHub-backed operations unreliable or impractical.
+
+---
+
+# ADM-059 - Storage Cost and Operation Budget Estimation
+
+Before large administrator operations, Signal SHOULD be able to estimate operational impact.
+
+Estimates MAY include:
+
+- Expected immutable objects
+- Expected mutable manifest updates
+- Expected provider reads
+- Expected provider writes
+- Expected bytes written
+- Expected repository growth
+- Expected index/materialized-view growth
+- Expected snapshot growth
+- Estimated browser memory demand
+- Estimated full-rebuild work
+
+The estimator MUST distinguish observed measurements from projections/estimates.
+
+A storage or operation estimate MUST NOT be represented as a guaranteed billing cost unless the provider exposes a reliable pricing contract and Signal explicitly supports it.
+
+The system SHOULD warn when a planned operation exceeds configured or evidence-based operational budgets.
+
+A warning MAY recommend:
+
+- Smaller batches
+- Partitioning
+- Deferred detail loading
+- Archive/rollover
+- Provider migration
+- Narrower analysis
+- Fewer retained snapshots
+
+Operational warnings SHOULD create explicit advisory evidence but SHOULD NOT silently alter canonical behavior.
+
+---
+
+# ADM-060 - Batch Import Transaction and Resume Semantics
+
+Batch import MUST define explicit transaction semantics.
+
+Default recommended behavior:
+
+- Each submission is validated and accepted/rejected independently.
+- One invalid artifact does not roll back unrelated valid accepted submissions.
+- The batch has a stable BatchImportId.
+- Batch progress is resumable.
+- Replaying the same batch is idempotent with respect to already accepted contributions.
+
+A batch result SHOULD contain:
+
+- BatchImportId
+- InputArtifactCount
+- ProcessedCount
+- AcceptedCount
+- RejectedCount
+- DuplicateCount
+- ReconciliationRequiredCount
+- RemainingCount
+- Stable per-item outcome references
+- BatchStatus
+
+Potential BatchStatus values:
+
+- Pending
+- Running
+- Partial
+- Complete
+- CompleteWithRejections
+- ReconciliationRequired
+- CancelledBeforeProcessingRemainder
+
+Cancellation MUST NOT roll back already committed independent accepted contributions unless a future explicit transactional provider mode is separately designed.
+
+Batch order MUST NOT alter the final accepted contribution set.
+
+A resumed batch MUST not double-count items processed before interruption.
+
+---
+
+# ADM-061 - Quarantine Boundary for Untrusted Artifacts
+
+Signal SHOULD provide an explicit Quarantined state for untrusted imported artifacts before they become authoritative.
+
+Artifacts that MAY enter quarantine include:
+
+- Respondent submissions
+- Batch import files
+- Configuration packages
+- Backup bundles
+- Restored provider objects
+- Migrated objects
+- Manually modified repository content
+- Future service import payloads
+
+Quarantine state SHOULD permit:
+
+- Structural validation
+- Schema validation
+- Integrity/hash verification
+- Template resolution
+- Privacy validation
+- Resource-limit validation
+- Reference validation
+- Compatibility analysis
+
+A quarantined artifact MUST NOT:
+
+- Contribute to a SurveyGroupResult
+- Appear in formal reports
+- Change completion counts
+- Become a report snapshot dependency
+- Become active configuration
+- Replace authoritative store objects
+
+Promotion from Quarantined to an authoritative state MUST be an explicit legal transition with evidence that all required validations succeeded.
+
+Rejected quarantine artifacts MAY retain only the non-PII evidence needed for diagnosis and audit under configured retention policy.
+
+---
+
+# ADM-062 - Conflict Resolution Workspace
+
+The administrator application SHOULD provide an explicit conflict-resolution workflow for concurrent incompatible changes.
+
+For a conflict the UI SHOULD be able to show:
+
+- Base version
+- Current authoritative version
+- Proposed version
+- Semantic diff
+- Automatically mergeable independent changes
+- Non-mergeable conflicting changes
+- Downstream impact preview
+- Required obligations after each resolution option
+
+The system MAY automatically merge only changes proven independent under deterministic merge rules.
+
+Examples of potentially mergeable changes:
+
+- Two distinct immutable accepted contributions
+- Independent dashboard block additions with deterministic ordering rules
+- Independent non-overlapping configuration package additions where semantics permit
+
+Examples requiring explicit resolution:
+
+- Conflicting group configuration changes
+- Different privacy thresholds
+- Different storage destination changes
+- Conflicting report-definition edits to the same block
+- Competing policy-pack versions
+
+A conflict resolution MUST create a new authoritative version/transition and MUST NOT rewrite historical versions.
+
+---
+
+# ADM-063 - Explicit Dependency Pinning for Reports, Dashboards, and Snapshots
+
+Every formal reusable administrator definition SHOULD explicitly pin external semantic dependencies.
+
+Dependencies MAY include:
+
+- Survey/template semantic version/hash
+- ReportDefinitionVersion
+- DashboardDefinitionVersion
+- VisualizationSpecVersion
+- Visualization grammar version
+- AnalysisExpressionLanguageVersion
+- PolicyPackId/version
+- Localization package/version
+- Comparison dataset/reference/version
+- Aggregate schema version
+- Result schema version
+
+"Latest" MUST NOT be used for a dependency whose later change could alter formal report meaning.
+
+A draft authoring experience MAY offer "latest" as a convenience selector, but publication/formal snapshot creation MUST resolve it to an exact immutable dependency.
+
+Missing pinned dependencies MUST produce an explicit unresolved state rather than silently substituting another version.
+
+---
+
+# ADM-064 - Reproducibility Versus Deletion Policy Conflict
+
+Signal MUST define behavior when reproducibility requirements conflict with deletion/retention policy.
+
+A policy decision MAY require removal of authoritative individual results while allowing a previously issued aggregate snapshot to remain.
+
+The system MUST explicitly represent when:
+
+- Full reconstruction is still possible
+- Only aggregate/report reproduction is possible
+- Underlying contribution-level reconstruction is no longer possible
+- A formal snapshot remains valid as an immutable historical artifact but its original source set has been intentionally retired
+- A deletion request or policy prevents future lineage expansion
+
+Lineage MUST NOT falsely claim reconstructability after required source artifacts have been deleted.
+
+Policy evaluation SHOULD identify whether deletion would break:
+
+- Group aggregate rebuild
+- Report snapshot rebuild
+- Audit verification
+- Comparison verification
+- Migration verification
+
+When policy requires deletion despite loss of reproducibility, the resulting limitation MUST be recorded as durable non-PII evidence.
+
+---
+
+# ADM-065 - Dataset Sealing
+
+A group/dataset SHOULD support an optional Sealed state after formal completion.
+
+A sealed dataset MUST NOT accept:
+
+- New accepted contributions
+- Configuration mutation
+- Privacy-policy mutation that would redefine previously issued report meaning
+- Storage-locator mutation outside migration
+- Replacement of immutable accepted results
+
+Allowed operations MAY include:
+
+- Read
+- Reproduce report snapshots
+- Export under current policy
+- Verify hashes/lineage
+- Migrate storage without changing semantics
+- Archive under policy
+- Create derived comparisons that do not mutate the sealed dataset
+
+Reopening a sealed dataset, if supported at all, MUST be an explicit high-consequence transition producing a successor state/version and clear audit evidence.
+
+The default SHOULD favor creating a successor group rather than mutating a sealed one.
+
+---
+
+# ADM-066 - Group Close and Formal Finalization Ceremony
+
+Group completion and formal administrator finalization MUST be distinct concepts.
+
+A group MAY satisfy completion rules but still have unresolved operational obligations.
+
+Before formal finalization/sealing, Signal SHOULD verify:
+
+- Group completion policy satisfied or explicitly closed incomplete
+- No unresolved import reconciliation
+- No stale aggregate/index required for final report
+- Privacy policy valid
+- Required report dependencies resolvable
+- Storage manifest healthy
+- Required hashes valid
+- Required formal report definition available
+- Required provider write complete or reconciled
+- Required acceptance evidence present
+
+Potential finalization outcomes include:
+
+- Finalized
+- FinalizedIncomplete
+- BlockedByObligations
+- FinalizationOutcomeUnknown
+
+Finalization MAY create a formal report snapshot as part of the same orchestrated workflow, but the snapshot remains a distinct immutable artifact.
+
+A finalization operation with OutcomeUnknown MUST be reconciled before the group is treated as formally finalized.
+
+---
+
+# ADM-067 - Import Provenance Without Person Identity
+
+Signal SHOULD record how an artifact entered the administrator system without recording who performed the action.
+
+Representative ImportOrigin values:
+
+- PastedUrl
+- MultiPaste
+- ImportedTextFile
+- ImportedCanonicalArtifact
+- RestoredBackup
+- ProviderMigration
+- ConfigurationPackage
+- FutureServiceImport
+- SyntheticSandbox
+
+Import provenance MAY record:
+
+- ImportOrigin
+- BatchImportId
+- Source artifact hash
+- Provider/source type
+- Migration/restore identifier
+- Schema/encoding version
+- Non-PII reason/evidence codes
+
+Import provenance MUST NOT record administrator names, email addresses, GitHub usernames, IP addresses, or other person identifiers.
+
+Provenance is operational lineage, not authentication identity.
+
+---
+
+# ADM-068 - Clock, Calendar, Time Zone, and Period Semantics
+
+Any administrator feature depending on time MUST use explicit clock/calendar semantics.
+
+Relevant features include:
+
+- Historical trends
+- Survey waves
+- Report periods
+- Snapshot display time
+- Retention schedules
+- Archive schedules
+- Migration evidence
+- Backup evidence
+- Operational diagnostics
+
+Canonical temporal evidence SHOULD use UTC instants where an instant is required.
+
+Human-facing period definitions SHOULD explicitly identify:
+
+- Time zone
+- Calendar system where relevant
+- Period start
+- Period end
+- Inclusivity/exclusivity rules
+- Locale only for display formatting
+
+Browser local time MUST NOT silently become authoritative domain time.
+
+A report period such as "September" MUST resolve to explicit boundaries before formal publication when time zone could change membership.
+
+Clock evidence MUST remain separate from deterministic result meaning unless the requirement intentionally includes time as an input.
+
+---
+
+# ADM-069 - Internationalization and Bidirectional Layout Semantics
+
+Administrator/report internationalization MUST extend beyond translated strings.
+
+The system SHOULD support or explicitly validate:
+
+- Right-to-left layout
+- Bidirectional text
+- Locale-aware number formatting
+- Locale-aware percentages
+- Decimal/group separators
+- Locale-aware date/time display
+- Pluralization
+- Long translated labels
+- Non-Latin scripts
+- Font fallback
+- Table direction
+- Chart label direction
+- Mirrored layout where appropriate
+
+Canonical numeric/date/result data MUST remain locale independent.
+
+Localization MUST be a presentation transformation over canonical data.
+
+A locale MUST NOT change:
+
+- Sorting semantics unless the definition explicitly requests locale-aware label sorting
+- Scoring
+- Aggregation
+- Privacy thresholds
+- Comparison eligibility
+- Hashes of canonical result data
+
+Localization regression fixtures SHOULD include at least one right-to-left locale and one locale with materially different number/date formatting.
+
+---
+
+# ADM-070 - Offline and Interrupted Administrator Session Behavior
+
+The administrator application MUST define behavior when network connectivity is lost or provider access is interrupted.
+
+When verified immutable data is already loaded, the application MAY continue to allow local read-only operations such as:
+
+- Viewing verified reports
+- Viewing cached snapshots
+- Running deterministic local analysis over already authorized loaded data
+- Inspecting lineage already present locally
+
+Mutating capabilities MUST become unavailable unless a future explicit offline-operation journal is designed.
+
+The application MUST NOT pretend a write succeeded while offline.
+
+A pending provider request interrupted before outcome is known MUST use OutcomeUnknown semantics where applicable.
+
+On reconnection, the application MUST revalidate provider version/change evidence before permitting stale mutations.
+
+An offline UI MUST clearly indicate:
+
+- Offline/degraded state
+- Last verified refresh evidence
+- Whether displayed data may be stale
+- Which actions are unavailable
+
+---
+
+# ADM-071 - Browser Secret Storage Policy
+
+Signal MUST define how provider credentials may be retained in the browser.
+
+Supported modes SHOULD be explicit, for example:
+
+- MemoryOnly
+- SessionScoped
+- PersistentBrowserStorage only by explicit administrator choice where supported
+
+The safest practical mode SHOULD be the default.
+
+Credential material MUST NOT enter:
+
+- URL/query/fragment state
+- Browser history
+- report/dashboard definitions
+- AnalysisState
+- exports
+- repository content
+- telemetry
+- crash logs
+
+If persistent browser storage is supported, the UI MUST clearly disclose the persistence behavior and provide a way to clear the credential.
+
+A browser secret policy MUST distinguish credential retention from ordinary non-secret administrator preferences.
+
+---
+
+# ADM-072 - Cross-Tab Credential and Capability Coherence
+
+Multiple administrator tabs may share provider/session state while holding different domain revisions.
+
+Signal SHOULD define cross-tab behavior for:
+
+- Credential rotation
+- Credential removal/logout
+- Permission reduction
+- Storage-profile changes
+- Dataset sealing
+- Group finalization
+- Provider migration activation
+
+Where the browser permits reliable signaling, a tab observing a credential/session invalidation SHOULD downgrade affected capabilities promptly.
+
+A stale tab MUST still rely on provider version/concurrency checks even if cross-tab notifications exist.
+
+Cross-tab notification is an optimization, not the authority for conflict prevention.
+
+No tab may assume its credential capability snapshot remains valid indefinitely without provider evidence.
+
+---
+
+# ADM-073 - GitHub Branch Protection and Pull Request Storage Mode
+
+The GitHub provider MUST detect when the configured branch does not permit direct writes.
+
+The provider SHOULD distinguish:
+
+- DirectWriteAvailable
+- ReadOnlyByPermission
+- ProtectedBranchRequiresReview
+- BranchMissing
+- RepositoryArchived
+- ProviderPolicyUnknown
+
+Phase 1 MAY support only direct-write repositories, but unsupported protected-branch behavior MUST fail explicitly.
+
+A future GitHub PullRequestWrite capability MAY be added.
+
+If implemented, PR-based storage writes MUST remain provider mechanics and MUST NOT change Signal domain semantics.
+
+A PR branch MUST NOT become authoritative until the provider contract can establish that the intended canonical objects are active in the configured authoritative branch.
+
+Pending PR state MUST not be reported as a completed durable Signal write.
+
+---
+
+# ADM-074 - Operational Repair Preview and Plan
+
+Before a repair operation mutates durable state, Signal SHOULD produce a repair plan.
+
+Repairable operations include:
+
+- Rebuild aggregate
+- Rebuild index/materialized view
+- Repair manifest references
+- Restore backup
+- Resume migration
+- Reconcile orphan immutable objects
+- Reproject AdminReportState
+- Rebuild comparison indexes
+
+The repair plan SHOULD identify:
+
+- Objects to read
+- Objects to create
+- Mutable references to change
+- Immutable authoritative objects guaranteed not to change
+- Expected source hash/set
+- Expected resulting hash
+- Provider operations required
+- Estimated operation budget
+- Rollback/recovery strategy where available
+- Validation required after repair
+
+Repair execution MUST verify that the source state still matches the plan's preconditions.
+
+If upstream state changed after plan creation, the repair MUST stop or re-plan rather than applying a stale plan blindly.
+
+---
+
+# ADM-075 - Invariant Health Dashboard
+
+The administrator system SHOULD expose an invariant health view showing whether the dataset is internally coherent.
+
+Potential health checks include:
+
+- Storage manifest valid
+- Dataset identity consistent
+- Accepted contribution index matches immutable objects
+- Current aggregate source hash matches accepted set
+- Current AdminReportState matches current SurveyGroupResult
+- Materialized indexes current
+- No unresolved OutcomeUnknown obligations
+- No unresolved provider conflicts
+- Pinned report dependencies resolvable
+- Formal snapshots reproducible to their declared level
+- Privacy policy valid
+- No active suppression-policy violation
+- Storage provider capability still sufficient
+- Migration state consistent
+- Backup verification status
+- Sealed/finalized state consistent
+- Schema versions supported
+
+Each invariant SHOULD report:
+
+- Healthy
+- Warning
+- Unhealthy
+- Unknown
+- NotApplicable
+
+The health view MUST distinguish an unverified check from a passing check.
+
+A health summary SHOULD link directly to the obligation/repair/action needed to resolve a failed invariant.
+
+---
+
+# ADM-076 - Proof-Carrying Derived Artifacts
+
+Derived administrator artifacts SHOULD carry compact derivation evidence sufficient to verify their relationship to authoritative inputs without trusting their storage location.
+
+Candidate artifacts include:
+
+- SurveyGroupResult
+- AdminReportState
+- Materialized aggregate/index
+- Analysis result
+- ReportData
+- VisualizationSpec projection
+- Report snapshot
+
+A derivation certificate MAY contain fields conceptually equivalent to:
+
+```
+DerivationCertificate
+    CertificateVersion
+    ArtifactType
+    InputSetHash
+    ConfigurationHash
+    EvaluatorVersion
+    DependencyClosureHash
+    OutputHash
+    SchemaVersions
+    PolicyHash?
+```
+
+The exact certificate MUST remain deterministic and free of PII and credentials.
+
+A certificate is evidence of derivation consistency, not a cryptographic signature of a person.
+
+The system SHOULD be able to validate:
+
+```
+Stored artifact
++
+DerivationCertificate
++
+Available authoritative inputs/configuration
+->
+Verified | Invalid | InputsUnavailable | UnsupportedCertificateVersion
+```
+
+Proof-carrying artifacts SHOULD support:
+
+- Cache validation
+- Migration verification
+- Backup verification
+- Repair verification
+- Report snapshot verification
+- Stale-state detection
+- Cross-provider equivalence
+
+If a certificate cannot be verified because required inputs were intentionally deleted under policy, the result MUST be InputsUnavailable or equivalent, not Verified.
+
+This capability SHOULD extend existing lineage rather than create a competing provenance system.
+
+---
+
 # Cross-Cutting Administrator Invariants
 
 1. Echelon Signal administrator state contains no PII.
@@ -2177,6 +2935,23 @@ This requirement intentionally pushes Ordo, ROS, Limen, evidence lineage, negati
 28. Large datasets do not require loading every immutable result for ordinary overview/report use.
 29. Rate limits and resource limits are explicit external/domain evidence, not generic exceptions.
 30. Browser/TypeScript code renders mechanisms; F# remains the authority for application meaning.
+31. Exact immutable template resolution never substitutes latest or merely compatible artifacts.
+32. Credential lifecycle changes capabilities but never canonical domain state.
+33. Storage destination changes for authoritative datasets use migration semantics.
+34. Batch import commits independent valid contributions idempotently and resumably.
+35. Quarantined artifacts cannot affect authoritative results before explicit validated promotion.
+36. Formal dependencies are pinned to exact versions before snapshot/publication.
+37. Deletion policy never leaves lineage claiming reproducibility that no longer exists.
+38. Sealed datasets reject ordinary mutation and new contributions.
+39. Formal finalization verifies unresolved obligations before declaring final state.
+40. Temporal semantics use explicit clock/time-zone/period evidence rather than implicit browser local time.
+41. Localization and bidirectional layout never change canonical result meaning.
+42. Offline/interrupted sessions never imply successful writes without provider evidence.
+43. Credentials never persist beyond the configured browser secret-storage policy.
+44. Branch protection and PR workflow are provider mechanics, never silent durable-write success.
+45. Repair execution verifies preconditions against the state used to create the repair plan.
+46. Invariant checks distinguish unknown/unverified from healthy.
+47. Derived artifact certificates extend lineage and can be independently validated when required inputs remain available.
 
 ---
 
@@ -2185,7 +2960,7 @@ This requirement intentionally pushes Ordo, ROS, Limen, evidence lineage, negati
 Requirements-definition status: COMPLETED  
 ROS work-item reconciliation completed: 2026-09-22
 
-These administrator requirements are authoritative input requirements. Every actionable statement in ADM-001 through ADM-054 is assigned to at least one bounded ROS delivery item.
+These administrator requirements are authoritative input requirements. Every actionable statement in ADM-001 through ADM-076 is assigned to at least one bounded ROS delivery item.
 
 The administrator extension is decomposed into:
 
@@ -2262,5 +3037,27 @@ The older WI-0008, WI-0009, and WI-0010 items remain the pre-existing administra
 | ADM-052 | Reversible Administration, Saved Views, and Capability Explanation | WI-0011, WI-0017 |
 | ADM-053 | Operational Diagnostics and Localization Preview | WI-0011, WI-0018 |
 | ADM-054 | End-to-End Derived-State Invalidation and Dependency Graph | WI-0014, WI-0020 |
+| ADM-055 | Template Registry and Exact Template Resolution | WI-0012, WI-0014 |
+| ADM-056 | Credential Lifecycle and Capability Revalidation | WI-0011, WI-0012, WI-0017 |
+| ADM-057 | Multiple Storage Profiles | WI-0011, WI-0012, WI-0018 |
+| ADM-058 | GitHub Repository Growth, Rollover, and Compaction Strategy | WI-0012, WI-0018, WI-0020 |
+| ADM-059 | Storage Cost and Operation Budget Estimation | WI-0012, WI-0020 |
+| ADM-060 | Batch Import Transaction and Resume Semantics | WI-0013, WI-0020 |
+| ADM-061 | Quarantine Boundary for Untrusted Artifacts | WI-0013, WI-0017, WI-0020 |
+| ADM-062 | Conflict Resolution Workspace | WI-0011, WI-0014 |
+| ADM-063 | Explicit Dependency Pinning for Reports, Dashboards, and Snapshots | WI-0014, WI-0016 |
+| ADM-064 | Reproducibility Versus Deletion Policy Conflict | WI-0016, WI-0017, WI-0018 |
+| ADM-065 | Dataset Sealing | WI-0011, WI-0017 |
+| ADM-066 | Group Close and Formal Finalization Ceremony | WI-0011, WI-0016, WI-0017 |
+| ADM-067 | Import Provenance Without Person Identity | WI-0013, WI-0017 |
+| ADM-068 | Clock, Calendar, Time Zone, and Period Semantics | WI-0011, WI-0014, WI-0016, WI-0020 |
+| ADM-069 | Internationalization and Bidirectional Layout Semantics | WI-0015, WI-0016, WI-0020 |
+| ADM-070 | Offline and Interrupted Administrator Session Behavior | WI-0011, WI-0012, WI-0020 |
+| ADM-071 | Browser Secret Storage Policy | WI-0011, WI-0017 |
+| ADM-072 | Cross-Tab Credential and Capability Coherence | WI-0011, WI-0012, WI-0020 |
+| ADM-073 | GitHub Branch Protection and Pull Request Storage Mode | WI-0012, WI-0020 |
+| ADM-074 | Operational Repair Preview and Plan | WI-0014, WI-0018, WI-0020 |
+| ADM-075 | Invariant Health Dashboard | WI-0011, WI-0014, WI-0018 |
+| ADM-076 | Proof-Carrying Derived Artifacts | WI-0013, WI-0014, WI-0016, WI-0018, WI-0020 |
 
 Complete migration ledger: `docs/requirements/survey-engine-requirements-migration.md`
