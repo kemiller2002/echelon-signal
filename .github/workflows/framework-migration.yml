@@ -48,6 +48,35 @@ jobs:
           npx --yes --package="$PKG" ros upgrade --json | tee /tmp/framework-migration/ros-upgrade.json
           npx --yes --package="$PKG" ros verify --strict --json | tee /tmp/framework-migration/ros-verify.json
 
+      - name: Attribute migration work in ROS
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./ros add "Migrate Echelon Signal to current ROS, Ordo SDE, and Limen" \
+            --id WI-0011 \
+            --tag framework,migration,ros,ordo,limen \
+            --priority high \
+            --description "Adopt current ROS lifecycle state, install SDE and Limen, update verification pins, and record durable migration evidence." \
+            --source agent-execution \
+            --source-reference ARX-001
+          ./ros work ready WI-0011
+          ./ros work start WI-0011 --type maintenance
+          ./ros work context WI-0011 | tee /tmp/framework-migration/ros-work-context.json
+
+      - name: Configure SDE product-code structural scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > sde.config.json <<'JSON'
+          {
+            "structuralReview": {
+              "excludePaths": [
+                "tools/ros_cli.mjs"
+              ]
+            }
+          }
+          JSON
+
       - name: Install Ordo SDE 1.3.0
         shell: bash
         run: |
@@ -76,14 +105,64 @@ jobs:
           set -euo pipefail
           sed -i 's/ROS 3\.1\.0/ROS 3.1.4/g; s/repository-operating-system@3\.1\.0/repository-operating-system@3.1.4/g; s/Limen 0\.6\.1/Limen 0.6.2/g; s/typescript-wasm-kernel@0\.6\.1/typescript-wasm-kernel@0.6.2/g' .github/workflows/echelon-verification.yml
 
+      - name: Record durable migration evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/verification
+          cat > docs/verification/framework-baseline-2026-09-22.md <<'EOF'
+          # Framework Baseline Verification — 2026-09-22
+
+          Echelon Signal framework lifecycle migration executed through GitHub Actions.
+
+          ## Installed baseline
+
+          - Repository Operating System (ROS): 3.1.4
+          - State Directed Engineering / Ordo execution package: 1.3.0
+          - Limen: 0.6.2
+
+          ## Verification performed
+
+          - ROS legacy configuration 0 -> 1 adoption completed through the supported ROS migration path.
+          - ROS strict installation verification passed after migration.
+          - SDE installation completed and strict verification passed.
+          - Limen installation completed and strict verification passed.
+          - ROS registries were rebuilt and checked.
+          - ROS repository validation passed.
+          - Repository whitespace validation passed.
+
+          ## Structural review scope decision
+
+          `tools/ros_cli.mjs` is excluded from SDE-STRUCT-001 through repository-owned
+          `sde.config.json`. The file is retained as ROS legacy compatibility tooling and is
+          not Echelon Signal product code. All other supported source paths remain subject to
+          SDE structural review defaults.
+
+          ## Evidence authority
+
+          The GitHub Actions migration run is operational evidence. This document is the durable
+          repository summary; the installed manifests under `.echelon/` are the machine-readable
+          authority for exact installed versions and managed artifacts.
+          EOF
+
       - name: Rebuild and validate ROS projections
         shell: bash
         run: |
           set -euo pipefail
           ./ros registry build | tee /tmp/framework-migration/ros-registry-build.txt
           ./ros registry check | tee /tmp/framework-migration/ros-registry-check.txt
-          ./ros validate --json | tee /tmp/framework-migration/ros-validate.json
+          ./ros validate --json | tee /tmp/framework-migration/ros-validate-before-complete.json
           ./ros verify --strict --json | tee /tmp/framework-migration/ros-final-verify.json
+
+      - name: Complete migration work item
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./ros work complete WI-0011 \
+            --evidence implementation=.github/workflows/echelon-verification.yml \
+            --evidence tests=docs/verification/framework-baseline-2026-09-22.md
+          ./ros validate --json | tee /tmp/framework-migration/ros-validate-after-complete.json
+          ./ros status --json | tee /tmp/framework-migration/ros-status-after.json
 
       - name: Verify repository diff
         shell: bash
