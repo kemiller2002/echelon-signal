@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "tool": "ros",
   "package": "@echelon-foundry/repository-operating-system",
-  "installedVersion": "3.1.3",
+  "installedVersion": "3.1.4",
   "configurationVersion": 1,
   "profile": "greenfield",
   "managedArtifacts": [
@@ -34,7 +34,7 @@
     {
       "path": "AGENTS.md",
       "ownership": "shared",
-      "sha256": "325f8d866ad79b86796545d7d6c02e43af5fda8d364e5b0ad6fbaee070ec83a1"
+      "sha256": "58f555c9313098da9dcb2eab3a6c7aa55997ad11af1937ec3bfed253025aacc7"
     },
     {
       "path": "BOOTSTRAP.md",

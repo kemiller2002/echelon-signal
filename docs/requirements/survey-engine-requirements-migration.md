@@ -165,7 +165,7 @@ The extension strengthens the existing privacy language: Echelon Signal itself d
 
 ### Framework-baseline observation
 
-At extension review time, the repository's installed ROS configuration identifies 1.2.1-main.16.1, while the current ROS source package is 3.1.0; the current Ordo/SDE distribution is 1.3.0 and the current Limen package is 0.6.1. The upgrade/install activity is therefore an explicit trial obligation under ARX-001 rather than an assumed prerequisite.
+At the original extension review, the repository's installed ROS configuration identified 1.2.1-main.16.1 while ROS 3.1.0 and Limen 0.6.1 were then observed upstream. Subsequent repository work installed ROS 3.1.3, SDE 1.3.0, and Limen 0.6.1. The 2026-09-22 finalization verified and advanced the baseline to ROS 3.1.4, SDE 1.3.0, and Limen 0.6.2. This upgrade history remains explicit trial evidence under ARX-001 rather than an assumed prerequisite.
 
 
 ## 2026-09-22 administrator console / storage / analytics / visualization extension
