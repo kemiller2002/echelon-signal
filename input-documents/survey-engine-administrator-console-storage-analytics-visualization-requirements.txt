@@ -1,0 +1,1567 @@
+# Echelon Signal - Administrator Console, Storage, Analytics, and Visualization Requirements
+
+Status: Authoritative requirements extension
+Added: 2026-09-22
+Purpose: Define the administrator-side product for importing survey submissions, aggregating results, selecting durable storage, exploring results, building reports and dashboards, and rendering accessible visualizations while preserving Echelon Signal's deterministic, no-PII architecture.
+
+This document extends, but does not replace:
+
+- `survey-engine-admin-result-persistence-model.txt`
+- `survey-engine-reporting-requirements-data-contract.txt`
+- `survey-engine-advanced-ros-ordo-limen-stress-requirements.txt`
+
+The earlier contracts remain authoritative for SurveyResult, SurveyGroupResult, AdminReportState, reporting boundaries, anonymous behavior, deterministic interpretation, Ordo state modeling, Limen browser boundaries, unknown effects, and no-PII requirements.
+
+---
+
+# ADM-001 - Administrator Product Boundary and No-PII Contract
+
+The administrator application MUST be a first-class Echelon Signal application, not a collection of ad hoc pages around storage APIs.
+
+The administrator application MUST support:
+
+- Survey-group creation and management
+- Completed submission import
+- Import validation and rejection handling
+- Aggregate status and completion tracking
+- Durable administrator-state persistence
+- Storage-provider selection and configuration
+- Report and dashboard authoring
+- Interactive analysis
+- Accessible visualization
+- Report snapshots and exports
+- Audit and lineage inspection
+- Storage migration and reconciliation
+
+The administrator application MUST NOT collect, persist, display, join, infer, or export PII.
+
+The administrator application MUST NOT add names, email addresses, employee IDs, phone numbers, postal addresses, account profiles, or other person-level identifiers to survey state.
+
+For identified surveys, SurveyInstanceId remains an opaque survey-instance identifier. Any mapping from SurveyInstanceId to a real person remains outside Echelon Signal.
+
+Administrator credentials are transport secrets, not domain data. Storage-provider authentication material MUST NOT become part of SurveyGroupResult, AdminReportState, report definitions, report exports, URLs, telemetry, or audit records.
+
+The application MUST NOT read or display GitHub user profile information merely because a GitHub token is present.
+
+Any storage provider that exposes account identity, commit-author identity, or other external account metadata MUST keep that metadata outside Signal's domain model and report model.
+
+Free-form administrator notes SHOULD NOT be stored inside Echelon Signal because they create a path for PII. If narrative report commentary is later supported, it MUST have a separate explicit privacy design and validation policy.
+
+---
+
+# ADM-002 - Administrator State System
+
+Administrator behavior MUST be modeled as explicit legal state and transitions under Ordo.
+
+At minimum the administrator state model MUST distinguish:
+
+- Unconfigured
+- StorageConfigured
+- GroupDraft
+- GroupReady
+- Importing
+- GroupPartial
+- GroupComplete
+- Reporting
+- Snapshotting
+- Reconciling
+- StorageMigrationPlanned
+- StorageMigrationRunning
+- StorageMigrationVerified
+- DegradedReadOnly
+- InvalidConfiguration
+
+The exact model MAY use nested state machines rather than one flat union, but illegal combinations MUST be unrepresentable or explicitly rejected.
+
+Representative commands include:
+
+- ConfigureStorage
+- VerifyStorage
+- CreateGroup
+- UpdateGroupConfiguration
+- ImportSubmission
+- ImportSubmissionBatch
+- RejectImport
+- AcceptImport
+- ReconcileUnknownImport
+- RefreshFromStore
+- GenerateReportProjection
+- SaveReportDefinition
+- CreateReportSnapshot
+- ExportReport
+- BeginStorageMigration
+- VerifyStorageMigration
+- ActivateMigratedStore
+- RepairDerivedIndex
+- RebuildAggregateProjection
+
+Representative capabilities include:
+
+- CanConfigureStorage
+- CanCreateGroup
+- CanImportSubmission
+- CanImportBatch
+- CanViewPartialReport
+- CanFinalizeGroup
+- CanBuildReport
+- CanCreateSnapshot
+- CanExport
+- CanMigrateStorage
+- CanRepairIndex
+- CanWriteStore
+- CanReadStore
+- CanReconcile
+
+Capabilities MUST be derived from authoritative F# state.
+
+Limen, HTML, CSS, JavaScript/TypeScript, and storage adapters MUST NOT independently recreate capability policy.
+
+Unresolved work MUST be represented as obligations.
+
+Representative obligations include:
+
+- ConfigureDurableStore
+- ResolveTemplate
+- ReconcileUnknownWrite
+- ResolveConcurrentModification
+- RepairCorruptManifest
+- RebuildDerivedProjection
+- ResolveUnsupportedStoreCapability
+- VerifyMigration
+- ResolveIncompatibleSurveyVersions
+- ResolvePrivacyThresholdViolation
+
+---
+
+# ADM-003 - Storage Provider Abstraction
+
+Administrator persistence MUST be defined through a storage-provider contract rather than through GitHub-specific domain logic.
+
+The domain SHOULD reason about a capability-oriented abstraction conceptually equivalent to:
+
+```
+StorageProvider
+    ProviderType
+    ProviderVersion
+    Capabilities
+    Locator
+    Read
+    Write
+    CompareAndSwap
+    List
+    Delete?
+    Batch?
+    Query?
+    Transaction?
+    Reconcile
+```
+
+Storage-provider capabilities MUST be explicit and versioned.
+
+Representative capabilities include:
+
+- ReadObject
+- WriteObject
+- ConditionalWrite
+- AtomicReplace
+- ListPrefix
+- BatchRead
+- BatchWrite
+- ServerSideQuery
+- ServerSideAggregate
+- Transactions
+- ImmutableObject
+- DeleteObject
+- StrongDelete
+- VersionHistory
+- Compression
+- EncryptionAtRestClaim
+- MaxObjectSize
+- MaxBatchSize
+- RateLimitObservation
+- ChangeToken
+- StreamingRead
+- StreamingWrite
+
+The application MUST NOT assume that every provider has the same capabilities.
+
+Unsupported provider behavior MUST produce explicit negative knowledge or unavailable capability state rather than hidden fallback behavior.
+
+Storage-provider selection MUST NOT change survey scoring, aggregation meaning, report meaning, duplicate rules, privacy rules, or result hashes.
+
+The same logical administrator state stored through two conforming providers MUST reconstruct the same canonical SurveyGroupResult and report projections.
+
+---
+
+# ADM-004 - Phase 1 GitHub Repository Storage Provider
+
+The first durable external storage provider MUST be a GitHub repository.
+
+The GitHub provider MUST allow an administrator to configure at minimum:
+
+- Repository owner/name
+- Branch
+- Root path
+- Authentication token or equivalent credential mechanism
+- Read-only versus read/write mode where token capabilities permit
+- Optional storage namespace when multiple Signal datasets share one repository
+
+The GitHub token MUST NOT be written to the repository, browser URL, report export, logs, telemetry, crash data, or serialized administrator state.
+
+The application SHOULD prefer a fine-grained token scoped only to the required repository and permissions.
+
+The application MUST verify required repository capabilities before enabling write operations.
+
+The GitHub provider SHOULD use canonical JSON or another deterministic text format for domain artifacts so history remains inspectable and diffable.
+
+A recommended logical storage layout is:
+
+```
+signal/
+  manifest/
+    storage-manifest.json
+  groups/
+    {group-id}/
+      group-config.json
+      accepted-set.json
+      current-aggregate.json
+      current-report-state.json
+      indexes/
+      snapshots/
+  results/
+    {prefix}/
+      {result-id-or-hash}.json
+  report-definitions/
+    {report-definition-id}/
+      {version}.json
+  report-snapshots/
+    {snapshot-id}.json
+  audit/
+    ...
+```
+
+The exact physical layout MAY evolve, but it MUST be versioned and described by a StorageManifest.
+
+The provider SHOULD favor immutable/content-addressed result objects plus small mutable manifests over repeatedly rewriting one monolithic file.
+
+Large collections SHOULD be partitioned by stable hash prefix or another deterministic sharding strategy.
+
+Git history MAY provide additional auditability, but Signal MUST NOT depend on Git commit author identity as application data.
+
+Git history MUST NOT be treated as a substitute for explicit Signal hashes, schema versions, lineage, or reconciliation records.
+
+---
+
+# ADM-005 - Canonical Storage Manifest
+
+Every durable administrator store MUST contain or expose a canonical storage manifest.
+
+The manifest SHOULD include:
+
+- StorageSchemaVersion
+- ProviderContractVersion
+- DatasetId
+- RootNamespace
+- CanonicalizationVersion
+- ResultSchemaVersion
+- AdminStateSchemaVersion
+- ReportDefinitionSchemaVersion
+- VisualizationSchemaVersion
+- SupportedEncodingVersions
+- CreatedFromApplicationVersion
+- ActiveMigrationState
+- Integrity metadata
+- Optional provider capability snapshot
+
+The manifest MUST NOT contain PII.
+
+The application MUST validate the manifest before loading mutable administrator state.
+
+Unsupported future manifest versions MUST fail explicitly.
+
+A partially completed storage migration MUST be represented in the manifest and MUST NOT be mistaken for a fully active store.
+
+---
+
+# ADM-006 - Future Installable Service Storage Option
+
+A future phase MUST be able to add an installable service with HTTP endpoints as another StorageProvider implementation.
+
+The current architecture MUST reserve this option without requiring the service in phase 1.
+
+The domain MUST NOT hardcode GitHub concepts such as commits, branches, repositories, or file paths into SurveyGroupResult, AdminReportState, ReportData, or scoring types.
+
+A future service provider MAY offer capabilities that GitHub does not, including:
+
+- Transactions
+- Server-side querying
+- Server-side aggregation
+- Background ingestion
+- Scheduled report generation
+- Push notifications
+- Larger datasets
+- Streaming import/export
+- Stronger deletion semantics
+- Centralized access control
+
+The endpoint shape itself is intentionally deferred to the later service phase.
+
+The phase-1 client MUST be able to discover that these capabilities are unavailable rather than simulate them incorrectly.
+
+---
+
+# ADM-007 - Group Administration
+
+The administrator application MUST provide a complete group-management experience.
+
+An administrator MUST be able to:
+
+- Create a survey group
+- Select the immutable survey/template definition used by the group
+- Select identity mode
+- Configure expected survey count where applicable
+- Configure accepted template/version policy
+- Configure group completion policy
+- Configure report definitions
+- Configure privacy/suppression thresholds
+- Select storage profile
+- View current group status
+- Close an incomplete group where policy allows
+- Reopen only when the group policy and state model explicitly allow it
+- Create a successor group without mutating prior immutable results
+
+Group configuration changes that alter interpretation MUST be versioned.
+
+Changes that would invalidate already accepted results MUST be blocked or require creation of a new group/configuration version.
+
+The UI MUST clearly distinguish:
+
+- Draft configuration
+- Active collection/import state
+- Partial result state
+- Complete result state
+- Closed incomplete state
+- Superseded state
+
+---
+
+# ADM-008 - Submission Intake and Import Queue
+
+Phase 1 MUST support administrator-driven import of completed respondent artifacts.
+
+At minimum support:
+
+- Paste one completed survey URL
+- Paste multiple completed survey URLs
+- Import a text file containing completed survey URLs
+- Import a canonical submission artifact if supported by the existing response contract
+- Reprocess previously rejected imports after the blocking issue is resolved
+
+The import pipeline MUST use the authoritative existing import semantics:
+
+Completed artifact
+-> parse
+-> resolve exact immutable template
+-> verify fingerprint/integrity
+-> decode
+-> validate
+-> evaluate
+-> score
+-> create SurveyResult
+-> enforce group acceptance and duplicate rules
+-> persist accepted contribution
+-> update aggregate projection
+
+The administrator UI MUST expose separate views for:
+
+- Pending imports
+- Accepted imports
+- Rejected imports
+- Duplicate imports
+- Imports requiring reconciliation
+- Imports blocked by missing template/version
+- Imports blocked by unsupported encoding/capability
+
+Rejected imports MUST NOT affect group scores, counts, charts, or completion.
+
+Batch import MUST be deterministic regardless of input ordering.
+
+If two valid submissions are independent, accepting A then B MUST produce the same final group result as accepting B then A.
+
+---
+
+# ADM-009 - Import Idempotency, Concurrency, and Unknown Effects
+
+Every import MUST have an idempotency identity derived from canonical submission identity and group context.
+
+A retried import MUST NOT create a second contribution.
+
+GitHub writes MUST use optimistic concurrency or equivalent compare-and-swap semantics.
+
+If two administrators import different valid submissions concurrently, the system SHOULD be able to merge the resulting independent immutable contributions deterministically.
+
+The preferred model is set-based:
+
+```
+AcceptedContributionSet
+    keyed by immutable accepted submission/result identity
+
+SurveyGroupResult
+    = deterministic aggregate(AcceptedContributionSet, GroupConfiguration)
+```
+
+Concurrent additions of distinct contributions SHOULD commute.
+
+Concurrent incompatible edits to mutable configuration MUST NOT be silently merged.
+
+If a write may have reached GitHub but the client cannot determine the outcome, the result MUST be OutcomeUnknown rather than Failed.
+
+OutcomeUnknown MUST create a reconciliation obligation.
+
+Before retrying an unknown write, the application MUST inspect the provider state and determine whether the intended immutable object and/or manifest transition already occurred.
+
+Blind retry after OutcomeUnknown is forbidden when it could duplicate or overwrite state.
+
+---
+
+# ADM-010 - Durable Result and Aggregate Storage Model
+
+The durable store SHOULD separate immutable accepted results from mutable derived projections.
+
+Recommended layers:
+
+1. Immutable accepted SurveyResult records
+2. AcceptedContributionSet / index
+3. Deterministically derived SurveyGroupResult
+4. Deterministically derived AdminReportState
+5. Saved ReportDefinition records
+6. Immutable ReportSnapshot records
+7. Rebuildable indexes/caches
+
+A derived index or cached aggregate MUST be rebuildable from authoritative immutable inputs.
+
+Derived projections MUST have hashes identifying the source set/configuration from which they were calculated.
+
+The system MUST be able to detect when:
+
+- A current aggregate is stale
+- A current report projection is stale
+- An index is stale
+- A snapshot references a missing or incompatible source
+- The store contains an immutable result not yet reflected in the current aggregate manifest
+
+Repair MUST be an explicit legal transition, not an invisible UI side effect.
+
+---
+
+# ADM-011 - Incremental Aggregation Engine
+
+The administrator application MUST support incremental aggregation.
+
+Importing one new accepted result SHOULD recompute only affected aggregate nodes rather than scanning all historical results when the existing aggregate state contains sufficient evidence.
+
+Incremental aggregation MUST remain observationally equivalent to full deterministic recomputation from the accepted contribution set.
+
+The following invariant applies:
+
+```
+IncrementalGroupAggregate(previousAggregate, newContribution)
+=
+FullGroupAggregate(allAcceptedContributions)
+```
+
+for every legal accepted-contribution sequence.
+
+The aggregate execution plan SHOULD reuse the same dependency-graph principles used by the survey evaluator.
+
+Aggregate state SHOULD distinguish at minimum:
+
+- Count
+- Sum
+- Mean support values
+- Min/max
+- Category counts
+- Distribution bins when configured
+- Missing/NA/Don't-Know counts
+- Coverage
+- Confidence inputs
+- Recommendation frequencies
+- Section/domain aggregates
+- Comparison-ready metric values
+
+If a statistic cannot be safely updated incrementally, the engine MAY mark the affected aggregate node as requiring rebuild rather than calculate an approximation.
+
+---
+
+# ADM-012 - Query and Analysis Model
+
+The administrator application MUST provide a deterministic analysis layer over SurveyGroupResult and approved stored result detail.
+
+The analysis layer SHOULD support:
+
+Dimensions:
+- SurveyIdentifier
+- TemplateVersion where comparison is legal
+- SurveyGroupId
+- Section/domain
+- Question/metric identifier where report policy allows
+- Result category
+- Recommendation identifier
+- Group-level time period or wave identifier
+- Other non-PII, explicitly declared dimensions
+
+Measures:
+- Accepted response count
+- Completion rate
+- Coverage
+- Mean
+- Median
+- Minimum
+- Maximum
+- Standard deviation
+- Percentiles
+- Category frequency
+- Percentage/proportion
+- Don't-Know rate
+- Not-Applicable rate
+- Missing rate
+- Recommendation frequency
+- Score distribution
+- Change from prior compatible group/snapshot
+
+The analysis system MUST distinguish raw canonical result values from calculated analysis metrics.
+
+Calculated analysis metrics MUST NOT mutate or replace canonical SurveyResult or SurveyGroupResult values.
+
+A typed, pure, serializable AnalysisExpression AST MAY be used for calculated measures.
+
+The AnalysisExpression language MUST be versioned, deterministic, resource-bounded, and free of I/O, clock access, randomness, reflection, or arbitrary code execution.
+
+---
+
+# ADM-013 - Statistical and Measurement Analysis
+
+The administrator analysis layer SHOULD support advanced statistical summaries when the underlying metric semantics and sample size make them meaningful.
+
+Potential capabilities include:
+
+- Confidence intervals
+- Interquartile range
+- Median absolute deviation
+- Effect size between compatible groups
+- Change over repeated waves
+- Correlation matrix for approved numeric metrics
+- Item-total correlation
+- Response entropy
+- Ceiling/floor effect detection
+- Internal-consistency estimates such as Cronbach's alpha when mathematically appropriate
+- Distribution skew indicators
+- Outlier flags on aggregate/non-identifying values
+
+Advanced statistics MUST NOT be displayed merely because they can be calculated.
+
+Each statistic MUST define prerequisites such as:
+
+- Minimum sample size
+- Metric scale assumptions
+- Missing-value policy
+- Comparable template semantics
+- Privacy threshold
+- Required data detail
+
+If prerequisites are not met, the result MUST be a typed unavailable/insufficient state.
+
+The UI MUST distinguish descriptive statistics from inferential statistics.
+
+Confidence intervals and similar uncertainty displays MUST identify the method used.
+
+No statistical output may imply causal inference unless the survey design explicitly supports it.
+
+---
+
+# ADM-014 - Cross-Group, Historical, and Version Comparison
+
+Administrators SHOULD be able to compare compatible groups, waves, or snapshots.
+
+Comparison MUST be based on explicit semantic compatibility, not merely matching labels.
+
+A comparison candidate SHOULD consider:
+
+- SurveyIdentifier
+- Metric/section/question stable identifier
+- TemplateVersion
+- SemanticHash
+- Scoring algorithm/version
+- Scoring-expression language version
+- Result direction
+- Scale/range
+- Applicability semantics
+- Aggregation semantics
+- Privacy policy
+
+The engine MUST return NotComparable when semantics differ materially.
+
+A report MAY show the reason comparison was rejected.
+
+If a later template explicitly declares a metric as backward-compatible with an earlier metric, that compatibility declaration MUST be versioned and validated.
+
+Historical comparison MUST never retroactively mutate the original result.
+
+Re-evaluating old submissions under new scoring rules, if later supported, MUST create a separately labeled derived analysis result.
+
+---
+
+# ADM-015 - Signal Visualization Grammar
+
+Echelon Signal SHOULD implement a typed declarative visualization system rather than allowing UI components to invent chart semantics independently.
+
+Conceptual model:
+
+```
+VisualizationSpec
+    VisualizationSpecVersion
+    Intent
+    DataBinding
+    Encodings
+    Scale
+    Sort
+    AggregationReference
+    Labels
+    Accessibility
+    Interaction
+    PrivacyClass
+```
+
+Visualization semantics MUST be produced or validated by F#.
+
+Limen/browser code MAY render the resulting visualization specification using SVG, Canvas, HTML, or another mechanism, but MUST NOT invent new business calculations.
+
+Initial chart types SHOULD include:
+
+- Bar
+- Grouped bar
+- Stacked bar
+- 100% stacked bar
+- Line
+- Area
+- Dot plot
+- Distribution/histogram
+- Box plot
+- Heatmap
+- Radar/profile chart where semantically appropriate
+- Progress/bullet chart
+- Small multiples
+- Ranked table
+- Metric cards
+- Matrix
+- Sparklines for compact historical views
+
+Pie/donut charts MAY be supported only for small categorical sets with explicit suitability rules.
+
+3D charts SHOULD NOT be supported.
+
+Dual-axis charts SHOULD be disabled by default and require an explicit report-definition justification because they are easy to misread.
+
+Every chart type MUST declare legal dimension/measure shapes.
+
+Invalid chart/data combinations MUST fail validation rather than render misleading output.
+
+---
+
+# ADM-016 - Visualization Suitability and Anti-Misleading Rules
+
+The visualization compiler SHOULD validate chart suitability.
+
+Representative rules include:
+
+- A line chart requires an ordered dimension.
+- A histogram requires a numeric distribution.
+- A 100% stacked chart requires a defined denominator and explicit missing-value policy.
+- Category charts with excessive cardinality should recommend grouping/table presentation.
+- Truncated quantitative axes MUST be explicit and SHOULD generate a warning for bar charts.
+- Percent axes MUST define whether values are 0-1 or 0-100.
+- Sorting MUST be deterministic.
+- Missing values MUST not silently become zero.
+- Suppressed privacy cells MUST not be inferable from totals when suppression policy forbids it.
+- Color MUST NOT be the only carrier of meaning.
+- Legends MUST map to stable semantic categories.
+- The same category SHOULD have stable visual encoding across one report when practical.
+
+The compiler MAY emit warnings, suggestions, and alternate chart candidates.
+
+Automated visualization recommendations MUST remain advisory. The authoritative output is the validated VisualizationSpec chosen by the report definition.
+
+---
+
+# ADM-017 - Visualization Accessibility
+
+Every visualization MUST have an accessible equivalent.
+
+At minimum:
+
+- Text alternative/title
+- Programmatic description
+- Keyboard-accessible focus where interaction exists
+- Tabular equivalent for charted data
+- Screen-reader meaningful labels
+- Sufficient contrast
+- Non-color encoding such as labels, patterns, line style, symbols, or position
+- Zoom/reflow support
+- No required hover-only interaction
+- Touch targets suitable for mobile/tablet use
+- Motion reduction support where animation exists
+
+Default palettes MUST account for common color-vision deficiencies.
+
+The system MUST support high-contrast presentation.
+
+Visualizations MUST remain understandable in grayscale/print where the report definition allows printing.
+
+Typography and spacing SHOULD support users with low vision and dyslexia without requiring a special font.
+
+Chart labels and summaries SHOULD use plain language and avoid forcing the user to decode a legend when direct labeling is practical.
+
+An accessibility validation pass SHOULD reject or warn on:
+
+- Color-only distinctions
+- Insufficient contrast
+- Unlabeled interactive marks
+- Data only available on hover
+- Tiny fixed text
+- Inaccessible canvas-only content without equivalent semantics
+- Keyboard traps
+- Excessive animation
+
+---
+
+# ADM-018 - Dashboard System
+
+The administrator application SHOULD support saved dashboards built from deterministic report/visualization components.
+
+A dashboard definition SHOULD be versioned and declarative.
+
+Representative dashboard blocks:
+
+- Group status
+- Import status
+- Overall score/result
+- Section/domain summary
+- Distribution
+- Trend
+- Comparison
+- Recommendation frequency
+- Coverage/confidence
+- Missing/Don't-Know analysis
+- Privacy/suppression warnings
+- Recent snapshot status
+- Storage health
+- Reconciliation obligations
+
+Administrators SHOULD be able to:
+
+- Add/remove blocks
+- Reorder blocks
+- Resize within supported layout constraints
+- Change approved visualization type
+- Select compatible metrics
+- Apply non-PII filters
+- Save a dashboard definition
+- Duplicate a dashboard definition
+- Version a dashboard definition
+- Reset to a known report template
+
+Dashboard layout MUST be responsive.
+
+The same dashboard definition SHOULD support desktop, tablet, and mobile projections without storing separate business meaning.
+
+---
+
+# ADM-019 - Interactive Exploration and Drill-Down
+
+The administrator application SHOULD support interactive analysis without requiring report-definition changes for every exploration.
+
+Supported interactions MAY include:
+
+- Filter
+- Sort
+- Search by opaque identifier
+- Expand/collapse
+- Select a chart mark
+- Drill from overall result to section/domain
+- Drill from section/domain to aggregate question metrics where policy permits
+- Compare compatible groups
+- Toggle count/percentage
+- Change time window
+- View distribution detail
+- View calculation explanation
+- View lineage
+
+Interactive exploration MUST NOT alter canonical stored results.
+
+Every derived view MUST be reproducible from an explicit AnalysisState.
+
+AnalysisState MAY be stored in the administrator URL when it fits, allowing bookmark/share behavior without embedding secrets.
+
+Credentials MUST never be encoded into AnalysisState or URLs.
+
+Back/Forward browser navigation SHOULD restore analysis state through Limen history integration.
+
+---
+
+# ADM-020 - Data-Lineage Explorer
+
+The administrator application SHOULD provide a lineage/explanation view capable of tracing a reported value backward.
+
+For a selected chart point, metric card, recommendation frequency, or table value, the system SHOULD be able to identify:
+
+- ReportDefinitionVersion
+- VisualizationSpecVersion
+- AnalysisExpressionVersion if used
+- Aggregate node
+- SurveyGroupResultHash
+- Accepted contribution/result hashes
+- Template/semantic hashes
+- Scoring versions
+- Relevant reason codes
+- Snapshot identity where applicable
+
+The lineage view MUST respect privacy policy.
+
+For anonymous groups it MUST NOT expose person-level linkage or reconstruct invitation identity.
+
+Lineage MUST be derived from the same authoritative evaluation/aggregation path that produced the displayed value.
+
+---
+
+# ADM-021 - Report Builder
+
+Administrators SHOULD be able to create report definitions through a structured report builder.
+
+The builder SHOULD support:
+
+- Audience selection
+- Report block selection
+- Block ordering
+- Visualization selection
+- Metric binding
+- Filter rules
+- Comparison rules
+- Privacy rules
+- Detail level
+- Rounding rules
+- Localization
+- Print behavior
+- Export formats
+- Accessibility checks
+- Preview using current group state
+- Validation before publication/use
+
+Report definitions MUST be versioned.
+
+A report definition used for a formal snapshot MUST become immutable at that version.
+
+Editing a used report definition MUST create a new version.
+
+The builder MUST NOT allow presentation rules to override scoring, applicability, duplicate handling, completion, or canonical aggregation.
+
+---
+
+# ADM-022 - Report Snapshots and Reproducibility
+
+A formal report snapshot MUST be an immutable record of a report generated from an exact result state and report definition.
+
+Recommended fields:
+
+```
+ReportSnapshot
+    ReportSnapshotId
+    SurveyGroupId
+    SurveyGroupResultHash
+    AdminReportStateHash
+    ReportDefinitionId
+    ReportDefinitionVersion
+    VisualizationSchemaVersion
+    ComparisonReferences
+    Locale
+    CanonicalReportDataHash
+    GeneratedAtEvidence?
+    SnapshotSchemaVersion
+```
+
+GeneratedAt MUST NOT affect canonical report meaning.
+
+If time is recorded, it MUST come from explicit clock evidence and be separated from deterministic content hashes unless the snapshot contract intentionally includes it.
+
+Opening a historical snapshot MUST NOT silently substitute current group state.
+
+A snapshot whose dependencies are unavailable MUST show an explicit unresolved state.
+
+---
+
+# ADM-023 - Exports
+
+The administrator system SHOULD support:
+
+- Structured JSON
+- CSV for legal tabular projections
+- Print-friendly HTML
+- PDF as a renderer/output format
+- Static snapshot package for offline review where feasible
+
+Exports MUST be derived from the same ReportData used by on-screen rendering.
+
+CSV MUST NOT be used as the canonical representation for composite results.
+
+Every export SHOULD include sufficient non-PII lineage metadata to identify:
+
+- Survey/group
+- Result schema version
+- Report definition version
+- Snapshot/result hash
+- Comparison references where used
+
+Exports MUST enforce the same privacy suppression rules as the screen.
+
+Exporting MUST NOT reveal data hidden by the current report policy.
+
+---
+
+# ADM-024 - Privacy-Preserving Aggregation and Disclosure Controls
+
+No-PII does not eliminate inference risk.
+
+The administrator system MUST support disclosure controls for small groups and small slices.
+
+At minimum support:
+
+- Minimum group size
+- Minimum subgroup/cell size
+- Suppression of small anonymous slices
+- Suppression-aware totals when subtraction could reveal a hidden cell
+- Minimum distribution sample size
+- Minimum comparison sample size
+- Optional minimum result diversity before showing a distribution
+
+Privacy policy MUST be evaluated before ReportData is emitted to visual components.
+
+The UI MUST NOT receive hidden row-level data and then merely hide it with CSS.
+
+A filtered view that reduces an anonymous group below the configured threshold MUST become suppressed.
+
+Repeated interactive filtering MUST NOT provide an easy differencing attack that reconstructs suppressed values.
+
+The system SHOULD detect and block obvious differencing paths when two displayed aggregates can reveal a suppressed small group.
+
+---
+
+# ADM-025 - Storage Security and Integrity
+
+Storage integrity MUST be independent of transport success.
+
+Every canonical stored domain object SHOULD have a deterministic content hash.
+
+Important mutable manifests SHOULD reference immutable child object hashes.
+
+The application MUST detect tampering, truncation, wrong-schema content, and wrong-dataset references.
+
+GitHub transport security alone MUST NOT be treated as proof that loaded data belongs to the intended Signal dataset.
+
+Sensitive storage locators and credentials MUST not be included in public/shareable report artifacts.
+
+Optional client-side encryption for durable store objects MAY be introduced later, but if implemented:
+
+- Encryption MUST be an explicit storage capability/policy.
+- Key material MUST never be stored alongside ciphertext in the same provider.
+- Encryption MUST not change canonical domain hashes unless the contract deliberately hashes ciphertext separately.
+- Lost keys MUST produce an explicit unrecoverable state.
+- Browser crypto operations MUST be mechanisms requested by authoritative F# state, not ad hoc TypeScript policy.
+
+---
+
+# ADM-026 - GitHub Rate Limits, Scale, and Performance
+
+The GitHub provider MUST treat rate limits and repository limits as first-class external constraints.
+
+The provider SHOULD observe and expose:
+
+- Remaining request budget where available
+- Retry-after/rate-limit reset evidence
+- Object size failures
+- Repository write conflicts
+- Network interruption
+- Partial list results
+- Stale ETag/change token
+
+The application MUST NOT spin or aggressively retry rate-limited operations.
+
+Immutable objects SHOULD be cached safely because their hashes guarantee identity.
+
+Conditional reads SHOULD be used where supported.
+
+Large group loading SHOULD avoid fetching every immutable result when a verified aggregate and index are sufficient for the requested view.
+
+The architecture SHOULD support at least three scale modes:
+
+- Small: all relevant admin state can be loaded eagerly.
+- Medium: indexes and aggregates are eager, immutable result detail is lazy.
+- Large: partitioned indexes/aggregates, lazy detail, bounded memory, provider-aware paging.
+
+Scale thresholds SHOULD be evidence-driven rather than hardcoded assumptions.
+
+Performance acceptance tests SHOULD include groups large enough to force partitioning and lazy loading.
+
+---
+
+# ADM-027 - Rebuildable Indexes and Materialized Views
+
+To make GitHub practical as a store, the system MAY maintain derived indexes/materialized views.
+
+Examples:
+
+- Accepted contribution index
+- Result-by-group index
+- Metric summary index
+- Report-ready aggregate
+- Recommendation-frequency index
+- Comparison index
+- Snapshot index
+
+Every derived index MUST identify the authoritative source hash/set it represents.
+
+Indexes MUST be disposable and rebuildable.
+
+A corrupt or stale index MUST NOT corrupt canonical results.
+
+The application SHOULD provide:
+
+- ValidateIndex
+- RebuildIndex
+- CompareIndexToReference
+- ActivateRebuiltIndex
+
+Rebuilding an index MUST produce the same canonical index output given the same immutable source set and index version.
+
+---
+
+# ADM-028 - Storage Migration and Provider Portability
+
+Administrators MUST be able to move a Signal dataset from one storage provider to another without changing report meaning.
+
+A migration SHOULD follow:
+
+1. Validate source store.
+2. Capture immutable source manifest/hash set.
+3. Create destination manifest in migration state.
+4. Copy immutable objects.
+5. Copy/version report definitions and snapshots.
+6. Rebuild or copy verified derived indexes.
+7. Verify object counts and hashes.
+8. Recompute representative aggregates.
+9. Compare source/destination canonical results.
+10. Mark destination verified.
+11. Explicitly activate destination.
+12. Leave source untouched unless a later explicit retirement action occurs.
+
+Migration MUST be resumable and idempotent.
+
+A partially copied destination MUST NOT be presented as authoritative.
+
+Migration verification MUST include semantic equivalence, not only byte counts.
+
+The same mechanism SHOULD later support GitHub -> installable service migration.
+
+---
+
+# ADM-029 - Backup, Restore, and Disaster Recovery
+
+A storage provider SHOULD support export of a provider-independent Signal backup bundle.
+
+The bundle SHOULD contain:
+
+- Storage manifest
+- Group configurations
+- Immutable accepted result objects
+- Accepted contribution sets
+- Report definitions
+- Report snapshots
+- Required non-PII comparison metadata
+- Hash manifest
+
+Derived caches MAY be excluded when they are rebuildable.
+
+Restore MUST verify hashes and schema versions before activation.
+
+A restore MUST never merge two datasets merely because their group IDs collide.
+
+DatasetId and content lineage MUST participate in restore validation.
+
+---
+
+# ADM-030 - Audit Without PII
+
+Signal audit records MUST describe what the system did without recording person identity or answer content unnecessarily.
+
+Representative audit events:
+
+- StorageConfigured
+- StorageVerified
+- GroupCreated
+- GroupConfigurationVersioned
+- SubmissionAccepted
+- SubmissionRejected
+- DuplicateRejected
+- UnknownWriteObserved
+- WriteReconciled
+- AggregateRebuilt
+- IndexRebuilt
+- ReportDefinitionPublished
+- ReportSnapshotCreated
+- ExportCreated
+- MigrationStarted
+- MigrationVerified
+- DestinationActivated
+
+Audit records SHOULD contain:
+
+- Event type
+- Opaque domain identifiers
+- Content hashes
+- Schema versions
+- Reason codes
+- Before/after state identifiers
+- Explicit clock evidence when required
+
+Audit records MUST NOT contain:
+
+- Names
+- Emails
+- GitHub login names
+- Free-form user commentary
+- Authentication tokens
+- Raw respondent URLs unless a separately configured retention policy explicitly requires a canonical submission artifact and the audit event references it by hash instead
+
+---
+
+# ADM-031 - Administrator UX Information Architecture
+
+The administrator UI SHOULD expose clear top-level areas equivalent to:
+
+- Overview
+- Groups
+- Imports
+- Analysis
+- Reports
+- Dashboards
+- Snapshots/Exports
+- Storage
+- Audit/Lineage
+- Settings
+
+Overview SHOULD prioritize unresolved obligations and current state, including:
+
+- Groups waiting for imports
+- Groups complete
+- Rejected imports
+- Unknown-effect reconciliations
+- Storage health
+- Stale aggregate/index warnings
+- Privacy suppression warnings
+- Recent snapshots
+- Migration state
+
+The UI MUST distinguish domain errors from infrastructure errors.
+
+The UI MUST not show raw exception text as the primary administrator message.
+
+Stable reason codes SHOULD be available in an expandable technical detail view.
+
+---
+
+# ADM-032 - Search, Filtering, and Saved Analysis
+
+Administrators SHOULD be able to search and filter by allowed non-PII domain fields.
+
+Examples:
+
+- SurveyIdentifier
+- SurveyGroupId
+- TemplateVersion
+- Result category
+- Section/domain
+- Recommendation
+- Group status
+- Snapshot
+- Date/wave metadata where non-identifying
+
+Search MUST NOT imply a hidden person directory.
+
+The system MAY support saved analysis definitions consisting of:
+
+- Filter expression
+- Metric set
+- Comparison references
+- Sort
+- Visualization selections
+- Layout
+
+Saved analysis definitions MUST be declarative, versioned, and free of credentials.
+
+---
+
+# ADM-033 - Read-Only and Degraded Modes
+
+The application MUST support a useful read-only mode when the storage provider allows reads but not writes.
+
+Read-only mode SHOULD allow:
+
+- Browse groups
+- View reports
+- Run local deterministic analysis over loaded authorized data
+- View snapshots
+- Export if policy allows
+- Inspect lineage
+- Validate store health
+
+It MUST disable write capabilities through authoritative state.
+
+If a provider becomes temporarily unavailable after state is loaded, the application MAY enter a degraded read-only mode.
+
+Degraded mode MUST make staleness explicit.
+
+The application MUST NOT imply that locally viewed state is current when refresh failed.
+
+---
+
+# ADM-034 - Schema Evolution and Compatibility
+
+Administrator schemas MUST be independently versioned where semantics differ.
+
+At minimum consider:
+
+- StorageSchemaVersion
+- AdminStateSchemaVersion
+- AggregateSchemaVersion
+- AnalysisExpressionLanguageVersion
+- VisualizationSpecVersion
+- DashboardDefinitionVersion
+- ReportDefinitionVersion
+- ReportSnapshotSchemaVersion
+
+Loading older supported versions MUST use explicit migration/adapter logic.
+
+Unsupported future versions MUST fail safely.
+
+A schema migration MUST never silently change canonical survey scores.
+
+If an aggregate schema changes, old immutable SurveyResults SHOULD remain valid inputs to a deterministic aggregate rebuild where semantic compatibility exists.
+
+---
+
+# ADM-035 - Limen Boundary for Administrator UI
+
+The administrator application MUST use Limen as the browser authority boundary.
+
+F# owns:
+
+- State
+- Commands
+- Capabilities
+- Obligations
+- Storage-operation intent
+- Import decisions
+- Aggregation
+- Analysis semantics
+- Privacy suppression
+- Report composition semantics
+- Visualization specification
+- Lineage
+- Export eligibility
+
+Browser/TypeScript code MAY own mechanism such as:
+
+- DOM event capture
+- File chooser
+- Clipboard access
+- Download initiation
+- History/navigation
+- SVG/Canvas drawing mechanics
+- Browser cryptography mechanism if requested
+- Network transport for provider calls
+- Resize/viewport observation
+
+TypeScript MUST NOT own:
+
+- Aggregate formulas
+- Privacy decisions
+- Comparison eligibility
+- Chart metric calculations
+- Report block eligibility
+- Duplicate decisions
+- Storage retry policy
+- Unknown-effect reconciliation policy
+
+The administrator application SHOULD be a demanding Limen example and exercise complex two-way interaction, file input, history, responsive layout, SVG/Canvas rendering, keyboard interaction, downloads, and provider I/O.
+
+---
+
+# ADM-036 - Advanced Stress and Adversarial Test Program
+
+The administrator section MUST include tests that deliberately stress the architecture.
+
+Required scenarios include:
+
+## Scenario A - Concurrent Imports
+
+Two administrator sessions import different submissions into the same GitHub-backed group from the same starting revision.
+
+Verify:
+
+- both immutable contributions can survive,
+- manifest conflict is detected,
+- deterministic reconciliation produces the same final set/aggregate,
+- no duplicate contribution is created.
+
+## Scenario B - Unknown GitHub Write Outcome
+
+Dispatch a write, lose the response, and make the client uncertain whether GitHub accepted it.
+
+Verify:
+
+- state becomes OutcomeUnknown,
+- blind retry is unavailable,
+- reconciliation inspects remote state,
+- exactly one logical contribution exists after resolution.
+
+## Scenario C - Large Dataset
+
+Populate enough accepted results to require partitioned indexes and lazy detail loading.
+
+Verify:
+
+- report overview does not require reading every result object,
+- full deterministic rebuild still matches the incremental aggregate,
+- memory remains bounded,
+- GitHub request behavior respects rate limits.
+
+## Scenario D - Corrupt Derived Aggregate
+
+Alter or remove the current aggregate file while leaving immutable results intact.
+
+Verify:
+
+- hash/lineage validation detects the problem,
+- reports are not silently rendered from corrupt state,
+- rebuild obligation appears,
+- rebuilt aggregate matches reference recomputation.
+
+## Scenario E - Visualization Accessibility
+
+For every supported chart type verify:
+
+- screen-reader text/table equivalent,
+- keyboard interaction,
+- high contrast,
+- color-blind safe distinction,
+- no hover-only information,
+- responsive zoom/reflow,
+- print/grayscale behavior where supported.
+
+## Scenario F - Privacy Differencing
+
+Create anonymous aggregate data where a small subgroup could be inferred by subtracting visible totals.
+
+Verify suppression policy prevents reconstruction.
+
+## Scenario G - Version Incompatibility
+
+Compare groups with similar labels but incompatible scoring semantics.
+
+Verify NotComparable with stable reason codes.
+
+## Scenario H - Provider Migration
+
+Migrate a non-trivial GitHub-backed dataset into a test implementation of the generic provider contract.
+
+Verify:
+
+- object hashes,
+- group aggregate hashes,
+- report-data hashes,
+- report snapshots,
+- privacy behavior,
+- visualization inputs
+
+are semantically equivalent before activation.
+
+## Scenario I - Stale Multi-Tab Admin State
+
+Open the same group in two tabs, mutate one, then attempt a conflicting operation from the stale tab.
+
+Verify stale effect/version checks prevent accidental overwrite.
+
+## Scenario J - Report Snapshot Reproduction
+
+Create a formal report snapshot, then change current group state and report definition.
+
+Verify the old snapshot still reconstructs the original report data exactly.
+
+---
+
+# ADM-037 - Property and Model-Based Tests
+
+Property-based tests SHOULD cover:
+
+- Import order independence for independent valid submissions
+- Duplicate idempotency
+- Full aggregate = incremental aggregate
+- Rebuild aggregate = stored verified aggregate
+- Storage round trip preserves canonical state
+- GitHub provider = provider-contract reference behavior
+- Migration source = destination canonical semantics
+- Filter order does not change final selected set
+- Report renderer does not change metric values
+- Visualization transformations do not change canonical measures
+- Suppressed data never reaches unauthorized visual projections
+- Snapshot reproduction is stable
+- Schema adapters preserve supported old semantics
+- Same immutable accepted set + same configuration = same SurveyGroupResultHash
+- Same ReportData + same ReportDefinition + same locale = same canonical rendered-data model
+
+Model-based tests SHOULD generate legal and illegal administrator transition sequences and verify capability/obligation correctness.
+
+---
+
+# ADM-038 - Performance and Resource Limits
+
+Administrator operations MUST define explicit resource limits.
+
+At minimum consider:
+
+- Maximum batch-import count per action
+- Maximum pasted URL size
+- Maximum import artifact size
+- Maximum chart point count before aggregation/binning is required
+- Maximum dashboard block count
+- Maximum filter-expression complexity
+- Maximum AnalysisExpression depth/node count
+- Maximum loaded result-detail count
+- Maximum in-memory dataset size
+- Maximum GitHub object size used by Signal
+- Maximum retry count
+- Maximum reconciliation scan scope
+
+Exceeding a resource limit MUST produce an explicit typed result.
+
+The system MUST NOT freeze the browser or enter unbounded retries on hostile but bounded input.
+
+Where a report would require too many visual marks, the system SHOULD aggregate, paginate, virtualize, or require a narrower view rather than render an unusable chart.
+
+---
+
+# ADM-039 - Optional Advanced Analytics Extensions
+
+The architecture SHOULD leave room for future non-authoritative analytic extensions such as:
+
+- Clustering of aggregate profiles
+- Anomaly detection
+- Survey-item quality analysis
+- Benchmarking
+- Forecast/trend projection
+- Scenario modeling
+- Recommendation impact tracking
+- Natural-language report explanation
+
+These extensions MUST NOT mutate canonical survey results.
+
+Any probabilistic or AI-generated analysis MUST be labeled as derived analysis, include its model/method version where reproducibility matters, and remain outside deterministic scoring authority.
+
+No AI feature may receive PII because Signal contains none.
+
+AI-generated narrative MUST NOT be treated as audit evidence unless its source data and model invocation are separately captured under an explicit future contract.
+
+These are future capabilities, not phase-1 implementation requirements.
+
+---
+
+# ADM-040 - Phase Boundaries
+
+Phase 1 MUST focus on a fully capable browser administrator application using:
+
+- F# authoritative domain logic
+- Limen browser boundary
+- GitHub repository durable storage provider
+- Deterministic import and aggregation
+- Interactive analysis
+- Typed visualization system
+- Report/dashboard definitions
+- Report snapshots/exports
+- Accessibility and privacy enforcement
+- Reconciliation and audit
+
+Phase 1 MUST NOT require:
+
+- A custom Signal server
+- A database server
+- Background workers
+- Scheduled jobs
+- Webhooks
+- Server-side query endpoints
+- Organization/user directory
+- PII identity mapping
+
+The architecture MUST leave explicit capability slots for those future provider/service features.
+
+---
+
+# Cross-Cutting Administrator Invariants
+
+1. Echelon Signal administrator state contains no PII.
+2. Storage choice does not change survey or report meaning.
+3. GitHub is a provider implementation, not the domain model.
+4. Every accepted contribution is immutable and idempotent.
+5. Independent accepted contributions aggregate deterministically regardless of import order.
+6. Rejected imports never affect aggregates.
+7. Unknown external effects are reconciled before unsafe retry.
+8. Mutable manifests use version/compare-and-swap semantics.
+9. Derived indexes and aggregates are rebuildable from authoritative immutable inputs.
+10. Incremental aggregation equals full recomputation.
+11. Report rendering never re-scores surveys.
+12. Analysis expressions never mutate canonical results.
+13. Comparisons require explicit semantic compatibility.
+14. Missing or suppressed values are never silently rendered as zero.
+15. Privacy suppression occurs before data reaches visualization components.
+16. Interactive filtering cannot bypass anonymous minimum-count rules.
+17. Chart semantics are declarative and validated.
+18. Every chart has an accessible non-visual/tabular equivalent.
+19. Color is never the only carrier of meaning.
+20. Report definitions and dashboards are versioned.
+21. Formal report snapshots are immutable and reproducible.
+22. Credentials never enter URLs, report data, exports, or repository content.
+23. Provider failure cannot silently turn a write-capable state into a successful completed state.
+24. Degraded/read-only state is explicit.
+25. Storage migration is verified before destination activation.
+26. Schema migration does not silently change canonical scores.
+27. Lineage can trace formal report values to authoritative aggregate/result inputs without exposing PII.
+28. Large datasets do not require loading every immutable result for ordinary overview/report use.
+29. Rate limits and resource limits are explicit external/domain evidence, not generic exceptions.
+30. Browser/TypeScript code renders mechanisms; F# remains the authority for application meaning.
+
+---
+
+# Requirements Migration Status
+
+These administrator requirements are authoritative input requirements.
+
+They were added after the 2026-09-21 advanced stress-trial migration.
+
+ROS work-item migration for ADM-001 through ADM-040 is intentionally not claimed complete by this document. The repository migration ledger MUST identify this source as newly captured/pending work-item reconciliation until the ROS work items are updated.
+
+Likely impacted delivery areas include:
+
+- Canonical domain contracts
+- Administrator import/aggregation/persistence
+- Reporting
+- Limen administrator UI
+- Cross-cutting testing/security/performance
+- Future storage-provider/service architecture
+
