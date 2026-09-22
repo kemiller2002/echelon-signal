@@ -3,7 +3,7 @@
 | ID | Work | Status | Tags | Priority |
 |---|---|---|---|---|
 | ROS-INSTALL-1-2-1-main-16-1 | ROS-INSTALL-1-2-1-main-16-1 | complete |  |  |
-| WI-0001 | Migrate authoritative survey requirements from input-documents into traceable ROS work items | active | requirements, migration, survey | high |
+| WI-0001 | Migrate authoritative survey requirements from input-documents into traceable ROS work items | complete | requirements, migration, survey | high |
 | WI-0002 | Canonical survey domain contracts and F# module boundaries | captured | domain, architecture, survey | high |
 | WI-0003 | Template authoring, publication, versioning, and compatibility | captured | authoring, publication, versioning | high |
 | WI-0004 | Answer model, URL encoding, and live respondent lifecycle | captured | answers, encoding, url-state | high |
@@ -13,3 +13,4 @@
 | WI-0008 | Administrator import, aggregation, and report-state persistence | captured | admin, import, persistence | high |
 | WI-0009 | Reporting contract, privacy, comparisons, and renderers | captured | reporting, privacy, exports | medium |
 | WI-0010 | Cross-cutting test, performance, security, migration, and acceptance program | captured | testing, performance, security | high |
+| WI-0011 | Migrate Echelon Signal to current ROS, Ordo SDE, and Limen | complete | framework, migration, ros, ordo, limen | high |

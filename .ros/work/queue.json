@@ -182,6 +182,26 @@
       "createdBy": "unknown",
       "source": "requirements-migration",
       "sourceReference": "input-documents/"
+    },
+    {
+      "id": "WI-0011",
+      "title": "Migrate Echelon Signal to current ROS, Ordo SDE, and Limen",
+      "description": "Adopt current ROS lifecycle state, install SDE and Limen, update verification pins, and record durable migration evidence.",
+      "tags": [
+        "framework",
+        "migration",
+        "ros",
+        "ordo",
+        "limen"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-22T08:46:00.000Z",
+      "updatedAt": "2026-09-22T08:46:59.000Z",
+      "createdBy": "unknown",
+      "source": "agent-execution",
+      "sourceReference": "ARX-001"
     }
   ]
 }

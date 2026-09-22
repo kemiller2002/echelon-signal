@@ -1,0 +1,11 @@
+{
+  "configurationVersion": 1,
+  "boundary": {
+    "engine": [
+      "src/Echelon.Signal.Engine"
+    ],
+    "kernel": [
+      "src/Echelon.Signal.Browser"
+    ]
+  }
+}
