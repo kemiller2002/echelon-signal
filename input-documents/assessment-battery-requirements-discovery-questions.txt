@@ -1,0 +1,1631 @@
+ECHELON SIGNAL
+ASSESSMENT BATTERY REQUIREMENTS DISCOVERY QUESTIONS
+
+Status: Discovery artifact
+Added: 2026-09-22
+
+Purpose
+=======
+
+This document is a comprehensive question set for defining first-class assessment-battery support in Echelon Signal.
+
+An assessment battery is intentionally treated as potentially more than the existing SurveyGroup concept. A battery may coordinate multiple immutable assessments/instruments under shared sequencing, adaptive selection, timing, breaks, repeated administration, scoring, norms, interpretation, privacy, accessibility, and reporting rules.
+
+These questions are NOT answers and are NOT yet normative product requirements. Each question should eventually be answered, explicitly deferred, or declared out of scope. Material answers should then be converted into numbered authoritative battery requirements and ROS work-item traceability.
+
+Existing Signal constraints continue to apply while these questions are answered, including:
+- no PII in Signal,
+- F# as application/domain authority,
+- Ordo/SDE legal-state/capability/obligation semantics,
+- Limen for browser mechanism boundaries,
+- Aegis for unexpected operational failures,
+- deterministic/versioned/hash-addressed semantics where formal reproducibility is required,
+- explicit unknown effects and reconciliation,
+- accessibility and privacy as acceptance properties rather than presentation afterthoughts.
+
+Question IDs are stable discovery identifiers.
+
+
+1. Battery Definition, Purpose, and Domain Boundary
+===================================================
+
+BATQ-001: What exactly is an assessment battery in Signal: a named collection of assessments, an executable administration plan, an interpretive unit, or all three?
+
+BATQ-002: How is an assessment battery semantically different from the existing SurveyGroup concept?
+
+BATQ-003: Can a SurveyGroup exist without a battery, and can a battery produce or contain multiple SurveyGroups?
+
+BATQ-004: Is the battery primarily a respondent-facing concept, an administrator-facing concept, or both?
+
+BATQ-005: What purposes must a battery support: screening, diagnostic support, skills assessment, organizational assessment, research, longitudinal monitoring, certification, development, selection, or other uses?
+
+BATQ-006: Must every battery declare its intended purpose before publication?
+
+BATQ-007: Must every battery declare explicitly prohibited uses or interpretations?
+
+BATQ-008: Must a battery declare the construct or set of constructs it is intended to measure?
+
+BATQ-009: Can one battery intentionally measure unrelated constructs?
+
+BATQ-010: Must a battery declare its intended population and context of use?
+
+BATQ-011: Can the same battery definition be valid for multiple populations, or should population-specific versions be separate?
+
+BATQ-012: Should battery semantics distinguish an instrument, test, questionnaire, task, observer rating, interview, simulation, and other assessment modalities?
+
+BATQ-013: Can non-survey instruments participate in a future battery even if Signal initially administers only survey-like instruments?
+
+BATQ-014: Should a battery itself be considered a versioned domain artifact independent of its component assessments?
+
+BATQ-015: What is the canonical result of a battery: completion status, component results, cross-instrument composites, interpretation, or a combination?
+
+BATQ-016: Can a battery be informational only, with no battery-level score or interpretation?
+
+BATQ-017: Can a battery be used only as an orchestration wrapper while each component remains independently interpreted?
+
+BATQ-018: Can one assessment belong to multiple batteries?
+
+BATQ-019: Can a battery contain another battery, and if so what nesting depth and cycle rules apply?
+
+BATQ-020: Should nested batteries be allowed at all in phase 1?
+
+BATQ-021: Must every published battery be immutable?
+
+BATQ-022: Should an edited battery always produce a new battery version rather than mutating the published definition?
+
+BATQ-023: What parts of battery behavior are semantic versus presentation-only?
+
+BATQ-024: Which battery decisions must be represented in F# authoritative state rather than browser configuration?
+
+BATQ-025: Which battery behaviors are intentionally out of scope for phase 1?
+
+
+2. Battery Identity, Versioning, Provenance, and Publication
+============================================================
+
+BATQ-026: What identifiers are required for BatteryIdentifier, BatteryVersion, BatteryHash, and published artifact identity?
+
+BATQ-027: Should BatteryIdentifier remain stable across semantic versions?
+
+BATQ-028: Should every published battery have a deterministic canonical hash?
+
+BATQ-029: What content contributes to the semantic battery hash?
+
+BATQ-030: Should presentation-only changes produce a different artifact hash but retain a semantic compatibility hash?
+
+BATQ-031: Must a battery pin every component assessment to an exact immutable version/hash?
+
+BATQ-032: Can a draft battery reference 'latest' components for authoring convenience?
+
+BATQ-033: Must all convenience references be resolved to exact immutable versions before publication?
+
+BATQ-034: What happens when a referenced assessment version is unavailable at administration time?
+
+BATQ-035: Can a battery publish if any component has unresolved dependencies?
+
+BATQ-036: Should battery publication validate every component assessment independently before validating the battery as a whole?
+
+BATQ-037: Should publication re-run component compatibility checks even if each component was already individually published?
+
+BATQ-038: Must the battery record provenance for why each instrument/version was selected?
+
+BATQ-039: Should provenance distinguish imported, cloned, locally authored, and externally licensed instruments?
+
+BATQ-040: Should a battery version declare the prior version it supersedes?
+
+BATQ-041: Should rollback mean publishing a new battery version equivalent to an earlier one rather than reactivating mutable history?
+
+BATQ-042: Should batteries support draft, validated, published, superseded, deprecated, withdrawn, and archived lifecycle states?
+
+BATQ-043: What does withdrawn mean for already-started battery administrations?
+
+BATQ-044: What does deprecated mean for new assignments versus historical reproduction?
+
+BATQ-045: Can a published battery be deleted, or only retired from new use?
+
+BATQ-046: Should battery publication produce a validation manifest and execution plan?
+
+BATQ-047: Should publication produce a dependency closure hash covering all component versions and relevant policies?
+
+BATQ-048: Should publication fail if two components contain conflicting identifiers or incompatible semantic dependencies?
+
+BATQ-049: How should Signal detect a battery version that is technically valid but no longer suitable because a component has been superseded for safety or validity reasons?
+
+BATQ-050: Should battery publication require a formal reviewer/approval capability in the future, even if phase 1 remains single-administrator?
+
+
+3. Battery Composition and Component Membership
+===============================================
+
+BATQ-051: How many component assessments may a battery contain?
+
+BATQ-052: Is there a practical or hard maximum number of component assessments?
+
+BATQ-053: Can a battery contain the same assessment more than once for repeated measurement within one administration?
+
+BATQ-054: How are repeated uses of the same assessment distinguished: component slot ID, occasion ID, wave ID, or another identity?
+
+BATQ-055: Can component assessments be required, optional, conditional, or informational?
+
+BATQ-056: Can a battery define one-of-N alternative instruments that measure the same construct?
+
+BATQ-057: Can a battery define fallback assessments if a primary assessment cannot be administered?
+
+BATQ-058: Can a battery define mutually exclusive assessment components?
+
+BATQ-059: Can a component be required only if another component produces a particular result?
+
+BATQ-060: Can a component be required only if another component is incomplete, invalid, or below a confidence threshold?
+
+BATQ-061: Can a component be skipped when an earlier assessment establishes sufficient evidence?
+
+BATQ-062: Can administrators add an assessment to a battery instance after the battery has started?
+
+BATQ-063: If dynamic additions are allowed, does that create a new battery plan/version or an instance-specific amendment?
+
+BATQ-064: Can administrators remove a not-yet-started assessment from an active battery instance?
+
+BATQ-065: How are component weights represented if battery-level scoring uses them?
+
+BATQ-066: Can different battery components contribute to multiple battery-level constructs?
+
+BATQ-067: Can a component contribute only selected sections/subscales rather than its entire result?
+
+BATQ-068: Can the battery reference specific result dimensions by stable semantic IDs rather than display labels?
+
+BATQ-069: How are incompatible result shapes handled across components?
+
+BATQ-070: Should component ordering be stored separately from membership so order can vary without changing semantic membership?
+
+BATQ-071: Can a battery have sections or phases that group assessments into meaningful blocks?
+
+BATQ-072: Can battery sections themselves be optional, conditional, banked, or randomized?
+
+BATQ-073: Can a battery require a minimum number of components from a bank rather than a fixed list?
+
+BATQ-074: Can battery component banks select equivalent instruments based on availability, language, accessibility, or form?
+
+BATQ-075: How is equivalence of alternate components established and versioned?
+
+BATQ-076: Can a battery declare preferred and acceptable substitute instruments?
+
+BATQ-077: Should a battery show administrators a construct-coverage matrix across its component assessments?
+
+BATQ-078: Should publication warn about redundant instruments measuring substantially overlapping constructs?
+
+BATQ-079: Should publication warn about uncovered intended constructs?
+
+BATQ-080: Should the battery record the rationale for redundant measures when redundancy is intentional?
+
+
+4. Instrument Eligibility, Evidence, Licensing, and Usage Constraints
+=====================================================================
+
+BATQ-081: Must every instrument included in a battery declare its evidence/measurement-quality status?
+
+BATQ-082: Must the battery builder show reliability, validity, responsiveness, fairness, norming, and feasibility evidence where available?
+
+BATQ-083: Can an instrument with incomplete evidence be included if the battery clearly records that limitation?
+
+BATQ-084: Should publication allow organization-defined minimum evidence standards?
+
+BATQ-085: Must each instrument declare the population for which its evidence applies?
+
+BATQ-086: Should Signal warn when battery population differs materially from an instrument's validation population?
+
+BATQ-087: Must instruments declare intended interpretation and prohibited interpretation?
+
+BATQ-088: Can an instrument be marked research-only or experimental?
+
+BATQ-089: Can a battery mix validated instruments with experimental ones if their status is clearly surfaced?
+
+BATQ-090: Must commercial/licensed assessments carry license metadata?
+
+BATQ-091: Should Signal prevent copying/exporting protected item text when licensing rules prohibit it?
+
+BATQ-092: Can instrument licenses restrict number of administrations, organizations, territories, languages, or dates?
+
+BATQ-093: Should battery validation detect expired or unavailable licenses before administration?
+
+BATQ-094: Should a battery snapshot preserve the exact license/version metadata relevant at administration time without embedding protected content unnecessarily?
+
+BATQ-095: Can a component require an external administrator or proctor rather than direct Signal administration?
+
+BATQ-096: How should Signal represent an externally administered component whose result is imported?
+
+BATQ-097: Must imported external scores include provenance and score-version metadata?
+
+BATQ-098: Should imported external instruments have the same compatibility and lineage requirements as native Signal instruments?
+
+BATQ-099: How are proprietary scoring algorithms represented when Signal is not allowed to implement or expose them?
+
+BATQ-100: Can a battery include a placeholder/result contract for an externally scored test?
+
+
+5. Assignment, Eligibility, Population, and Administration Context
+==================================================================
+
+BATQ-101: What creates a BatteryInstance or BatteryAdministration?
+
+BATQ-102: Can one battery definition create many independent administrations?
+
+BATQ-103: Must each administration pin the exact battery version used?
+
+BATQ-104: Can an administration target a cohort without Signal storing PII?
+
+BATQ-105: How is external identity mapped to opaque BatteryInstanceId values?
+
+BATQ-106: Can a battery be fully anonymous?
+
+BATQ-107: Can some components be identified while others finalize anonymously?
+
+BATQ-108: Is mixed identity mode within one battery allowed?
+
+BATQ-109: Must eligibility criteria be represented in Signal, or remain outside Signal?
+
+BATQ-110: Can the battery contain non-PII eligibility questions?
+
+BATQ-111: Can eligibility determine which components are administered?
+
+BATQ-112: Should a battery administration declare purpose/context such as baseline, follow-up, pre-hire, training, or research?
+
+BATQ-113: Can the same opaque subject complete multiple battery administrations over time without Signal knowing the person's identity?
+
+BATQ-114: How are longitudinal administrations linked using opaque external identifiers while preserving the no-PII rule?
+
+BATQ-115: Can administrators pre-generate battery invitation URLs or instance artifacts?
+
+BATQ-116: Can a battery be open/public with no pre-created instance?
+
+BATQ-117: Can one BatteryInstance be shared across multiple devices or browsers?
+
+BATQ-118: Can a battery be administered in individual, group, facilitator-led, or kiosk mode?
+
+BATQ-119: Should administration mode be part of the interpretive provenance because it may affect comparability?
+
+BATQ-120: Can one battery administration have multiple respondents or raters contributing different components?
+
+BATQ-121: Can administrators constrain where or when a battery may be started without introducing PII or geolocation requirements?
+
+
+6. Sequence, Ordering, Counterbalancing, and Randomization
+==========================================================
+
+BATQ-122: Must battery components support fixed order?
+
+BATQ-123: Can administrators allow respondent-selected order?
+
+BATQ-124: Can order be randomized?
+
+BATQ-125: Can order be randomized within blocks while keeping blocks fixed?
+
+BATQ-126: Can some components be fixed anchors while others are randomized?
+
+BATQ-127: Can the battery specify precedence constraints rather than one exact order?
+
+BATQ-128: Can a component have multiple prerequisites?
+
+BATQ-129: Can two components be allowed in either order but both required before a third?
+
+BATQ-130: Should sequence rules compile into an explicit dependency graph?
+
+BATQ-131: Must publication detect sequencing cycles?
+
+BATQ-132: Must publication detect unreachable components caused by sequencing rules?
+
+BATQ-133: Should the battery support counterbalancing across administrations to study/order-control effects?
+
+BATQ-134: Should it support simple reversal (AB/BA)?
+
+BATQ-135: Should it support Latin-square or balanced-order assignment?
+
+BATQ-136: Should counterbalancing assignment be deterministic from a non-PII seed?
+
+BATQ-137: Should the selected sequence be persisted in a BatteryExecutionManifest?
+
+BATQ-138: Should the exact sequence become part of administration lineage?
+
+BATQ-139: Should battery-level reports be able to stratify outcomes by sequence to detect order effects?
+
+BATQ-140: Should publication warn when strongly similar or priming-sensitive assessments are always adjacent?
+
+BATQ-141: Can a component define minimum/maximum distance from another component?
+
+BATQ-142: Can an administrator insert a neutral break/task between potentially interacting assessments?
+
+BATQ-143: Can a battery declare that an assessment must occur before exposure to another assessment?
+
+BATQ-144: Can randomization be disabled for instruments whose standardization requires fixed sequence?
+
+BATQ-145: Can battery order vary by language, accessibility mode, or device capability?
+
+BATQ-146: Would such variation require separate comparability evidence?
+
+BATQ-147: Should the battery distinguish randomized order used for experimental design from randomized order used only for respondent experience?
+
+BATQ-148: Should sequence selection be reproducible exactly from a stored manifest even if the battery engine version changes?
+
+
+7. Branching, Adaptive Batteries, Stopping Rules, and Evidence-Driven Selection
+===============================================================================
+
+BATQ-149: Can the battery select later assessments based on earlier scores?
+
+BATQ-150: Can branching depend on categories, profiles, recommendations, coverage, confidence, completion, or specific derived facts?
+
+BATQ-151: Can branching depend on multiple prior assessments?
+
+BATQ-152: Can branching depend on non-score administration evidence such as timeout or inability to complete a modality?
+
+BATQ-153: Should all adaptive battery rules use the same typed rule/expression infrastructure as survey logic?
+
+BATQ-154: Must adaptive battery rules be validated for cycles and unreachable paths before publication?
+
+BATQ-155: Can a battery stop early when sufficient evidence has been gathered?
+
+BATQ-156: How is 'sufficient evidence' defined and versioned?
+
+BATQ-157: Can stopping depend on confidence intervals or measurement precision?
+
+BATQ-158: Can stopping depend on convergent evidence from multiple instruments?
+
+BATQ-159: Can the battery add a confirmatory instrument when two measures disagree?
+
+BATQ-160: Can the battery add a disambiguating instrument when a composite result is uncertain?
+
+BATQ-161: Can the battery choose a shorter or longer form based on earlier information?
+
+BATQ-162: Can battery adaptation choose among equivalent forms?
+
+BATQ-163: Can adaptation choose a different modality for accessibility?
+
+BATQ-164: Should every adaptive selection produce a reason code and lineage explanation?
+
+BATQ-165: Should the administrator be able to preview all reachable battery paths?
+
+BATQ-166: Should publication estimate worst-case, best-case, and typical battery length across adaptive paths?
+
+BATQ-167: Should adaptive path choice be deterministic given the same authoritative inputs and seed?
+
+BATQ-168: Can adaptive rules use external data, or must phase 1 use only battery-local non-PII evidence?
+
+BATQ-169: If external data is eventually allowed, how is its provenance/version pinned?
+
+BATQ-170: Can an administrator override an adaptive branch?
+
+BATQ-171: If override is allowed, must it be recorded as an explicit transition with reason/evidence?
+
+BATQ-172: Can an overridden battery result remain comparable to standard administrations?
+
+BATQ-173: Should the report identify which components were selected by rule versus manually overridden?
+
+
+8. Timing, Scheduling, Breaks, Fatigue, and Administration Burden
+=================================================================
+
+BATQ-174: Can the battery define an expected completion duration?
+
+BATQ-175: Can each component contribute an estimated duration?
+
+BATQ-176: Should publication calculate expected, minimum, and maximum total duration?
+
+BATQ-177: Should adaptive batteries calculate duration distributions or bounded estimates?
+
+BATQ-178: Can a battery impose an overall time limit?
+
+BATQ-179: Can individual components impose their own time limits independently?
+
+BATQ-180: Can battery sections/phases have separate time limits?
+
+BATQ-181: Can timing include active-only versus wall-clock semantics?
+
+BATQ-182: Can a battery require a minimum break after a component?
+
+BATQ-183: Can it recommend rather than require a break?
+
+BATQ-184: Can break duration depend on time already spent or number of completed assessments?
+
+BATQ-185: Can respondents voluntarily take breaks?
+
+BATQ-186: Can a component prohibit pausing because standardization requires continuous administration?
+
+BATQ-187: Can the battery enforce a maximum pause duration before restart/revalidation is required?
+
+BATQ-188: Can the battery require completion within one session?
+
+BATQ-189: Can it allow completion across multiple sessions or days?
+
+BATQ-190: Can components have maximum allowable interval between them?
+
+BATQ-191: Can components have minimum intervals to reduce carryover or practice effects?
+
+BATQ-192: Can a battery define a completion window such as all components within N days?
+
+BATQ-193: Can a battery define different schedules for baseline and follow-up waves?
+
+BATQ-194: Should reports disclose actual elapsed time, pauses, and scheduling deviations when interpretation may depend on them?
+
+BATQ-195: Should Signal calculate administration burden including number of questions, expected duration, interactions, and accessibility mode?
+
+BATQ-196: Should battery authoring warn when total burden exceeds a configured threshold?
+
+BATQ-197: Can the system detect unusually long response time and surface it as administration evidence without inferring motivation or ability?
+
+BATQ-198: Can the system detect likely fatigue patterns only as descriptive evidence rather than automatically interpreting psychological state?
+
+BATQ-199: Can administrators choose fatigue-related quality flags such as increasing omission rates or response-time changes?
+
+BATQ-200: How do we prevent fatigue heuristics from becoming unvalidated scoring rules?
+
+BATQ-201: Can battery-level analysis compare early versus late component performance to investigate order/fatigue effects?
+
+BATQ-202: Should a battery support planned micro-breaks between high-load components?
+
+BATQ-203: Should the exact timer/break policy be part of semantic compatibility for results?
+
+
+9. Respondent Lifecycle, Navigation, Resume, Device, and Session Integrity
+==========================================================================
+
+BATQ-204: Does a battery have its own respondent landing page and progress view?
+
+BATQ-205: Should respondents see all upcoming components or only the next available one?
+
+BATQ-206: Can administrators hide future component names to reduce priming?
+
+BATQ-207: Can respondents skip an optional component and return later?
+
+BATQ-208: Can respondents revisit a completed component?
+
+BATQ-209: Can a component be locked once submitted?
+
+BATQ-210: Can battery-level forward-only rules prevent returning to earlier assessments?
+
+BATQ-211: Can forward-only policy differ by component?
+
+BATQ-212: Can the respondent resume the entire battery from a portable URL or battery-state artifact?
+
+BATQ-213: What minimum state must a battery resume artifact contain?
+
+BATQ-214: Can component state remain in separate URLs while a battery manifest links them?
+
+BATQ-215: Should one canonical battery URL encode the current administration plan and component completion references?
+
+BATQ-216: What happens when the battery state exceeds safe URL capacity?
+
+BATQ-217: Can the administrator storage provider become the source for battery administration state while respondent answers remain URL-based?
+
+BATQ-218: Can an assessment be completed on one device and the next on another?
+
+BATQ-219: How is the completed component state transferred safely without PII?
+
+BATQ-220: Can two tabs work on different components concurrently?
+
+BATQ-221: Should concurrent component completion be allowed or prohibited?
+
+BATQ-222: How are stale tabs detected when sequence/adaptive rules changed after another component completed?
+
+BATQ-223: What happens if a respondent opens an old battery URL after the battery advanced?
+
+BATQ-224: Should Back/Forward browser navigation restore battery navigation state through Limen?
+
+BATQ-225: Should browser refresh reproduce the same selected component/order manifest?
+
+BATQ-226: Can a battery run offline using only already-resolved components?
+
+BATQ-227: Which battery mutations are prohibited offline?
+
+BATQ-228: What happens if connectivity fails while a component is being finalized?
+
+BATQ-229: How is OutcomeUnknown represented for battery-level finalization or storage writes?
+
+BATQ-230: Can one component fail operationally without invalidating already completed components?
+
+
+10. Multi-Rater, 360, Observer, and Role-Based Batteries
+========================================================
+
+BATQ-231: Can one battery include self-report, manager, peer, direct-report, observer, or assessor instruments?
+
+BATQ-232: Can component roles be different within the same battery?
+
+BATQ-233: Can multiple raters complete the same component type?
+
+BATQ-234: How is required rater count represented without storing rater PII?
+
+BATQ-235: Can role-specific components have different assessment versions?
+
+BATQ-236: Can a battery require minimum counts by rater role?
+
+BATQ-237: Can rater-role submissions be anonymous relative to the subject?
+
+BATQ-238: How are small-rater privacy thresholds enforced across the battery?
+
+BATQ-239: Can a battery combine self and observer scores only after minimum anonymous counts are met?
+
+BATQ-240: Can the battery report disagreement between rater groups without exposing individuals?
+
+BATQ-241: Can some rater groups be optional?
+
+BATQ-242: Can the battery close with missing rater roles?
+
+BATQ-243: Can the administrator add additional opaque rater instances after the battery starts?
+
+BATQ-244: Can rater completion windows differ by role?
+
+BATQ-245: Can adaptive battery logic depend on aggregate rater evidence without revealing an individual rater's response?
+
+BATQ-246: Should multi-rater batteries distinguish subject completion from battery completion?
+
+BATQ-247: Can a subject-facing report be generated before all observers finish?
+
+BATQ-248: Should partial multi-rater reports be explicitly labeled and privacy-checked?
+
+BATQ-249: Can different roles receive different report views from the same battery result?
+
+
+11. Battery-Level Scoring and Composite Construction
+====================================================
+
+BATQ-250: Does every battery need a battery-level score?
+
+BATQ-251: Can the battery produce no composite and simply report component results?
+
+BATQ-252: Can it produce multiple battery-level composites?
+
+BATQ-253: Can battery composites be scalar, categorical, profile, ordinal, probabilistic, or structured?
+
+BATQ-254: Can component scores be weighted?
+
+BATQ-255: Can weights vary by battery version?
+
+BATQ-256: Can weights depend on component reliability or confidence?
+
+BATQ-257: Should dynamic reliability-based weighting be allowed at all without explicit validation evidence?
+
+BATQ-258: Can one component contribute multiple subscales to different battery composites?
+
+BATQ-259: Can one subscale contribute to more than one composite?
+
+BATQ-260: Can composite formulas reference normalized rather than raw component scores?
+
+BATQ-261: Can composite formulas reference percentiles, z-scores, T-scores, stanines, bands, or latent estimates?
+
+BATQ-262: Should battery scoring use the same typed serializable expression-tree approach as survey scoring?
+
+BATQ-263: Should common composite algorithms be precompiled built-ins?
+
+BATQ-264: Which built-in battery aggregation algorithms are needed: sum, weighted sum, mean, weighted mean, minimum/weakest-link, maximum, median, trimmed mean, geometric mean, threshold count, profile, rule-based category, rank aggregation?
+
+BATQ-265: Should battery scoring support compensatory versus non-compensatory models?
+
+BATQ-266: Can a high score on one component compensate for a low score on another?
+
+BATQ-267: Can a component define a hard gate that limits the maximum battery classification?
+
+BATQ-268: Can battery scoring require minimum evidence coverage before producing a result?
+
+BATQ-269: Can a battery score be provisional while components remain incomplete?
+
+BATQ-270: Can incremental battery scoring update after each component completes?
+
+BATQ-271: Can administrators choose whether provisional battery scores are shown?
+
+BATQ-272: How is a provisional battery result distinguished from a final one?
+
+BATQ-273: Can battery scoring use component confidence/coverage values as explicit inputs?
+
+BATQ-274: Should missing component results be excluded, imputed, treated as zero, or make the composite unavailable?
+
+BATQ-275: Must missing-data policy be explicit per composite?
+
+BATQ-276: Can optional components affect a composite when present but not penalize when absent?
+
+BATQ-277: Can different legal adaptive paths produce comparable battery-level scores?
+
+BATQ-278: What proof is required before treating scores from different component paths as comparable?
+
+BATQ-279: Can the battery transform component scores to a common metric before aggregation?
+
+BATQ-280: Must all transformations be versioned and deterministic?
+
+BATQ-281: Can a composite include interaction terms between component results?
+
+BATQ-282: Can a composite use threshold/gating logic before aggregation?
+
+BATQ-283: Can custom battery expressions call arbitrary code? (Expected answer should remain no.)
+
+BATQ-284: Should battery score explanations trace every output to component inputs and transformations?
+
+BATQ-285: Should a report expose contribution weights/sensitivity for each component?
+
+BATQ-286: Should battery-level scoring have static range analysis and impossible-category detection at publication?
+
+BATQ-287: Should Signal detect formulas where one component unintentionally dominates the composite?
+
+BATQ-288: Should rounding occur only at presentation time rather than during internal aggregation?
+
+BATQ-289: How are directionality mismatches handled when one component's high score means more/better and another means more/worse?
+
+
+12. Missing, Invalid, Partial, Aborted, and Unavailable Components
+==================================================================
+
+BATQ-290: What is the battery status when one required component is incomplete?
+
+BATQ-291: What is the status when one component is invalid?
+
+BATQ-292: What is the status when an optional component is incomplete?
+
+BATQ-293: What is the difference between Skipped, NotApplicable, NotAdministered, Aborted, TimedOut, Invalid, Unavailable, and Missing?
+
+BATQ-294: Should every component outcome use an explicit typed state?
+
+BATQ-295: Can a battery complete when one required component is unavailable for an operational reason?
+
+BATQ-296: Can policy allow a substitute component in that case?
+
+BATQ-297: Can a battery produce a partial report before completion?
+
+BATQ-298: Can a partial report contain battery-level composites?
+
+BATQ-299: If so, how are provisional values marked?
+
+BATQ-300: Can an invalid component be re-administered within the same BatteryInstance?
+
+BATQ-301: Does re-administration supersede the prior attempt or create a separate attempt record?
+
+BATQ-302: Can administrators choose the valid attempt when multiple attempts exist?
+
+BATQ-303: Should the choice be deterministic by policy rather than manual by default?
+
+BATQ-304: What happens when two valid attempts exist unexpectedly?
+
+BATQ-305: Can a component result be quarantined after battery completion if later found corrupt?
+
+BATQ-306: How does quarantine invalidate downstream battery composites and snapshots?
+
+BATQ-307: Can a sealed battery become Unverifiable if a dependency is later found corrupt?
+
+BATQ-308: Should previously issued snapshots remain historically available but carry a validity warning?
+
+BATQ-309: Can a battery distinguish 'result unavailable because component was never administered' from 'result unavailable because source data was deleted by policy'?
+
+BATQ-310: Should missingness itself be a reportable quality indicator?
+
+BATQ-311: Can high missingness block interpretation even if a mathematical score can be computed?
+
+
+13. Norms, Standardization, Reference Populations, and Score Transformations
+============================================================================
+
+BATQ-312: Can component assessments use different norm sets within one battery?
+
+BATQ-313: Must every normalized score identify the exact norm set/version used?
+
+BATQ-314: Can a battery-level composite have its own norm set independent of component norms?
+
+BATQ-315: Can raw component scores be combined before norming, or must components be normalized first?
+
+BATQ-316: Which approach is allowed must depend on the validated scoring design, correct?
+
+BATQ-317: Can a battery select norms based on non-PII population attributes supplied externally?
+
+BATQ-318: Should Signal avoid storing demographic PII even if an external norm-selection process uses it?
+
+BATQ-319: Can norm selection be represented by an opaque NormProfileId?
+
+BATQ-320: Must formal reports state which norm/reference population was used?
+
+BATQ-321: How are local organizational norms distinguished from published norms?
+
+BATQ-322: Can an administrator upload a custom norm table?
+
+BATQ-323: What validation is required for custom norm tables?
+
+BATQ-324: Must norm tables be immutable/versioned and hash-addressed?
+
+BATQ-325: Can norms have effective dates?
+
+BATQ-326: Can old administrations be reinterpreted using newer norms without changing their original formal result?
+
+BATQ-327: Should re-normed analysis be labeled as a derived reinterpretation?
+
+BATQ-328: Can percentile, standard score, T-score, z-score, stanine, sten, age-equivalent, grade-equivalent, or other transformations be supported?
+
+BATQ-329: Which transforms should be built in versus custom declarative transforms?
+
+BATQ-330: How are bounded/discrete score distributions handled when percentile ranks have ties?
+
+BATQ-331: Should confidence intervals around normed scores be supported?
+
+BATQ-332: Can norm tables vary by language or cultural adaptation?
+
+BATQ-333: How is cross-cultural validity evidence linked to a norm set?
+
+BATQ-334: Can battery comparisons mix results derived from different norm versions?
+
+BATQ-335: When should that be prohibited versus explicitly converted?
+
+BATQ-336: Should a battery support criterion-referenced interpretation with no normative comparison?
+
+BATQ-337: Can norm-referenced and criterion-referenced outputs coexist in one battery?
+
+BATQ-338: Can a battery use benchmark distributions derived from historical Signal datasets?
+
+BATQ-339: What privacy/minimum-sample rules apply to locally derived benchmark norms?
+
+BATQ-340: Must benchmark provenance include dataset hash, inclusion rules, scoring versions, and date/period?
+
+BATQ-341: Can benchmark/norm updates ever silently change an existing report? (Expected answer should remain no.)
+
+
+14. Equating, Linking, Alternate Forms, and Cross-Version Comparability
+=======================================================================
+
+BATQ-342: Can a battery use alternate forms of the same instrument?
+
+BATQ-343: How is form identity represented?
+
+BATQ-344: Must form equivalence/equating evidence be declared before forms are interchangeable?
+
+BATQ-345: Can an adaptive battery select an alternate form while retaining score comparability?
+
+BATQ-346: Can scores be linked across instrument versions?
+
+BATQ-347: What linking/equating method metadata must be stored?
+
+BATQ-348: Should equating transformations be versioned typed artifacts?
+
+BATQ-349: Can a battery compare a participant's current form against a previous administration using a different form?
+
+BATQ-350: What evidence is required before Signal marks those scores Comparable?
+
+BATQ-351: Can Signal represent ComparableWithTransformation versus DirectlyComparable versus NotComparable?
+
+BATQ-352: Should the compatibility engine identify why two forms/versions cannot be compared?
+
+BATQ-353: Can battery authoring require common anchor components across versions to support longitudinal linking?
+
+BATQ-354: Can a component be included solely as an anchor measure?
+
+BATQ-355: Can a battery report form effects or version effects as analysis dimensions?
+
+BATQ-356: Should administrators be able to test equivalence using synthetic or historical non-PII datasets?
+
+BATQ-357: Can different battery versions be considered semantically equivalent if membership changes but calibrated composites remain equivalent?
+
+BATQ-358: What evidence would be required to assert that equivalence?
+
+BATQ-359: Should semantic compatibility be declared manually, proven by rules, or require both?
+
+
+15. Psychometric Quality of Components and the Battery as a Whole
+=================================================================
+
+BATQ-360: What measurement properties must an instrument declare when known: content validity, structural validity, internal consistency, reliability, measurement error, criterion validity, construct validity, cross-cultural validity, and responsiveness?
+
+BATQ-361: Should Signal distinguish evidence quality from the numerical value of a measurement property?
+
+BATQ-362: Can evidence be scoped by population, language, setting, administration mode, and version?
+
+BATQ-363: Can a battery have its own validity evidence beyond the validity of each component?
+
+BATQ-364: Should the battery declare an interpretation/use claim and link evidence specifically to that claim?
+
+BATQ-365: Can a battery be valid for one use but explicitly unsupported for another?
+
+BATQ-366: Should battery authoring warn that combining valid instruments does not automatically validate the battery-level composite?
+
+BATQ-367: Must each battery-level composite declare supporting evidence or experimental status?
+
+BATQ-368: Should internal consistency be computed only where the construct/model makes it appropriate rather than automatically for every multi-item score?
+
+BATQ-369: Should Cronbach's alpha be available but never treated as a universal proof of reliability?
+
+BATQ-370: Should omega or other reliability estimates be supported in advanced analytics?
+
+BATQ-371: Should test-retest reliability be supported at component and battery-composite levels?
+
+BATQ-372: Should inter-rater and intra-rater reliability be supported for observer components?
+
+BATQ-373: Should standard error of measurement be supported?
+
+BATQ-374: Should minimum detectable change be supported where validated?
+
+BATQ-375: Should reliable change indices be supported where appropriate?
+
+BATQ-376: Should responsiveness/change sensitivity be represented separately from cross-sectional validity?
+
+BATQ-377: Should floor and ceiling effects be analyzed?
+
+BATQ-378: Should item-total correlations be available for instrument-quality analysis?
+
+BATQ-379: Should dimensionality/factor structure be represented when available?
+
+BATQ-380: Should exploratory factor analysis be supported as research-only derived analytics rather than formal scoring?
+
+BATQ-381: Should confirmatory factor model metadata be attachable to an instrument/battery version?
+
+BATQ-382: Should IRT/Rasch model parameters be supportable in a future phase?
+
+BATQ-383: Can a battery mix classical-test-theory and IRT-scored instruments?
+
+BATQ-384: If so, how are resulting score scales represented and prevented from being naively combined?
+
+BATQ-385: Should measurement invariance evidence be attachable across groups, languages, devices, or administration modes?
+
+BATQ-386: Should differential item functioning evidence be represented at the instrument level?
+
+BATQ-387: Should differential test functioning or composite-level bias analysis be supported?
+
+BATQ-388: Should convergent validity be testable across components intended to measure related constructs?
+
+BATQ-389: Should discriminant validity be testable across intentionally distinct constructs?
+
+BATQ-390: Should known-groups validity analyses be supported?
+
+BATQ-391: Should criterion validity analyses support concurrent and predictive designs?
+
+BATQ-392: Can criterion outcomes be imported later without PII using opaque linked IDs?
+
+BATQ-393: Should Signal distinguish validation research analytics from production report interpretation?
+
+BATQ-394: Should every psychometric estimate include sample size, method, population scope, version, and uncertainty where applicable?
+
+BATQ-395: Should Signal prevent use of an estimate outside its declared applicable population without a warning?
+
+BATQ-396: Should administrators be able to define a minimum psychometric evidence policy for battery publication?
+
+BATQ-397: Should a battery have a 'measurement evidence status' separate from publication state?
+
+BATQ-398: Can an instrument be operationally published but psychometrically Experimental?
+
+BATQ-399: Should battery reports disclose experimental/insufficient-evidence status prominently?
+
+
+16. Repeated Administration, Longitudinal Change, Practice Effects, and Washout
+===============================================================================
+
+BATQ-400: Can a battery define repeat administrations or waves?
+
+BATQ-401: Can waves have names such as baseline, post, follow-up, annual, or custom?
+
+BATQ-402: Must each wave pin an exact battery version?
+
+BATQ-403: Can later waves use a successor battery version?
+
+BATQ-404: How is comparability across waves established?
+
+BATQ-405: Can a battery define minimum retest interval per component?
+
+BATQ-406: Can it define maximum retest interval?
+
+BATQ-407: Can an alternate form be required on retest?
+
+BATQ-408: Can a battery rotate forms deterministically to reduce practice effects?
+
+BATQ-409: Should practice-effect evidence be attached to components/forms?
+
+BATQ-410: Can Signal adjust scores for practice effects only when a validated explicit model exists?
+
+BATQ-411: Should an adjusted score always remain distinguishable from the observed score?
+
+BATQ-412: Can order be changed across waves to control carryover?
+
+BATQ-413: Should sequence/counterbalancing assignments remain linked across waves?
+
+BATQ-414: Can a component be intentionally omitted from certain waves?
+
+BATQ-415: Can battery composites change composition by wave and remain comparable only through an explicit linking model?
+
+BATQ-416: Should longitudinal reports distinguish raw change, standardized change, reliable change, and clinically/practically meaningful change?
+
+BATQ-417: Should change interpretation require a declared minimal important difference or threshold where applicable?
+
+BATQ-418: Can a longitudinal battery stop repeating a component after stable evidence is reached?
+
+BATQ-419: How do we prevent longitudinal adaptation from making later waves incomparable without explicit evidence?
+
+BATQ-420: Can missing waves be represented without collapsing the longitudinal series?
+
+BATQ-421: Can late completion outside a planned window be flagged without automatically invalidating the result?
+
+BATQ-422: Should exact elapsed interval between administrations be part of longitudinal lineage?
+
+
+17. Fairness, Bias, Measurement Invariance, and Appropriate Interpretation
+==========================================================================
+
+BATQ-423: Must every battery declare fairness considerations for its intended population?
+
+BATQ-424: Should battery validation distinguish accessibility barriers from construct-relevant difficulty?
+
+BATQ-425: Can a component be prohibited for a population when validity evidence is insufficient?
+
+BATQ-426: Should Signal record measurement-invariance evidence by population/language/mode?
+
+BATQ-427: Should battery analysis support DIF/DTF investigations as research analytics?
+
+BATQ-428: Should group comparisons be blocked when measurement invariance is known to be inadequate?
+
+BATQ-429: Should reports distinguish observed score differences from causal or ability claims?
+
+BATQ-430: Should interpretive text avoid implying that a score measures traits outside the validated construct?
+
+BATQ-431: Can administrators define restricted interpretation language for sensitive uses?
+
+BATQ-432: Should reports warn when sample size is too small for subgroup comparison?
+
+BATQ-433: Should privacy suppression and fairness analysis be designed so one cannot defeat the other?
+
+BATQ-434: Can accommodations change comparability classification?
+
+BATQ-435: Should each accommodation declare whether existing validity evidence supports it?
+
+BATQ-436: Can battery-level composites exclude a component when an accommodation materially changes its interpretation?
+
+BATQ-437: Should the system retain the accommodated administration mode in lineage without storing disability/health PII?
+
+BATQ-438: Can an opaque AccommodationProfileId represent the applied administration configuration?
+
+BATQ-439: Should alternate accessible forms be versioned independently?
+
+BATQ-440: Should battery validation require equivalent content/construct coverage for accessible alternatives?
+
+BATQ-441: Should translation/cultural adaptation have its own version/evidence rather than being treated as a string-resource change?
+
+BATQ-442: Should administrators see fairness warnings before publication and before interpreting cross-group comparisons?
+
+
+18. Accessibility and Accommodation Orchestration
+=================================================
+
+BATQ-443: Can accessibility settings apply globally to the battery and be overridden by a component only when necessary?
+
+BATQ-444: Can a battery support high contrast, enlarged text, reduced motion, screen reader, keyboard-only, and low-vision presentation modes?
+
+BATQ-445: Can each component declare which accessibility capabilities it supports?
+
+BATQ-446: Should battery publication fail if an intended accessibility mode cannot be supported by a required component?
+
+BATQ-447: Can the battery substitute an equivalent accessible component when the primary modality is inaccessible?
+
+BATQ-448: Can time extensions be configured without exposing why the accommodation was granted?
+
+BATQ-449: Can break policies be modified through an accommodation profile?
+
+BATQ-450: Can forward-only navigation be modified when accessibility requires review?
+
+BATQ-451: If an accommodation changes standardized administration, must the report identify that interpretation may differ?
+
+BATQ-452: Should battery instructions be available in accessible formats before the first component begins?
+
+BATQ-453: Can audio instructions be supported without making audio mandatory?
+
+BATQ-454: Can respondents control text size and spacing without changing semantic layout?
+
+BATQ-455: Should print-based components have accessible digital alternatives where valid?
+
+BATQ-456: Should visual charts in respondent feedback always have text/table equivalents?
+
+BATQ-457: Can a battery include a component requiring a visual modality that cannot be validly adapted?
+
+BATQ-458: How should the system communicate that limitation without inferring or recording the respondent's disability?
+
+BATQ-459: Should accommodation configuration remain outside respondent answer data?
+
+BATQ-460: Can accessibility support be tested automatically as part of battery publication?
+
+BATQ-461: Should the battery preview simulate keyboard, screen-reader semantics, zoom, RTL, reduced motion, high contrast, and color-vision deficiencies?
+
+
+19. Instructions, Consent/Notice, Priming, and Respondent Communication
+=======================================================================
+
+BATQ-462: Can a battery have battery-level instructions in addition to component instructions?
+
+BATQ-463: Should battery-level instructions explain approximate duration, number of components, break behavior, and resume behavior?
+
+BATQ-464: Can administrators hide component purpose or scoring details when disclosure could bias responses?
+
+BATQ-465: How is that balanced against necessary informed notice for the intended use?
+
+BATQ-466: Can each component show different instructions based on administration mode?
+
+BATQ-467: Can instructions be versioned and pinned to the battery artifact?
+
+BATQ-468: Should changes to instructions ever count as semantic changes if they could affect responses?
+
+BATQ-469: Can a battery show progress as percentage, component count, time estimate, or phase?
+
+BATQ-470: Could precise progress reveal adaptive branching or hidden future components, and should administrators control that?
+
+BATQ-471: Can the respondent see which components are optional?
+
+BATQ-472: How are required versus optional components communicated accessibly?
+
+BATQ-473: Can the battery provide standardized transition text between instruments to reduce context effects?
+
+BATQ-474: Can transition text be randomized or adapted?
+
+BATQ-475: Should publication detect wording that reveals answers or scores from prior components in a way that may prime later responses?
+
+BATQ-476: Can interim feedback be disabled until all priming-sensitive components are completed?
+
+BATQ-477: Can component scores be hidden while the battery continues?
+
+BATQ-478: Can battery-level score feedback be final-only even if component scores are otherwise available?
+
+BATQ-479: Should reports to respondents use language distinct from administrator/technical reports?
+
+
+20. Battery-Level Reporting, Interpretation, and Decision Support
+=================================================================
+
+BATQ-480: What standard battery reports are needed: respondent, administrator, aggregate, longitudinal, technical, research, executive, or other?
+
+BATQ-481: Can a battery report show all component results and battery composites together?
+
+BATQ-482: Can component results be hidden while still contributing to a composite?
+
+BATQ-483: Can reports show construct coverage across components?
+
+BATQ-484: Can reports show agreement/disagreement among measures intended to assess the same construct?
+
+BATQ-485: Can reports show uncertainty/confidence separately for each component and composite?
+
+BATQ-486: Can reports show which adaptive path was taken?
+
+BATQ-487: Can reports explain why a component was skipped, selected, substituted, or repeated?
+
+BATQ-488: Can reports identify administration deviations such as time-window violation or accommodation mode without exposing sensitive rationale?
+
+BATQ-489: Can reports distinguish observed scores from transformed/normed scores?
+
+BATQ-490: Can reports distinguish formal score interpretation from exploratory analytics?
+
+BATQ-491: Can reports show data-quality indicators such as missingness, completion time, and response consistency without overinterpreting them?
+
+BATQ-492: Should reports suppress unstable statistics below minimum sample size?
+
+BATQ-493: Can the battery define report blocks conditional on result/category?
+
+BATQ-494: Can recommendations combine evidence from multiple instruments?
+
+BATQ-495: Can conflicting component recommendations be reconciled through explicit rules?
+
+BATQ-496: Can a report state 'insufficient evidence' instead of forcing a conclusion?
+
+BATQ-497: Can reports show the exact battery/component/norm/scoring versions used?
+
+BATQ-498: Can every reported composite trace to exact component result hashes?
+
+BATQ-499: Can reports compare battery administrations over time only when semantic compatibility is established?
+
+BATQ-500: Can reports compare individuals to local groups without storing PII?
+
+BATQ-501: Can group reports show distributions across battery composites and components?
+
+BATQ-502: Can reports show order/sequence effects as an administrative quality analysis?
+
+BATQ-503: Can formal snapshots freeze all battery report dependencies?
+
+BATQ-504: Can report definitions be battery-specific or reused across compatible batteries?
+
+BATQ-505: Should a battery report include a methodology/limitations block by default?
+
+BATQ-506: Should reports automatically disclose experimental instruments or unvalidated battery composites?
+
+BATQ-507: Can reports contain decision thresholds used by downstream workflows?
+
+BATQ-508: Should Signal distinguish reporting a threshold from making a consequential decision based on it?
+
+BATQ-509: Can decision rules be modeled as explicit derived interpretations with separate provenance from measurement scores?
+
+
+21. Administrator Authoring, Preview, and Battery UX
+====================================================
+
+BATQ-510: Should the administrator have a dedicated Battery Builder separate from Survey Builder?
+
+BATQ-511: Should the builder support drag/drop ordering while preserving semantic dependency constraints?
+
+BATQ-512: Should it show a dependency graph?
+
+BATQ-513: Should it show construct coverage?
+
+BATQ-514: Should it show estimated total burden?
+
+BATQ-515: Should it show all reachable adaptive paths?
+
+BATQ-516: Should it show minimum/maximum component count?
+
+BATQ-517: Should it show minimum/maximum/expected duration?
+
+BATQ-518: Should it show unresolved norm/evidence/license dependencies?
+
+BATQ-519: Should it show privacy implications?
+
+BATQ-520: Should it show accessibility compatibility by component?
+
+BATQ-521: Should it show whether components can run in the selected administration modes?
+
+BATQ-522: Should it warn about redundant or highly overlapping instruments?
+
+BATQ-523: Should it warn about possible order/priming effects?
+
+BATQ-524: Should it warn about excessive length/fatigue risk?
+
+BATQ-525: Should it warn about mixed score direction or incompatible scales?
+
+BATQ-526: Should it show battery-level scoring dependency graphs?
+
+BATQ-527: Should custom composite expressions have type-checking and static diagnostics in the builder?
+
+BATQ-528: Should administrators be able to simulate specific result paths?
+
+BATQ-529: Should administrators be able to generate synthetic battery administrations?
+
+BATQ-530: Should preview include respondent experience from start through finalization?
+
+BATQ-531: Should preview support accessibility modes and mobile layouts?
+
+BATQ-532: Should preview show hidden versus visible future components?
+
+BATQ-533: Should the builder provide semantic diffs between battery versions?
+
+BATQ-534: Should change-impact preview identify reports, norms, composites, longitudinal comparisons, and saved analyses affected by a battery edit?
+
+BATQ-535: Can a battery be cloned into a new draft?
+
+BATQ-536: Can individual sections/phases be copied between battery drafts?
+
+BATQ-537: Can administrators create reusable battery templates/patterns?
+
+BATQ-538: Can policy packs constrain which instruments, scoring methods, privacy thresholds, or report types a battery may use?
+
+BATQ-539: Should authoring support comments/notes if free-form text creates a PII risk, or should rationale use structured fields?
+
+BATQ-540: Should publication require all warnings to be explicitly acknowledged or only blockers to be resolved?
+
+
+22. Storage, Canonical Data Model, Lineage, and Proof-Carrying Artifacts
+========================================================================
+
+BATQ-541: What canonical entities are needed: BatteryDefinition, BatteryComponent, BatteryExecutionPlan, BatteryInstance, BatteryAdministrationState, ComponentAdministration, BatteryResult, BatterySnapshot?
+
+BATQ-542: Which entities are immutable versus mutable projections?
+
+BATQ-543: Should accepted component results remain independent immutable objects?
+
+BATQ-544: Should BatteryResult be fully reconstructable from component result hashes plus battery definition/version?
+
+BATQ-545: Should the accepted component set be represented explicitly?
+
+BATQ-546: Should BatteryExecutionManifest persist exact order, bank selections, adaptive selections, substitutions, and seeds?
+
+BATQ-547: Should a battery result have a deterministic ResultHash?
+
+BATQ-548: Should a battery result carry a derivation certificate under ADM-076?
+
+BATQ-549: What belongs in the battery dependency-closure hash?
+
+BATQ-550: Should component report snapshots be embedded, referenced, or independently stored?
+
+BATQ-551: Should battery aggregate indexes be rebuildable from immutable component results?
+
+BATQ-552: Can a BatteryAdministrationState be stored in GitHub using the existing StorageProvider abstraction?
+
+BATQ-553: Should battery storage use the same dataset manifest as administrator group data or a battery-specific namespace?
+
+BATQ-554: How are very large longitudinal batteries partitioned?
+
+BATQ-555: Should battery completion/finalization manifests use compare-and-swap?
+
+BATQ-556: Can two independent component completions commute safely?
+
+BATQ-557: How are conflicting writes to battery plan/configuration distinguished from independent result additions?
+
+BATQ-558: Can a battery migrate storage providers without changing semantic hashes?
+
+BATQ-559: Should proof-carrying battery artifacts verify component-set hash, battery config hash, evaluator version, dependency closure, and output hash?
+
+BATQ-560: How is lineage preserved when source component data is deleted by policy?
+
+BATQ-561: Can a sealed battery snapshot remain verifiable to a reduced level after deletion?
+
+BATQ-562: Should every derived battery artifact distinguish Verified, Invalid, InputsUnavailable, UnsupportedVersion, and Unknown?
+
+
+23. Privacy, Security, Test Integrity, and No-PII Boundaries
+============================================================
+
+BATQ-563: Does the no-PII rule apply to every battery definition, instance, result, report, audit record, URL, telemetry event, and Aegis fault context?
+
+BATQ-564: Can any component request free-text responses that could accidentally collect PII, or should battery policy prohibit them?
+
+BATQ-565: Can a battery enforce stricter privacy policy than its component assessments?
+
+BATQ-566: Can a component weaken battery privacy policy? (Expected answer should remain no.)
+
+BATQ-567: Should anonymous batteries require minimum sample sizes before aggregate battery reports are available?
+
+BATQ-568: Can differencing across component-level and battery-level reports reveal suppressed values?
+
+BATQ-569: Should privacy analysis model cross-report differencing across multiple components?
+
+BATQ-570: Can adaptive path visibility reveal sensitive inferences even when scores are suppressed?
+
+BATQ-571: Should the report suppress path details when the path itself could disclose a sensitive category?
+
+BATQ-572: Can battery URLs reveal component selection or prior answers?
+
+BATQ-573: Should URL fragments remain the preferred location for respondent answer state where the existing URL architecture applies?
+
+BATQ-574: Should battery-level URLs avoid third-party requests/referrers just like component URLs?
+
+BATQ-575: Can battery state be signed or integrity-protected independently from component submissions?
+
+BATQ-576: How is authenticity distinguished from corruption/integrity?
+
+BATQ-577: Can administrators restrict exports of battery-level detail while allowing aggregate reports?
+
+BATQ-578: Should test security requirements support hiding item banks, answer keys, scoring rules, and future component selection?
+
+BATQ-579: Can item exposure be tracked without storing respondent identity?
+
+BATQ-580: Can a battery limit repeated exposure to a protected component using only opaque instance information?
+
+BATQ-581: How are compromised battery definitions withdrawn from new administration?
+
+BATQ-582: Can a battery require proctoring or secure-browser capabilities in a future phase?
+
+BATQ-583: How would such capabilities remain explicit rather than assumed?
+
+BATQ-584: Should security review treat component definitions and stored battery artifacts as untrusted input?
+
+
+24. Operational Failure, Aegis, Recovery, and Degraded Modes
+============================================================
+
+BATQ-585: Which battery operations cross architectural boundaries that must use Aegis?
+
+BATQ-586: Should component/template registry resolution failures use Aegis while NotFound/unsupported-version outcomes remain typed domain results where expected?
+
+BATQ-587: Should GitHub battery-state reads/writes use EchelonFoundry.Aegis.Integration.GitHub?
+
+BATQ-588: How are battery-specific stable Aegis fault codes named?
+
+BATQ-589: Can failure to load one optional component place the battery in a degraded-but-continuable state?
+
+BATQ-590: Can failure to load a required component create a blocking obligation rather than failing the entire administration irrecoverably?
+
+BATQ-591: Can Aegis recovery propose use of a verified cached component while Ordo decides whether that transition is legal?
+
+BATQ-592: Can Aegis retry a component/template read safely?
+
+BATQ-593: Can Aegis ever retry battery finalization writes without first establishing idempotency?
+
+BATQ-594: How does OutcomeUnknown propagate from component persistence to BatteryAdministrationState?
+
+BATQ-595: Can a battery finalize while any required component write is OutcomeUnknown? (Expected answer should normally be no.)
+
+BATQ-596: Can the battery continue read-only during storage-provider outage?
+
+BATQ-597: Can respondents continue an already-loaded component while administrator persistence is unavailable?
+
+BATQ-598: How are recovery attempts recorded without PII or respondent answer leakage?
+
+BATQ-599: Can repeated component faults be deduplicated/throttled in Limen presentation while preserving every diagnostic occurrence?
+
+BATQ-600: Should the battery invariant health dashboard include unresolved Aegis fault obligations?
+
+
+25. Imports, Exports, Interoperability, and External Assessment Results
+=======================================================================
+
+BATQ-601: Can complete battery definitions be exported/imported as configuration packages?
+
+BATQ-602: Should imported battery packages include component references or embed component definitions?
+
+BATQ-603: How are missing external components resolved during package import?
+
+BATQ-604: Can battery packages be installed in another Signal repository without changing semantic hashes?
+
+BATQ-605: Can a BatteryExecutionManifest be exported for independent verification?
+
+BATQ-606: Can BatteryResult be exported as canonical JSON?
+
+BATQ-607: Should tabular exports flatten component results or retain a normalized multi-table structure?
+
+BATQ-608: Can FHIR, QTI, xAPI, LTI, HRIS, LMS, or other interoperability formats be supported later without leaking those schemas into the core domain?
+
+BATQ-609: Should interoperability adapters map into canonical Signal battery contracts rather than becoming parallel models?
+
+BATQ-610: Can external assessment systems send only scores/results rather than item responses?
+
+BATQ-611: What minimum provenance is required for an externally supplied result?
+
+BATQ-612: Can externally supplied results participate in battery composites?
+
+BATQ-613: Must external scoring/version/norm metadata be pinned before they are accepted?
+
+BATQ-614: How is authenticity of external results handled separately from integrity?
+
+BATQ-615: Can future service endpoints create/update battery administration state without bypassing Ordo transitions?
+
+BATQ-616: Should import/export conformance tests prove semantic round-trip equivalence?
+
+
+26. Licensing, Ownership, Copyright, and Content Governance
+===========================================================
+
+BATQ-617: Can a battery contain copyrighted/proprietary assessments whose item text must not be exported?
+
+BATQ-618: Should license rules be represented as machine-readable capabilities where possible?
+
+BATQ-619: Can a battery be shared without sharing restricted component content?
+
+BATQ-620: Can a configuration package contain only secure references to licensed assessments?
+
+BATQ-621: Should report exports prevent reproducing protected test items?
+
+BATQ-622: Can administrators see which battery components require separate licenses?
+
+BATQ-623: Should publication fail when a required license is absent/expired?
+
+BATQ-624: Can a battery version remain historically reproducible if a license later expires but the content cannot legally be redistributed?
+
+BATQ-625: How do we distinguish technical availability from legal/contractual permission to administer?
+
+BATQ-626: Can battery templates be organization-owned, vendor-owned, public-domain, or open-licensed?
+
+BATQ-627: Should license provenance be part of the battery manifest but excluded from score semantics?
+
+BATQ-628: Can an instrument withdrawal notice mark future use prohibited while preserving historical result interpretation?
+
+BATQ-629: Should Signal support component replacement recommendations when a licensed assessment becomes unavailable?
+
+
+27. Testing, Simulation, Property Tests, and Adversarial Battery Cases
+======================================================================
+
+BATQ-630: What is the smallest canonical battery fixture needed for unit tests?
+
+BATQ-631: Do we need fixtures for fixed-order, randomized, counterbalanced, adaptive, multi-rater, longitudinal, timed, and banked batteries?
+
+BATQ-632: Should every published battery be executable against deterministic synthetic data?
+
+BATQ-633: Should the synthetic generator create complete, partial, invalid, contradictory, extreme, sparse, and privacy-edge battery administrations?
+
+BATQ-634: Should property tests prove component order independence where order is declared semantically irrelevant?
+
+BATQ-635: Should property tests prove order sensitivity where the battery explicitly makes order semantic?
+
+BATQ-636: Should incremental BatteryResult equal full reference recomputation after every component completion?
+
+BATQ-637: Should reloading from serialized battery state reproduce the same execution plan and result?
+
+BATQ-638: Should random/counterbalanced sequences reproduce from the same seed/manifest?
+
+BATQ-639: Should adaptive path selection reproduce exactly from the same inputs?
+
+BATQ-640: Should tests prove unreachable components are rejected at publication?
+
+BATQ-641: Should tests prove cycles are rejected?
+
+BATQ-642: Should tests prove illegal dynamic substitution is rejected?
+
+BATQ-643: Should tests prove missing required components block finalization?
+
+BATQ-644: Should tests prove optional missing components obey the declared composite policy?
+
+BATQ-645: Should tests prove provisional scores never appear when configured Hidden/FinalOnly?
+
+BATQ-646: Should tests prove a sealed battery cannot accept another component result?
+
+BATQ-647: Should tests prove reopening/sealing uses legal Ordo transitions?
+
+BATQ-648: Should tests inject GitHub timeout, rate limit, permission loss, branch protection, malformed content, and OutcomeUnknown writes?
+
+BATQ-649: Should tests prove Aegis is exercised at battery operational boundaries?
+
+BATQ-650: Should tests prove domain failures are not misclassified as Aegis faults?
+
+BATQ-651: Should tests prove credentials/PII/respondent answer state are absent from Aegis events?
+
+BATQ-652: Should tests prove privacy suppression survives cross-component and cross-report differencing attempts?
+
+BATQ-653: Should tests prove accessible equivalents for every battery-level visualization/report block?
+
+BATQ-654: Should tests exercise RTL/localized battery instructions and reports?
+
+BATQ-655: Should performance tests include hundreds of components, thousands of administrations, and longitudinal datasets?
+
+BATQ-656: Should resource tests limit dependency depth, adaptive-rule nodes, composite-expression depth, component count, and report complexity?
+
+BATQ-657: Should migration tests move a battery dataset between providers and prove identical canonical results?
+
+BATQ-658: Should proof-carrying artifact tests deliberately corrupt input-set/config/output hashes and verify detection?
+
+BATQ-659: Should model-based tests generate random legal/illegal BatteryState transitions and compare against the Ordo state model?
+
+
+28. Performance, Scale, Caching, and Resource Limits
+====================================================
+
+BATQ-660: What maximum component count should a single battery support?
+
+BATQ-661: What maximum number of simultaneous active battery administrations should the GitHub-backed phase support reasonably?
+
+BATQ-662: What maximum historical administration count should ordinary dashboards handle without loading all component results?
+
+BATQ-663: Should battery summaries use materialized/rebuildable indexes?
+
+BATQ-664: Which battery analytics can be computed incrementally?
+
+BATQ-665: Should component completion invalidate only dependent composites/reports?
+
+BATQ-666: Should battery dependency invalidation use the administrator-wide ADM-054 graph?
+
+BATQ-667: Can immutable component/result objects be cached by hash safely?
+
+BATQ-668: Should exact battery/template artifacts be cached offline by hash?
+
+BATQ-669: What memory budget should the WASM client enforce for a large battery?
+
+BATQ-670: Should long result histories page/stream rather than load eagerly?
+
+BATQ-671: Should report charts aggregate large longitudinal series automatically?
+
+BATQ-672: What hard limits prevent an adversarial battery definition from creating unbounded graph/expression work?
+
+BATQ-673: Should publication estimate computational complexity before allowing a battery to publish?
+
+BATQ-674: Can a battery be valid but marked RequiresServiceBackend if it exceeds GitHub/browser operating limits?
+
+BATQ-675: Should Signal recommend provider migration when a battery exceeds evidence-based GitHub scale thresholds?
+
+
+29. Governance, Approval, Change Control, and Lifecycle
+=======================================================
+
+BATQ-676: Who is allowed to create, validate, publish, deprecate, withdraw, seal, reopen, or supersede a battery?
+
+BATQ-677: Can these capabilities exist without Signal storing user identity by relying on external authorization and opaque actor classes?
+
+BATQ-678: Should high-impact actions require a second approval in a future multi-user service?
+
+BATQ-679: Which battery changes require a Decision Record?
+
+BATQ-680: Should changes to scoring, norms, adaptive rules, privacy, or component membership always create a new semantic version?
+
+BATQ-681: Can presentation-only changes create a patch artifact without changing semantic comparability?
+
+BATQ-682: How are urgent withdrawals handled for invalid or unsafe batteries?
+
+BATQ-683: Can an already-started administration continue on a withdrawn battery?
+
+BATQ-684: Should the withdrawal policy be selectable: continue existing, halt before next component, or require administrator review?
+
+BATQ-685: Can historical reports continue to reproduce a withdrawn battery?
+
+BATQ-686: Should a battery have an end-of-life date?
+
+BATQ-687: Should an old battery version automatically become non-selectable for new administrations after a successor date?
+
+BATQ-688: Can policy packs define minimum governance for production batteries?
+
+BATQ-689: Should experimental batteries require conspicuous status in every report?
+
+BATQ-690: Should the audit trail record state transition type and artifact hashes without recording who performed the action?
+
+BATQ-691: Can a formal battery snapshot be sealed and separately archived?
+
+BATQ-692: Should battery lifecycle transitions appear on the invariant health dashboard?
+
+
+30. Open Edge Cases and Deliberately Difficult Scenarios
+========================================================
+
+BATQ-693: What happens if a battery component is superseded while a respondent is midway through that component?
+
+BATQ-694: What happens if a component is withdrawn after completion but before battery finalization?
+
+BATQ-695: What happens if a norm set is withdrawn between component scoring and report generation?
+
+BATQ-696: What happens if one component result becomes unverifiable after the battery is sealed?
+
+BATQ-697: What happens if two concurrently completed components each make the other no longer required?
+
+BATQ-698: What happens if adaptive rules select different next components after a version/cache discrepancy?
+
+BATQ-699: What happens if a respondent completes a component that was valid when loaded but no longer reachable when submitted?
+
+BATQ-700: What happens if a counterbalanced sequence cannot be completed because one selected form becomes unavailable?
+
+BATQ-701: What happens if a substitute form exists but is only partially comparable?
+
+BATQ-702: What happens if a battery requires three of five assessments and four are completed?
+
+BATQ-703: What happens if two optional components produce contradictory evidence?
+
+BATQ-704: What happens if the composite formula can mathematically compute a score but evidence coverage policy says interpretation is insufficient?
+
+BATQ-705: What happens if an administrator changes a privacy threshold after a partial report was viewed?
+
+BATQ-706: What happens if a formal snapshot is reproducible but a later policy requires deleting all source-level results?
+
+BATQ-707: What happens if a battery is restored from backup into a repository where the same BatteryIdentifier already exists with a different DatasetId?
+
+BATQ-708: What happens if a GitHub branch becomes protected after the battery has started?
+
+BATQ-709: What happens if the token loses write permission after some component results are persisted?
+
+BATQ-710: What happens if finalization dispatches successfully but the client loses connection before confirmation?
+
+BATQ-711: What happens if two tabs both attempt battery finalization?
+
+BATQ-712: What happens if a battery has reached completion but unresolved OutcomeUnknown obligations remain?
+
+BATQ-713: What happens if the battery is sealed while another tab still holds stale CanSubmitComponent capability?
+
+BATQ-714: What happens if a BatteryExecutionManifest references an instrument hash that resolves to conflicting bytes in two registries?
+
+BATQ-715: What happens if an imported external result uses a norm version Signal cannot resolve?
+
+BATQ-716: What happens if longitudinal comparison spans a battery version whose composite changed definition?
+
+BATQ-717: What happens if an accessibility accommodation requires an alternate component that has different norms?
+
+BATQ-718: What happens if order/randomization was intended to be non-semantic but analysis later discovers a meaningful order effect?
+
+BATQ-719: What happens if a battery takes substantially longer than its validated administration conditions?
+
+BATQ-720: What happens if a respondent resumes after the allowed completion window?
+
+BATQ-721: What happens if a component's timing rule conflicts with the battery's break rule?
+
+BATQ-722: What happens if nested batteries create duplicate component identities?
+
+BATQ-723: What happens if a battery package imports successfully but one licensed component cannot be activated?
+
+BATQ-724: What happens if the same component result is accidentally referenced by two battery instances?
+
+BATQ-725: What happens if one result is valid cryptographically but belongs to a different battery execution plan?
+
+BATQ-726: What happens if a proof-carrying BatteryResult certificate verifies but privacy policy has changed since it was generated?
+
+BATQ-727: What happens if an analysis is mathematically valid but based on too few administrations to support the intended inference?
+
+BATQ-728: What happens if a report's comparison cohort overlaps the focal cohort in a way that biases interpretation?
+
+BATQ-729: What happens if a battery-level recommendation depends on a component that is later deleted under retention policy?
+
+BATQ-730: What happens if a future server and GitHub provider disagree about which manifest is authoritative during migration?
+
+BATQ-731: What happens if Aegis fault-event persistence fails while the underlying battery write succeeds?
+
+BATQ-732: What happens if the browser can no longer persist a credential but the current administration has already loaded all required immutable artifacts?
+
+
+Discovery Completion Standard
+=============================
+
+This discovery set is considered dispositioned only when every BATQ item is one of:
+
+- Answered with a decision that has been converted into an authoritative requirement,
+- Explicitly deferred with a named future phase/trigger,
+- Explicitly declared not applicable or out of scope with rationale,
+- Merged into another answered question with a traceable reference.
+
+No unanswered question should silently become implementation behavior.
+
+Recommended next artifact after disposition:
+input-documents/assessment-battery-requirements.txt
+
+Recommended requirement prefix:
+BAT-001, BAT-002, ...
+
+Recommended ROS decomposition should occur only after the answers reveal the actual semantic boundaries rather than pre-assigning work items from the question set.
