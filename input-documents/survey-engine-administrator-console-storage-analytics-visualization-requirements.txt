@@ -2912,7 +2912,7 @@ The application MUST reference:
 
 - `EchelonFoundry.Aegis.Core`
 
-Because the phase-1 administrator storage provider calls the GitHub API directly, the applicable GitHub integration SHOULD also be referenced and used:
+Because the phase-1 administrator storage provider calls the GitHub API directly, the applicable GitHub integration MUST also be referenced and used:
 
 - `EchelonFoundry.Aegis.Integration.GitHub`
 
