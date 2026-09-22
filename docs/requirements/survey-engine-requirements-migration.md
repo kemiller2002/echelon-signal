@@ -157,6 +157,7 @@ The thirteenth authoritative source was added after the original migration speci
 | ARX-012 | Derivation Lineage, Reproducibility, and Trial Evidence | Hash/version derivation chain, same-path explanations, reason codes, engineering telemetry, and retrospective outcomes. | WI-0002, WI-0007, WI-0008, WI-0009, WI-0010 |
 | ARX-013 | Timers, Forward-Only Progression, Pagination, and Content Banking | Timer scopes and authority, strengthened ItemsPerPage semantics, independent question/section revisit locks, deterministic question/section banking, selection seeds/manifests, bank-aware encoding/scoring, and combined stress fixtures. | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
 | ARX-014 | Live Incremental Scoring and Typed Custom Scoring Expressions | Per-response authoritative scoring, configurable live score visibility, provisional/final semantics, typed serializable scoring AST, publication-time type/dependency/resource validation, expression-language versioning, and built-in/custom differential equivalence. | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
+| ARX-015 | Required Aegis Operational-Fault Integration | Repository-wide required Aegis package/use at external operational boundaries, explicit boundary declarations, typed-domain separation, Ordo-authorized recovery, unknown-effect preservation, redaction, and integration verification. | WI-0002, WI-0004, WI-0008, WI-0010 |
 
 ### No-PII scope clarification
 
@@ -169,7 +170,7 @@ At extension review time, the repository's installed ROS configuration identifie
 
 ## 2026-09-22 administrator console / storage / analytics / visualization extension
 
-The fourteenth authoritative source, `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt`, defines ADM-001 through ADM-076.
+The fourteenth authoritative source, `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt`, defines ADM-001 through ADM-077.
 
 It extends the existing administrator persistence and reporting contracts with:
 
@@ -223,9 +224,10 @@ It extends the existing administrator persistence and reporting contracts with:
 - protected-branch/PR-mode detection,
 - operational repair previews,
 - an invariant-health dashboard,
-- proof-carrying derived artifacts through deterministic derivation certificates.
+- proof-carrying derived artifacts through deterministic derivation certificates,
+- required Aegis integration at architectural operational-fault boundaries, with Ordo/Limen separation and test evidence that Aegis is actually exercised.
 
-ROS work-item reconciliation is complete. ADM-001 through ADM-076 are decomposed across WI-0011 through WI-0020, with reciprocal references in each work-item detail record. WI-0008, WI-0009, and WI-0010 remain the earlier administrator/reporting/cross-cutting baseline and are dependencies rather than duplicate implementations.
+ROS work-item reconciliation is complete. ADM-001 through ADM-077 are decomposed across WI-0011 through WI-0020, with reciprocal references in each work-item detail record. WI-0008, WI-0009, and WI-0010 remain the earlier administrator/reporting/cross-cutting baseline and are dependencies rather than duplicate implementations.
 
 
 
@@ -309,6 +311,7 @@ ROS work-item reconciliation is complete. ADM-001 through ADM-076 are decomposed
 | ADM-074 | Operational Repair Preview and Plan | WI-0014, WI-0018, WI-0020 |
 | ADM-075 | Invariant Health Dashboard | WI-0011, WI-0014, WI-0018 |
 | ADM-076 | Proof-Carrying Derived Artifacts | WI-0013, WI-0014, WI-0016, WI-0018, WI-0020 |
+| ADM-077 | Required Aegis Integration and Operational Fault Boundaries | WI-0011, WI-0012, WI-0013, WI-0017, WI-0018, WI-0020 |
 
 
 
@@ -326,7 +329,7 @@ ROS work-item reconciliation is complete. ADM-001 through ADM-076 are decomposed
 - Relevant source files discovered: 14
 - Relevant source files reviewed completely: 14
 - Relevant source files excluded: 0
-- Requirement groups recorded: 162
+- Requirement groups recorded: 164
 - New delivery work items: 19
 - Source appendices added: 12
 - Sources fully migrated to ROS work items: 14
