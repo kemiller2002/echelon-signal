@@ -15,3 +15,13 @@
 | WI-0008 | Administrator import, aggregation, and report-state persistence | captured | admin, import, persistence | high |
 | WI-0009 | Reporting contract, privacy, comparisons, and renderers | captured | reporting, privacy, exports | medium |
 | WI-0010 | Cross-cutting test, performance, security, migration, and acceptance program | captured | testing, performance, security | high |
+| WI-0011 | Administrator application state, group management, and Limen UX | captured | admin, ordo, limen, ux | high |
+| WI-0012 | Storage provider contract and GitHub repository provider | captured | admin, storage, github, provider | high |
+| WI-0013 | Administrator import, concurrency, durable aggregation, and indexes | captured | admin, import, aggregation, concurrency | high |
+| WI-0014 | Administrator analytics, comparisons, lineage, and dependency invalidation | captured | admin, analytics, lineage, dependencies | high |
+| WI-0015 | Typed visualization grammar, dashboards, and accessibility | captured | admin, visualization, accessibility, dashboard | high |
+| WI-0016 | Report builder, snapshots, exports, configuration packages, and policy packs | captured | admin, reporting, snapshots, configuration | medium |
+| WI-0017 | Administrator privacy, security, audit, retention, and deletion lifecycle | captured | admin, privacy, security, lifecycle | high |
+| WI-0018 | Storage migration, backup, schema evolution, and operational recovery | captured | admin, migration, backup, recovery | high |
+| WI-0019 | Administrator sandbox, synthetic data, advanced analytics extensions, and phase boundary | captured | admin, sandbox, synthetic-data, experiments | medium |
+| WI-0020 | Administrator cross-cutting verification, performance, and acceptance program | captured | admin, testing, performance, acceptance | high |
