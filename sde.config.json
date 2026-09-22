@@ -1,0 +1,7 @@
+{
+  "structuralReview": {
+    "excludePaths": [
+      "tools/ros_cli.mjs"
+    ]
+  }
+}

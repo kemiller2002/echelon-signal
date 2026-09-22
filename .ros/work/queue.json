@@ -404,6 +404,26 @@
       "createdBy": "agent:chatgpt",
       "source": "requirements-migration",
       "sourceReference": "input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt"
+    },
+    {
+      "id": "SIGNAL-FRAMEWORK-2026-09-22",
+      "title": "Finalize Echelon Signal current ROS, Ordo SDE, and Limen baseline",
+      "description": "Upgrade current main from ROS 3.1.3 to 3.1.4 and Limen 0.6.1 to 0.6.2, enforce strict SDE verification, and define Signal's explicit F# and browser Limen boundaries without replaying legacy migration state.",
+      "tags": [
+        "framework",
+        "migration",
+        "ros",
+        "ordo",
+        "limen"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-22T09:00:00.000Z",
+      "updatedAt": "2026-09-22T09:00:59.000Z",
+      "createdBy": "unknown",
+      "source": "agent-execution",
+      "sourceReference": "ARX-001"
     }
   ]
 }
