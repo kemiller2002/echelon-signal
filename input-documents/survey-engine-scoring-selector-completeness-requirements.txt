@@ -200,6 +200,7 @@ NegativeMarking MUST support correct/incorrect/blank or equivalent answer-state 
 
 - TopBox
 - TopKBox
+- WeightedTopKBox
 - BottomBox
 - BottomKBox
 - FavorableRate
@@ -207,6 +208,8 @@ NegativeMarking MUST support correct/incorrect/blank or equivalent answer-state 
 - NetFavorable
 
 TopKBox and BottomKBox MUST allow K to be configured and validated against the ordinal cardinality.
+
+WeightedTopKBox MUST assign explicit deterministic weights to the included top-K categories, validate those weights, and preserve the unweighted TopKBox as a distinct metric.
 
 FavorableRate and UnfavorableRate MUST use explicit category membership or cutoff rules.
 
@@ -400,6 +403,7 @@ Every scoring strategy MUST declare or inherit an explicit policy for:
 - Unanswered,
 - NotApplicable,
 - DontKnow,
+- PreferNotToAnswer / Declined,
 - excluded-by-flow,
 - invalid answer state,
 - zero numeric answer,
@@ -417,6 +421,8 @@ Supported ordinary missing/special-state policies SHOULD include:
 - BlockScore
 - ReturnUnavailable
 - PreserveSeparateCoverageMetric
+
+PreferNotToAnswer/Declined MUST remain distinct from Don't Know, Not Applicable, and Unanswered. It MAY be excluded from scoring/denominators by policy but MUST remain visible in coverage/response-state semantics when permitted by the report privacy policy.
 
 Imputation is NOT a default scoring behavior. If statistical imputation is ever introduced, it requires separate explicit requirements and provenance.
 
@@ -454,6 +460,15 @@ BoundedRange represents an ordered lower/upper pair over the same finite bounded
 Matrix/grid questions are composite repeated-answer structures, not a new scalar primitive.
 
 Best-Worst is a constrained multi-selection composite, not arbitrary free-form data.
+
+Enabled special answer states SHOULD include, as individually configurable states:
+
+- Unanswered,
+- NotApplicable,
+- DontKnow,
+- PreferNotToAnswer / Declined.
+
+PreferNotToAnswer is a semantic response state, not a hidden alias for Unanswered.
 
 All primitive cardinalities MUST be known or bounded at publication.
 
@@ -560,6 +575,8 @@ ImageChoiceSingle MUST include accessible text for each image choice and MUST re
 ## Multi-choice presentation variants
 
 - CheckboxList
+- MultiSelectDropdown
+- SearchableMultiSelect
 - MultiSelectChips
 - MultiSelectButtons
 - MultiSelectCards
@@ -601,10 +618,12 @@ Signal MUST support matrix/grid questions as a first-class composite authoring/p
 Required matrix families:
 
 - MatrixSingleChoice
+- MatrixDropdown
 - MatrixMultiChoice
 - MatrixLikert
 - MatrixSemanticDifferential
 - MatrixNumericRating
+- MatrixSideBySide
 
 Required optional constraints:
 
@@ -614,6 +633,10 @@ Required optional constraints:
 - multiple responses per row,
 - optional one-use-per-column / forced-ranking constraint when semantically appropriate,
 - row-specific NotApplicable where enabled.
+
+MatrixDropdown is a presentation variant of row-level SingleChoice, not a different answer semantic.
+
+MatrixSideBySide MAY present two or more explicitly named finite scales for each row. Each scale MUST retain its own primitive answer semantics, scoring declaration, accessibility label, and encoding slot.
 
 Matrix scoring MUST be equivalent to scoring the same row answers individually and then applying the declared aggregate.
 
@@ -637,6 +660,7 @@ Required structured selectors:
 - PairwiseComparison
 - BestWorst
 - HierarchicalSingleChoice / CascadingSelect
+- HierarchicalMultiChoice / TreeMultiSelect
 
 Ranking MUST support a keyboard-accessible non-drag mechanism such as move up/down, position selector, or equivalent.
 
@@ -649,6 +673,8 @@ PairwiseComparison presents exactly two choices for one comparison instance and 
 BestWorst presents a finite set and captures exactly one Best and one Worst choice unless the template explicitly defines another bounded variant. The same option cannot be both Best and Worst.
 
 HierarchicalSingleChoice selects one terminal or allowed node from a template-owned finite option tree. It MAY be presented as cascading dropdowns/tree navigation but canonicalizes to a stable option identity.
+
+HierarchicalMultiChoice selects a bounded set of allowed nodes from the same kind of immutable tree and MUST declare whether selecting a parent implies descendants, forbids descendants, or is independent of descendants.
 
 Hierarchical selectors MUST NOT fetch mutable external option data during respondent scoring. Published option hierarchies are immutable template dependencies.
 
@@ -872,12 +898,15 @@ Core component families:
 - signal-star-rating
 - signal-icon-rating
 - signal-matrix-single
+- signal-matrix-dropdown
 - signal-matrix-multi
+- signal-matrix-side-by-side
 - signal-ranking
 - signal-allocation
 - signal-pairwise
 - signal-best-worst
 - signal-hierarchical-select
+- signal-hierarchical-multi-select
 
 Required variants of the shared single-choice family:
 
@@ -892,6 +921,8 @@ Required variants of the shared single-choice family:
 Required variants of the shared multi-choice family:
 
 - checkbox list
+- multi-select dropdown
+- searchable multi-select
 - chips
 - buttons
 - cards
@@ -927,6 +958,7 @@ The following may be valuable later but are not required as basic/moderate built
 - Bayesian scoring
 - machine-learned scoring
 - free-text/NLP scoring
+- inaccessible image-hotspot-only question models without a semantically equivalent accessible interaction contract
 - image/audio/video interpretation
 - respondent identity inference
 - arbitrary executable scoring code
