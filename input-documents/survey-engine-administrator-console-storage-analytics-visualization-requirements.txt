@@ -1513,6 +1513,638 @@ The architecture MUST leave explicit capability slots for those future provider/
 
 ---
 
+
+# ADM-041 - Change-Impact Preview and Obligation Planning
+
+Before applying any administrator change that can affect existing or future derived state, Echelon Signal SHOULD calculate and present an impact preview.
+
+Impact-aware changes include at minimum:
+
+- Group configuration changes
+- Report definition changes
+- Dashboard definition changes
+- Visualization definition changes
+- Privacy-threshold changes
+- Comparison-policy changes
+- Storage-schema changes
+- Aggregate-schema changes
+- Analysis-expression changes
+- Storage-provider changes
+- Template/version adoption for successor groups
+
+The impact preview SHOULD classify affected artifacts as:
+
+- Unaffected
+- RequiresReprojection
+- RequiresAggregateRebuild
+- RequiresIndexRebuild
+- RequiresRevalidation
+- BecomesNotComparable
+- BecomesSuppressed
+- BecomesStale
+- RequiresMigration
+- Blocked
+- UnknownImpact
+
+The preview MUST identify why each impact exists using stable reason codes and dependency evidence.
+
+Applying a change SHOULD create explicit obligations for any required follow-up work.
+
+A change MUST NOT silently invalidate a previously valid snapshot, report, comparison, aggregate, or index.
+
+Historical immutable artifacts MUST remain historically valid even when current configuration changes.
+
+The impact preview itself SHOULD be deterministic from:
+
+Current authoritative state
++
+Proposed change
++
+Versioned dependency rules
+
+---
+
+# ADM-042 - Administrator Sandbox and Simulation Mode
+
+The administrator application SHOULD provide a sandbox/simulation mode for testing configuration before affecting live administrator state.
+
+Sandbox mode SHOULD support:
+
+- Loading a survey/template definition
+- Generating or importing synthetic submissions
+- Exercising import validation
+- Exercising scoring and aggregation
+- Exercising duplicate detection
+- Exercising report definitions
+- Exercising dashboards
+- Exercising visualization specifications
+- Exercising privacy suppression
+- Exercising storage-provider behavior
+- Exercising schema migrations
+- Exercising comparison rules
+- Exercising report snapshots
+- Exercising accessibility validation
+
+Sandbox state MUST be isolated from production administrator state.
+
+A sandbox artifact MUST NOT become an accepted live contribution through an accidental transition.
+
+Promotion from sandbox to live configuration, where allowed, MUST be an explicit transition that promotes configuration only, not synthetic responses or synthetic accepted results.
+
+Sandbox artifacts SHOULD be visibly marked as synthetic/test data.
+
+Sandbox URLs, exports, snapshots, and reports MUST clearly indicate that they are non-production artifacts.
+
+---
+
+# ADM-043 - Synthetic and Adversarial Survey Data Generator
+
+Echelon Signal SHOULD include a deterministic synthetic-data generator for administrator testing and preview.
+
+The generator SHOULD be able to create:
+
+- Fully valid submissions
+- Partially complete submissions
+- Invalid submissions
+- Boundary-value submissions
+- Highly skewed response distributions
+- Uniform distributions
+- Sparse responses
+- High Don't-Know usage
+- High Not-Applicable usage
+- Highly correlated items
+- Weakly correlated items
+- Contradictory patterns where the survey permits them
+- Privacy-threshold edge cases
+- Duplicate submissions
+- Large-volume result sets
+- Version-mismatch cases
+- Corrupt/tampered artifacts
+- Pathological but bounded expression/analysis inputs
+
+Synthetic generation MUST respect the no-PII constraint.
+
+Generation SHOULD be seedable so a scenario can be reproduced exactly.
+
+A generated dataset SHOULD record:
+
+- GeneratorVersion
+- Seed
+- Template/version identity
+- Generation profile
+- Intended edge cases
+- Expected high-level properties where defined
+
+Synthetic data SHOULD be usable for:
+
+- Administrator preview
+- Report-design preview
+- Visualization testing
+- Accessibility testing
+- Performance testing
+- Privacy testing
+- Storage testing
+- Provider conformance testing
+
+---
+
+# ADM-044 - Storage Provider Conformance Suite
+
+Every StorageProvider implementation MUST be testable against a shared provider-conformance suite.
+
+The suite SHOULD verify at minimum:
+
+- Canonical round-trip behavior
+- Immutable object reads/writes
+- Conditional writes
+- Compare-and-swap behavior
+- Concurrent modification handling
+- Idempotent repeated writes
+- OutcomeUnknown reconciliation
+- Missing-object semantics
+- Corrupt-object behavior
+- Unsupported-capability behavior
+- Partial listing behavior
+- Pagination
+- Rate-limit behavior
+- Oversized object behavior
+- Authentication failure behavior
+- Read-only mode
+- Network interruption
+- Stale change tokens/ETags
+- Schema-version incompatibility
+- Migration source behavior
+- Migration destination behavior
+- Provider capability discovery
+
+A provider MUST NOT claim a capability unless the conformance suite can verify its contract or the capability is explicitly marked unverifiable with evidence.
+
+The GitHub provider is the initial reference provider.
+
+A future installable Signal service MUST pass the same provider-contract suite plus tests for any additional capabilities it advertises.
+
+Provider-specific optimizations are permitted only when they preserve the shared semantic contract.
+
+---
+
+# ADM-045 - Data Lifecycle, Retention, Archival, and Deletion Semantics
+
+Echelon Signal MUST model administrator data lifecycle explicitly.
+
+At minimum consider states or policies equivalent to:
+
+- Active
+- Archived
+- RetainedForAudit
+- Superseded
+- Retired
+- DeletedFromActiveState
+- ProviderDeletionRequested
+- ProviderDeletionVerified
+- ProviderDeletionNotProvable
+
+Retention policy SHOULD be configurable by artifact class, including:
+
+- Accepted SurveyResult
+- SurveyGroupResult
+- AdminReportState
+- Derived indexes
+- Report definitions
+- Report snapshots
+- Comparison data
+- Audit records
+- Synthetic/test artifacts
+- Backup bundles
+
+Deletion semantics MUST reflect actual provider behavior.
+
+For GitHub, deleting a current file does not necessarily erase prior Git history.
+
+Therefore Signal MUST distinguish:
+
+- Removal from current application state
+- Removal from current repository tree
+- Provider-level historical retention
+- Verified irreversible deletion where a provider can prove it
+
+The UI MUST NOT claim that data is permanently erased when the provider cannot establish that fact.
+
+Lifecycle transitions MUST be auditable without storing PII.
+
+Archival MUST preserve enough lineage to reproduce formal snapshots that are intentionally retained.
+
+A retired dataset MUST become read-only by default.
+
+---
+
+# ADM-046 - Durable Store as Untrusted Input
+
+All content loaded from a storage provider MUST be treated as untrusted input even when it was previously written by Signal.
+
+The loader MUST validate:
+
+- Path/locator validity
+- Object size
+- Schema version
+- Canonical encoding
+- Content hash
+- Dataset identity
+- Object type
+- Required references
+- Reference cycles
+- Expression complexity
+- Visualization complexity
+- Dashboard complexity
+- Analysis-expression limits
+- Manifest consistency
+- Cross-object version compatibility
+
+A human may manually edit GitHub repository files.
+
+A compromised credential may alter repository state.
+
+A provider may return truncated, stale, duplicated, or malformed content.
+
+Therefore repository provenance alone is not proof of validity.
+
+Malformed or hostile durable objects MUST fail with typed reason codes.
+
+A malformed object MUST NOT cause:
+
+- Arbitrary code execution
+- Unbounded allocation
+- Unbounded recursion
+- Infinite retry
+- Silent data loss
+- Partial domain activation
+
+Loading a durable store SHOULD be staged so validation completes before mutable administrator capabilities become available.
+
+---
+
+# ADM-047 - Portable Configuration Packages
+
+Echelon Signal SHOULD support provider-independent configuration packages that can move administration design without moving response data.
+
+A configuration package MAY include:
+
+- Group configuration templates
+- Report definitions
+- Dashboard definitions
+- Visualization specifications
+- Privacy policies
+- Comparison policies
+- Analysis expressions
+- Localization resources
+- Accessibility policy
+- Export policy
+- Storage-independent schema/configuration metadata
+
+A configuration package MUST NOT include:
+
+- Authentication credentials
+- GitHub tokens
+- Provider secrets
+- Accepted respondent results unless the package is explicitly a data backup rather than a configuration package
+- PII
+
+Configuration packages MUST be versioned and integrity protected.
+
+Import MUST validate every contained definition before activation.
+
+Configuration-package import SHOULD support dry-run impact preview.
+
+Imported configuration provenance SHOULD record:
+
+- Package identity/hash
+- Package schema version
+- Source version where declared
+- Import time evidence where needed
+- Any applied compatibility adapters
+
+Configuration activation MUST be explicit.
+
+---
+
+# ADM-048 - Versioned Policy Packs
+
+Echelon Signal SHOULD support versioned policy packs for reusable administrator constraints.
+
+A policy pack MAY define rules for:
+
+- Privacy thresholds
+- Anonymous suppression
+- Differencing protection
+- Accessibility requirements
+- Allowed visualization types
+- Export restrictions
+- Report-detail defaults
+- Comparison prerequisites
+- Retention defaults
+- Snapshot requirements
+- Audit requirements
+- Storage requirements
+- Minimum validation/test expectations
+
+Examples could include concepts such as:
+
+- StrictAnonymous
+- ExecutiveReporting
+- ResearchAudit
+- AccessibilityStrict
+- OrganizationDefined
+
+Policy packs MUST expand into explicit deterministic constraints.
+
+They MUST NOT contain arbitrary executable code.
+
+A policy pack MUST have:
+
+- PolicyPackId
+- Version
+- Declared rules
+- Compatibility requirements
+- Optional parent/base policy
+- Deterministic resolution semantics
+
+Conflicting inherited policy rules MUST fail explicitly.
+
+Formal report snapshots SHOULD record the effective policy-pack identities/versions that constrained them when relevant.
+
+---
+
+# ADM-049 - Template Upgrade and Successor-Group Impact Analysis
+
+When an administrator chooses a newer survey/template version for a successor group, Signal SHOULD explain the consequences before activation.
+
+The upgrade impact analysis SHOULD identify:
+
+- Added metrics
+- Removed metrics
+- Changed metric semantics
+- Changed scoring
+- Changed scoring-expression language
+- Changed applicability
+- Changed completion rules
+- Changed category thresholds
+- Changed recommendation logic
+- Changed aggregation semantics
+- Changed privacy implications
+- Comparison compatibility
+- Dashboard impacts
+- Report-definition impacts
+- Visualization impacts
+- Required index/aggregate schema changes
+
+The system SHOULD answer questions equivalent to:
+
+- Which existing reports still work unchanged?
+- Which comparisons remain valid?
+- Which charts lose a required metric?
+- Which metrics have semantic continuity?
+- Which saved analyses become invalid?
+- Which policy packs no longer validate?
+- Which historical groups remain directly comparable?
+
+A template upgrade MUST NOT retroactively mutate old groups.
+
+The default path SHOULD create a successor group bound to the new immutable template version.
+
+---
+
+# ADM-050 - Report and Visualization Regression Verification
+
+Report and visualization definitions SHOULD support regression verification using deterministic fixtures.
+
+Regression checks SHOULD focus on semantic and accessibility correctness rather than relying only on pixel-perfect screenshots.
+
+Potential assertions include:
+
+- Every required metric is represented
+- No unauthorized metric is represented
+- Privacy-suppressed data is absent
+- Missing values remain explicit
+- Sort order is deterministic
+- Labels map to the correct data
+- Units are correct
+- Axis scale is legal
+- Required direct labels exist
+- Accessible descriptions exist
+- Tabular equivalents contain the same legal data
+- Keyboard focus order is valid
+- No required interaction is hover-only
+- Layout remains usable at supported widths
+- Text does not clip beyond declared tolerances
+- High-contrast mode remains interpretable
+- Grayscale/print remains interpretable when supported
+- Color-blind simulation preserves distinctions
+- Responsive projection preserves semantic ordering
+
+Deterministic rendering snapshots MAY supplement these tests where useful, but screenshots MUST NOT be the only authority.
+
+A changed report/visualization definition SHOULD show which regression assertions changed or failed.
+
+---
+
+# ADM-051 - Definition and State Diffing
+
+Administrators SHOULD be able to inspect semantic diffs for important versioned artifacts.
+
+Diff support SHOULD include:
+
+- Group configuration versions
+- Report definitions
+- Dashboard definitions
+- Visualization specifications
+- Analysis expressions
+- Privacy policies
+- Policy packs
+- Storage manifests
+- Aggregate schema versions
+- Configuration packages
+
+Diffs SHOULD classify changes by meaning rather than only by serialized text.
+
+Representative classifications include:
+
+- PresentationOnly
+- PrivacyRelevant
+- ComparisonRelevant
+- AggregateRelevant
+- StorageRelevant
+- AccessibilityRelevant
+- Breaking
+- NonBreaking
+- RequiresRebuild
+- RequiresRevalidation
+
+The system SHOULD show the downstream impact of a diff using the change-impact dependency model.
+
+---
+
+# ADM-052 - Reversible Administration, Saved Views, and Capability Explanation
+
+Administrator operations that conceptually support undo SHOULD implement undo as a new legal transition rather than mutation of historical state.
+
+Examples include:
+
+- Revert current dashboard definition to prior version
+- Restore prior report definition as a new current version
+- Reactivate a prior configuration where legal
+- Reverse a non-destructive archive transition
+- Restore a saved analysis definition
+
+Undo MUST NOT:
+
+- Erase immutable history
+- Remove an accepted result that policy says is immutable
+- Rewrite an old report snapshot
+- Bypass storage/audit policy
+
+Interactive analysis views SHOULD be bookmarkable when safe.
+
+A bookmarkable analysis view MAY encode:
+
+- Filters
+- Sort
+- Selected metrics
+- Comparison references
+- Visualization choice
+- Drill-down location
+- Dashboard/view identity
+
+It MUST NOT encode credentials or hidden/suppressed data.
+
+The application SHOULD provide a "Why can't I do this?" explanation for unavailable administrator actions.
+
+Capability explanation SHOULD identify:
+
+- Current state
+- Missing capability
+- Blocking guard
+- Outstanding obligation
+- Required evidence
+- Relevant provider limitation
+- Stable reason code
+
+A disabled button without an explanation SHOULD be avoided for significant administrator actions.
+
+---
+
+# ADM-053 - Operational Diagnostics and Localization Preview
+
+The administrator application SHOULD provide an explicit operational diagnostics area.
+
+Diagnostics SHOULD surface:
+
+- Storage provider connectivity
+- Provider capability snapshot
+- Authentication capability status without exposing secrets
+- Read/write status
+- Rate-limit state
+- Manifest health
+- Aggregate/index freshness
+- Pending reconciliation obligations
+- Schema compatibility
+- Migration state
+- Backup/restore readiness
+- Last successful verified refresh evidence
+- Degraded-mode status
+
+Diagnostics MUST distinguish:
+
+- Domain invalidity
+- Provider unavailability
+- Authentication failure
+- Rate limiting
+- Stale local state
+- Corruption
+- Unsupported capability
+- Unknown external outcome
+
+The report/dashboard builder SHOULD support localization preview.
+
+Localization preview SHOULD detect:
+
+- Text expansion/clipping
+- Missing translations
+- Unsupported glyphs where detectable
+- Directionality issues
+- Label collisions
+- Table overflow
+- Chart annotation overflow
+
+Localization changes MUST NOT alter canonical data semantics.
+
+---
+
+# ADM-054 - End-to-End Derived-State Invalidation and Dependency Graph
+
+Echelon Signal SHOULD model the administrator system as an explicit dependency graph extending from accepted submissions through final presentation artifacts.
+
+Conceptually:
+
+```
+AcceptedSubmission
+    -> SurveyResult
+    -> AcceptedContributionSet
+    -> SurveyGroupResult aggregate nodes
+    -> Analysis measures
+    -> Privacy/suppression decisions
+    -> ReportData blocks
+    -> VisualizationSpec nodes
+    -> Dashboard/report projections
+    -> Snapshot eligibility
+```
+
+Dependencies MUST be explicit or mechanically derivable.
+
+When one authoritative input changes, the system SHOULD invalidate only the affected downstream closure.
+
+Examples:
+
+- A new accepted submission invalidates affected aggregate nodes, dependent analysis measures, dependent privacy decisions, dependent report blocks, and dependent visualization projections.
+- A privacy-policy change invalidates privacy projections and downstream report/visualization output without requiring survey re-scoring.
+- A report-definition presentation-only change invalidates report/visualization output without invalidating SurveyGroupResult.
+- A template semantic change for a successor group does not invalidate historical immutable groups but may invalidate comparison eligibility.
+
+Every derived node SHOULD be able to identify:
+
+- Its input dependencies
+- Its version
+- Its current/stale state
+- Its source hash/set
+- Its rebuild/reprojection capability
+- Its downstream dependents
+
+The dependency graph SHOULD power:
+
+- Incremental recomputation
+- Change-impact preview
+- Staleness detection
+- Repair planning
+- Capability explanation
+- Lineage explanation
+- Performance optimization
+- Regression test targeting
+
+A derived artifact MUST NOT be treated as current when any required upstream dependency has changed without a successful compatible reprojection.
+
+The architecture SHOULD prove:
+
+```
+IncrementallyUpdatedDerivedClosure
+=
+FullReferenceRebuild
+```
+
+for every supported administrator transition where incremental execution is used.
+
+This requirement intentionally pushes Ordo, ROS, Limen, evidence lineage, negative knowledge, unknown effects, and dependency-driven engineering across the complete administrator stack rather than only the respondent/scoring path.
+
+---
+
+
 # Cross-Cutting Administrator Invariants
 
 1. Echelon Signal administrator state contains no PII.
@@ -1554,7 +2186,7 @@ These administrator requirements are authoritative input requirements.
 
 They were added after the 2026-09-21 advanced stress-trial migration.
 
-ROS work-item migration for ADM-001 through ADM-040 is intentionally not claimed complete by this document. The repository migration ledger MUST identify this source as newly captured/pending work-item reconciliation until the ROS work items are updated.
+ROS work-item migration for ADM-001 through ADM-054 is intentionally not claimed complete by this document. The repository migration ledger MUST identify this source as newly captured/pending work-item reconciliation until the ROS work items are updated.
 
 Likely impacted delivery areas include:
 
