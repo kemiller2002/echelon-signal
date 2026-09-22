@@ -31,7 +31,7 @@ No file under `input-documents/` is excluded. The original 12-file corpus was re
 | `input-documents/survey-group-identity-anonymous-submissions.txt` | requirements-definition completed | ID-001, ID-002, ID-003, ID-004 | WI-0004, WI-0005, WI-0008, WI-0009, WI-0010 |
 | `input-documents/survey-instance-template-versioning-requirements.txt` | requirements-definition completed | VER-001, VER-002, VER-003, VER-004, VER-005, VER-006, VER-007 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007 |
 | `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt` | requirements-definition completed | ARX-001 through ARX-014 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
-| `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt` | requirements-definition completed | ADM-001 through ADM-054 | WI-0011 through WI-0020 |
+| `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt` | requirements-definition completed | ADM-001 through ADM-076 | WI-0011 through WI-0020 |
 
 ## Work-item decomposition
 
@@ -169,7 +169,7 @@ At extension review time, the repository's installed ROS configuration identifie
 
 ## 2026-09-22 administrator console / storage / analytics / visualization extension
 
-The fourteenth authoritative source, `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt`, defines ADM-001 through ADM-054.
+The fourteenth authoritative source, `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt`, defines ADM-001 through ADM-076.
 
 It extends the existing administrator persistence and reporting contracts with:
 
@@ -206,9 +206,26 @@ It extends the existing administrator persistence and reporting contracts with:
 - semantic definition/state diffing,
 - transition-based undo, bookmarkable safe analysis views, and capability explanations,
 - operational/storage health diagnostics and localization preview,
-- an end-to-end derived-state invalidation graph from accepted submission through visualization and snapshot eligibility.
+- an end-to-end derived-state invalidation graph from accepted submission through visualization and snapshot eligibility,
+- exact template registry/resolution management,
+- credential lifecycle and multiple storage profiles,
+- GitHub repository growth/rollover/compaction and operation-budget estimation,
+- resumable per-item batch import semantics and quarantine,
+- conflict-resolution workflows,
+- formal dependency pinning,
+- reproducibility-versus-deletion conflict semantics,
+- optional dataset sealing and a formal close/finalization ceremony,
+- non-PII import provenance,
+- explicit clock/time-zone/period semantics,
+- internationalization including RTL/bidirectional layout,
+- offline/interrupted-session semantics,
+- browser secret-storage policy and cross-tab credential coherence,
+- protected-branch/PR-mode detection,
+- operational repair previews,
+- an invariant-health dashboard,
+- proof-carrying derived artifacts through deterministic derivation certificates.
 
-ROS work-item reconciliation is complete. ADM-001 through ADM-054 are decomposed across WI-0011 through WI-0020, with reciprocal references in each work-item detail record. WI-0008, WI-0009, and WI-0010 remain the earlier administrator/reporting/cross-cutting baseline and are dependencies rather than duplicate implementations.
+ROS work-item reconciliation is complete. ADM-001 through ADM-076 are decomposed across WI-0011 through WI-0020, with reciprocal references in each work-item detail record. WI-0008, WI-0009, and WI-0010 remain the earlier administrator/reporting/cross-cutting baseline and are dependencies rather than duplicate implementations.
 
 
 
@@ -270,6 +287,28 @@ ROS work-item reconciliation is complete. ADM-001 through ADM-054 are decomposed
 | ADM-052 | Reversible Administration, Saved Views, and Capability Explanation | WI-0011, WI-0017 |
 | ADM-053 | Operational Diagnostics and Localization Preview | WI-0011, WI-0018 |
 | ADM-054 | End-to-End Derived-State Invalidation and Dependency Graph | WI-0014, WI-0020 |
+| ADM-055 | Template Registry and Exact Template Resolution | WI-0012, WI-0014 |
+| ADM-056 | Credential Lifecycle and Capability Revalidation | WI-0011, WI-0012, WI-0017 |
+| ADM-057 | Multiple Storage Profiles | WI-0011, WI-0012, WI-0018 |
+| ADM-058 | GitHub Repository Growth, Rollover, and Compaction Strategy | WI-0012, WI-0018, WI-0020 |
+| ADM-059 | Storage Cost and Operation Budget Estimation | WI-0012, WI-0020 |
+| ADM-060 | Batch Import Transaction and Resume Semantics | WI-0013, WI-0020 |
+| ADM-061 | Quarantine Boundary for Untrusted Artifacts | WI-0013, WI-0017, WI-0020 |
+| ADM-062 | Conflict Resolution Workspace | WI-0011, WI-0014 |
+| ADM-063 | Explicit Dependency Pinning for Reports, Dashboards, and Snapshots | WI-0014, WI-0016 |
+| ADM-064 | Reproducibility Versus Deletion Policy Conflict | WI-0016, WI-0017, WI-0018 |
+| ADM-065 | Dataset Sealing | WI-0011, WI-0017 |
+| ADM-066 | Group Close and Formal Finalization Ceremony | WI-0011, WI-0016, WI-0017 |
+| ADM-067 | Import Provenance Without Person Identity | WI-0013, WI-0017 |
+| ADM-068 | Clock, Calendar, Time Zone, and Period Semantics | WI-0011, WI-0014, WI-0016, WI-0020 |
+| ADM-069 | Internationalization and Bidirectional Layout Semantics | WI-0015, WI-0016, WI-0020 |
+| ADM-070 | Offline and Interrupted Administrator Session Behavior | WI-0011, WI-0012, WI-0020 |
+| ADM-071 | Browser Secret Storage Policy | WI-0011, WI-0017 |
+| ADM-072 | Cross-Tab Credential and Capability Coherence | WI-0011, WI-0012, WI-0020 |
+| ADM-073 | GitHub Branch Protection and Pull Request Storage Mode | WI-0012, WI-0020 |
+| ADM-074 | Operational Repair Preview and Plan | WI-0014, WI-0018, WI-0020 |
+| ADM-075 | Invariant Health Dashboard | WI-0011, WI-0014, WI-0018 |
+| ADM-076 | Proof-Carrying Derived Artifacts | WI-0013, WI-0014, WI-0016, WI-0018, WI-0020 |
 
 
 
@@ -287,7 +326,7 @@ ROS work-item reconciliation is complete. ADM-001 through ADM-054 are decomposed
 - Relevant source files discovered: 14
 - Relevant source files reviewed completely: 14
 - Relevant source files excluded: 0
-- Requirement groups recorded: 140
+- Requirement groups recorded: 162
 - New delivery work items: 19
 - Source appendices added: 12
 - Sources fully migrated to ROS work items: 14
