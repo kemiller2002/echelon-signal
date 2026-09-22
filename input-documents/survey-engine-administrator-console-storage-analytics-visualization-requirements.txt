@@ -2903,6 +2903,124 @@ This capability SHOULD extend existing lineage rather than create a competing pr
 
 ---
 
+
+# ADM-077 - Required Aegis Integration and Operational Fault Boundaries
+
+Echelon Signal MUST import and actively use Aegis as the standard mechanism for unexpected operational failure.
+
+The application MUST reference:
+
+- `EchelonFoundry.Aegis.Core`
+
+Because the phase-1 administrator storage provider calls the GitHub API directly, the applicable GitHub integration SHOULD also be referenced and used:
+
+- `EchelonFoundry.Aegis.Integration.GitHub`
+
+If Signal persists Aegis fault/lifecycle events in GitHub, it MUST use the standard GitHub store adapter rather than inventing a Signal-specific Aegis event format:
+
+- `EchelonFoundry.Aegis.Store.GitHub`
+
+The exact package versions MUST be pinned according to the repository's dependency/versioning policy.
+
+Merely adding package references does not satisfy this requirement.
+
+Signal MUST configure Aegis once during application/bootstrap initialization and validate that configuration before relying on it.
+
+Aegis MUST be used at architectural boundaries where unexpected operational failure can originate outside the authoritative Signal domain model, including as applicable:
+
+- GitHub API/network access
+- GitHub storage-provider reads and writes
+- Template registry access
+- Browser/file import mechanism boundaries
+- Backup/restore provider I/O
+- Storage migration provider I/O
+- Export/download mechanism boundaries where failures originate outside domain logic
+- Future HTTP/service storage providers
+- Other filesystem, network, browser interop, or external-service boundaries introduced later
+
+Signal SHOULD maintain an explicit boundary declaration compatible with Aegis guidance, such as an `aegis-boundaries.json` artifact or the then-current Aegis boundary declaration mechanism.
+
+Aegis MUST NOT replace Signal/Ordo domain outcomes.
+
+The following remain typed domain/state outcomes rather than Aegis faults:
+
+- Illegal state transition
+- Duplicate accepted submission
+- Privacy suppression
+- NotComparable
+- Unsupported provider capability
+- Quarantined artifact
+- Validation failure
+- Missing required evidence
+- Dataset sealed
+- Group not complete
+- Other expected outcomes already represented by Signal discriminated unions, capabilities, obligations, or transition results
+
+Programming defects MUST continue to fail loudly according to Aegis policy rather than being swallowed or converted into ordinary domain failures.
+
+Bare catch-all handling that swallows unexpected operational failure is prohibited.
+
+An intercepted operational failure MUST terminate in an explicit path such as:
+
+- Propagation
+- Verified recovery
+- A proposed Ordo/SDE state transition
+- A declared suppression policy that emits the applicable Aegis lifecycle evidence
+
+Aegis MAY propose recovery/state transitions, but Ordo/SDE remains the authority deciding whether those transitions are legal.
+
+Retry through Aegis recovery MUST occur only when the operation is known to be safe/idempotent.
+
+A write with an uncertain remote outcome MUST preserve Signal's `OutcomeUnknown` / reconciliation semantics and MUST NOT be converted into a generic retry merely because Aegis captured the fault.
+
+Signal SHOULD use stable application-specific Aegis fault codes for its boundaries.
+
+GitHub failures SHOULD use the standard Aegis GitHub failure translation model where applicable rather than independently classifying raw GitHub exceptions at every call site.
+
+Aegis fault context MUST respect Signal's no-PII and credential rules.
+
+Fault context, diagnostic events, sinks, and exported diagnostics MUST NOT contain:
+
+- GitHub tokens
+- Other provider credentials
+- PII
+- Raw respondent URLs when they could contain answer state
+- Unredacted sensitive configuration
+- Hidden/suppressed report data
+
+Context values MUST use the applicable Aegis privacy classification/redaction mechanisms.
+
+Limen SHOULD render user-facing fault presentation from Aegis presentation intent/structure rather than inventing an independent browser fault taxonomy.
+
+Aegis remains the operational-fault authority; Limen remains the browser rendering mechanism; Ordo remains the legal-state-transition authority.
+
+Testing MUST prove actual Aegis integration.
+
+At minimum:
+
+- Tests use Aegis replaceable/collector sinks rather than asserting console output.
+- Each integration boundary has deterministic translation/classification tests.
+- GitHub authentication, authorization, not-found, rate-limit, timeout/network, malformed-response, and uncertain-write scenarios are covered where the integration exposes them.
+- Fault context redaction is tested for tokens, PII-like values, and respondent URL leakage.
+- Programming defects are verified not to be silently captured as recoverable operational faults.
+- Domain outcomes are verified not to be routed through Aegis.
+- Recovery authorization remains controlled by Ordo/SDE policy.
+- Unknown-effect writes remain reconciliation obligations.
+- Repeated/transient faults do not produce uncontrolled UI notification storms.
+- Aegis degraded/sink-failure behavior does not corrupt or block authoritative Signal domain state unless a configured required-sink policy explicitly requires the operation to stop.
+
+Acceptance evidence MUST demonstrate both:
+
+```
+Aegis package/reference present
+AND
+Aegis exercised at declared operational boundaries
+```
+
+A build that references Aegis but bypasses it with ad hoc `try/with`, raw exception handling, or a parallel Signal-specific operational fault framework does not satisfy this requirement.
+
+---
+
 # Cross-Cutting Administrator Invariants
 
 1. Echelon Signal administrator state contains no PII.
@@ -2952,6 +3070,10 @@ This capability SHOULD extend existing lineage rather than create a competing pr
 45. Repair execution verifies preconditions against the state used to create the repair plan.
 46. Invariant checks distinguish unknown/unverified from healthy.
 47. Derived artifact certificates extend lineage and can be independently validated when required inputs remain available.
+48. Aegis is required and must be exercised at operational boundaries; package presence alone is insufficient.
+49. Aegis faults never replace typed Signal/Ordo domain outcomes.
+50. Aegis recovery may propose but never authorize an Ordo transition or unsafe retry.
+51. Aegis diagnostics obey the same no-PII, no-secret, and respondent-data redaction boundaries as the rest of Signal.
 
 ---
 
@@ -2960,7 +3082,7 @@ This capability SHOULD extend existing lineage rather than create a competing pr
 Requirements-definition status: COMPLETED  
 ROS work-item reconciliation completed: 2026-09-22
 
-These administrator requirements are authoritative input requirements. Every actionable statement in ADM-001 through ADM-076 is assigned to at least one bounded ROS delivery item.
+These administrator requirements are authoritative input requirements. Every actionable statement in ADM-001 through ADM-077 is assigned to at least one bounded ROS delivery item.
 
 The administrator extension is decomposed into:
 
@@ -3059,5 +3181,6 @@ The older WI-0008, WI-0009, and WI-0010 items remain the pre-existing administra
 | ADM-074 | Operational Repair Preview and Plan | WI-0014, WI-0018, WI-0020 |
 | ADM-075 | Invariant Health Dashboard | WI-0011, WI-0014, WI-0018 |
 | ADM-076 | Proof-Carrying Derived Artifacts | WI-0013, WI-0014, WI-0016, WI-0018, WI-0020 |
+| ADM-077 | Required Aegis Integration and Operational Fault Boundaries | WI-0011, WI-0012, WI-0013, WI-0017, WI-0018, WI-0020 |
 
 Complete migration ledger: `docs/requirements/survey-engine-requirements-migration.md`
