@@ -167,3 +167,18 @@ Those products are comparison inputs only. Signal's deterministic F# semantics, 
 ### Interpretation
 
 This review establishes requirement-catalog completeness for basic and moderate scoring and closed-ended selector/question styles. It does not claim implementation exists. The mapped delivery work items remain responsible for implementation and acceptance evidence.
+
+
+### ROS 3.1.4 attribution-policy migration finding
+
+During completion of `SIGNAL-SCORING-SELECTORS-2026-09-22`, the first post-completion validation reported the work item's own finalized telemetry execution as an unattributed meaningful change.
+
+Investigation confirmed that the current ROS 3.1.4 greenfield `ros.json` template excludes machine-owned:
+
+- `.ros/telemetry/**`,
+- `.ros/locks/**`,
+- `.echelon/**`
+
+from work-attribution checks, while Echelon Signal's older shared `ros.json` still excluded only context/events/work/registries.
+
+Signal's attribution exclusions were aligned to the current ROS 3.1.4 policy. This does not exempt product, requirement, test, or application files from attribution; it prevents ROS machine-generated lifecycle metadata from recursively requiring its own work attribution.
