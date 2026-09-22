@@ -1440,6 +1440,68 @@ for both built-in and custom expression-tree scoring.
 
 ---
 
+
+# ARX-015 - Required Aegis Operational-Fault Integration
+
+Echelon Signal MUST import and actively use Aegis as the repository-wide mechanism for unexpected operational failure.
+
+At minimum the implementation MUST reference:
+
+- `EchelonFoundry.Aegis.Core`
+
+Where Signal directly calls GitHub, it SHOULD use:
+
+- `EchelonFoundry.Aegis.Integration.GitHub`
+
+Where Signal chooses GitHub as the durable Aegis event store, it MUST use:
+
+- `EchelonFoundry.Aegis.Store.GitHub`
+
+Package presence alone is insufficient. Aegis MUST be exercised at real architectural boundaries and verified by tests.
+
+Aegis belongs at external operational boundaries such as:
+
+- GitHub/API network calls
+- Storage-provider I/O
+- Template-registry I/O
+- Browser/file/clipboard/download interop where unexpected operational failure can occur
+- Backup/restore/migration I/O
+- Future HTTP/service providers
+
+Aegis MUST NOT replace expected Signal/Ordo domain outcomes. Illegal transitions, validation failures, duplicates, privacy suppression, NotComparable, unsupported capabilities, sealed-state restrictions, and similar expected states remain modeled by F# discriminated unions/capabilities/obligations.
+
+Aegis recovery MAY propose an Ordo/SDE transition. Ordo/SDE remains the authority that decides whether the transition is legal.
+
+Aegis retry MUST respect idempotency and Signal's unknown-effect model. A write with uncertain remote outcome MUST remain `OutcomeUnknown` and create/reuse reconciliation obligations rather than being blindly retried.
+
+Signal MUST configure Aegis once at bootstrap and validate the configuration.
+
+Signal SHOULD maintain the then-current Aegis boundary declaration artifact (for example `aegis-boundaries.json`) so architectural fault boundaries are explicit and reviewable.
+
+Fault codes MUST be stable and machine-readable.
+
+Fault context, lifecycle events, sinks, exported diagnostics, and presentation data MUST obey Signal's no-PII/no-secret rules and MUST redact credentials, respondent URLs/answer state, hidden report data, and other sensitive values.
+
+Limen renders Aegis presentation intent/structure; Limen MUST NOT invent a competing operational-fault taxonomy.
+
+Programming defects MUST fail loudly according to Aegis policy and MUST NOT be swallowed as recoverable operational faults.
+
+Tests MUST use replaceable/collector sinks and MUST prove:
+
+- declared architectural boundaries actually use Aegis capture/guard or the current equivalent,
+- typed integration failures translate deterministically,
+- domain outcomes do not flow through Aegis,
+- credentials/PII/respondent state are redacted,
+- programming defects are not silently swallowed,
+- recovery remains Ordo-authorized,
+- uncertain writes preserve reconciliation semantics,
+- repeated faults do not create uncontrolled user-notification storms,
+- Aegis sink/degraded behavior cannot corrupt canonical Signal state.
+
+Any ad hoc parallel operational-fault framework or widespread bare `try/with` handling that bypasses Aegis violates this requirement.
+
+---
+
 # Cross-Cutting Acceptance Invariants
 
 1. Echelon Signal processes no PII.
@@ -1469,6 +1531,10 @@ for both built-in and custom expression-tree scoring.
 25. Custom scoring expressions are typed, serializable, deterministic data and never arbitrary executable code.
 26. Built-in and custom scoring participate in the same dependency graph, lineage, explanation, and differential verification.
 27. Incremental scoring after every accepted answer is observationally equivalent to full reference recomputation.
+28. Aegis is the required operational-fault mechanism at declared architectural boundaries; package presence alone is insufficient.
+29. Aegis never replaces typed Signal/Ordo domain outcomes.
+30. Aegis recovery cannot authorize an illegal Ordo transition or bypass OutcomeUnknown reconciliation.
+31. Aegis diagnostics obey Signal's no-PII, no-secret, and redaction requirements.
 
 ---
 
@@ -1580,5 +1646,6 @@ This extension was added after the original 2026-08-31 twelve-file migration. It
 | ARX-012 | Derivation Lineage, Reproducibility, and Trial Evidence | WI-0002, WI-0007, WI-0008, WI-0009, WI-0010 |
 | ARX-013 | Timers, Forward-Only Progression, Pagination, and Content Banking | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
 | ARX-014 | Live Incremental Scoring and Typed Custom Scoring Expressions | WI-0002, WI-0003, WI-0004, WI-0006, WI-0007, WI-0010 |
+| ARX-015 | Required Aegis Operational-Fault Integration | WI-0002, WI-0004, WI-0008, WI-0010 |
 
 Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
