@@ -54,13 +54,24 @@ jobs:
           set -euo pipefail
           ./ros add "Migrate Echelon Signal to current ROS, Ordo SDE, and Limen" \
             --id WI-0011 \
-            --tag framework,migration,ros,ordo,limen \
+            --tag framework \
+            --tag migration \
+            --tag ros \
+            --tag ordo \
+            --tag limen \
             --priority high \
             --description "Adopt current ROS lifecycle state, install SDE and Limen, update verification pins, and record durable migration evidence." \
             --source agent-execution \
-            --source-reference ARX-001
-          ./ros work ready WI-0011
-          ./ros work start WI-0011 --type maintenance
+            --source-reference ARX-001 \
+            --occurred-at 2026-09-22T08:46:00.000Z
+          ./ros work backlog-transition \
+            --id WI-0011 \
+            --action ready \
+            --occurred-at 2026-09-22T08:46:01.000Z
+          ./ros work start \
+            --id WI-0011 \
+            --type maintenance \
+            --occurred-at 2026-09-22T08:46:02.000Z
           ./ros work context WI-0011 | tee /tmp/framework-migration/ros-work-context.json
 
       - name: Configure SDE product-code structural scope
@@ -138,6 +149,13 @@ jobs:
           not Echelon Signal product code. All other supported source paths remain subject to
           SDE structural review defaults.
 
+          ## Framework-trial findings
+
+          - ROS 3.1.4 successfully adopted the real legacy installation without force or manual file deletion.
+          - ROS 3.1.0 had reported ten legacy files as blocking unmanaged conflicts; the 3.1.2+ legacy-adoption path eliminated those false conflicts by using the recorded legacy hashes.
+          - The current ROS 3.1.4 executable requires `work backlog-transition --action ready --id ID --occurred-at TIMESTAMP` for backlog mutation, while the current upstream `docs/work-backlog-guide.md` still demonstrates `work ready ID`. The executable contract was followed and the documentation mismatch is retained as ROS trial evidence.
+          - SDE strict structural review initially flagged `tools/ros_cli.mjs` (1,085 lines). That file is retained as ROS legacy compatibility tooling and is narrowly excluded from Signal product-code structural review rather than deleting it or disabling structural review globally.
+
           ## Evidence authority
 
           The GitHub Actions migration run is operational evidence. This document is the durable
@@ -158,7 +176,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./ros work complete WI-0011 \
+          ./ros work complete \
+            --id WI-0011 \
+            --occurred-at 2026-09-22T08:46:59.000Z \
             --evidence implementation=.github/workflows/echelon-verification.yml \
             --evidence tests=docs/verification/framework-baseline-2026-09-22.md
           ./ros validate --json | tee /tmp/framework-migration/ros-validate-after-complete.json
