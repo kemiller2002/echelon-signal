@@ -1,7 +1,7 @@
 # Survey engine requirements migration ledger
 
-Status: requirements-definition completed  
-Completed: 2026-08-31  
+Status: original and advanced migrations completed; 2026-09-22 administrator extension pending ROS work-item reconciliation  
+Original migration completed: 2026-08-31  
 Authoritative corpus: `input-documents/`  
 Migration work item: WI-0001
 
@@ -13,7 +13,7 @@ Original source content is preserved. Each source received only an appended migr
 
 ## Complete corpus coverage
 
-No file under `input-documents/` is excluded. The original 12-file corpus was reviewed completely on 2026-08-31; the advanced ROS/Ordo/Limen stress-trial extension was added and reviewed on 2026-09-21, bringing the authoritative corpus to 13 files.
+No file under `input-documents/` is excluded. The original 12-file corpus was reviewed completely on 2026-08-31; the advanced ROS/Ordo/Limen stress-trial extension was added and reviewed on 2026-09-21; the administrator console/storage/analytics/visualization extension was added and reviewed on 2026-09-22, bringing the authoritative corpus to 14 files. The first 13 sources are migrated to ROS work items; the fourteenth source is authoritative and pending work-item reconciliation.
 
 | Authoritative source | Migration status | Requirement groups | ROS work items |
 |---|---|---|---|
@@ -30,6 +30,7 @@ No file under `input-documents/` is excluded. The original 12-file corpus was re
 | `input-documents/survey-group-identity-anonymous-submissions.txt` | requirements-definition completed | ID-001, ID-002, ID-003, ID-004 | WI-0004, WI-0005, WI-0008, WI-0009, WI-0010 |
 | `input-documents/survey-instance-template-versioning-requirements.txt` | requirements-definition completed | VER-001, VER-002, VER-003, VER-004, VER-005, VER-006, VER-007 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007 |
 | `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt` | requirements-definition completed | ARX-001 through ARX-014 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
+| `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt` | authoritative requirements captured; ROS migration pending | ADM-001 through ADM-040 | pending reconciliation |
 
 ## Work-item decomposition
 
@@ -155,6 +156,39 @@ The extension strengthens the existing privacy language: Echelon Signal itself d
 At extension review time, the repository's installed ROS configuration identifies 1.2.1-main.16.1, while the current ROS source package is 3.1.0; the current Ordo/SDE distribution is 1.3.0 and the current Limen package is 0.6.1. The upgrade/install activity is therefore an explicit trial obligation under ARX-001 rather than an assumed prerequisite.
 
 
+## 2026-09-22 administrator console / storage / analytics / visualization extension
+
+The fourteenth authoritative source, `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt`, defines ADM-001 through ADM-040.
+
+It extends the existing administrator persistence and reporting contracts with:
+
+- a first-class administrator product/state system,
+- capability-oriented storage providers,
+- GitHub repository storage as the phase-1 durable provider,
+- an explicit future installable service provider option without requiring that service in phase 1,
+- concurrency, compare-and-swap, idempotency, and unknown-effect reconciliation,
+- immutable accepted contributions plus rebuildable aggregate/index projections,
+- incremental aggregation with full-recompute equivalence,
+- deterministic query and analysis contracts,
+- advanced statistical/measurement analysis with typed prerequisites,
+- semantic cross-group/version comparison,
+- a typed declarative visualization grammar,
+- visualization suitability checks and anti-misleading rules,
+- accessibility for low vision, color-vision deficiency, dyslexia, keyboard and screen-reader use,
+- saved dashboards and interactive drill-down,
+- report lineage, report builders, immutable snapshots, and exports,
+- privacy-preserving small-cell/differencing controls,
+- storage integrity, rate-limit behavior, scale modes, materialized-view repair,
+- provider migration, backup/restore, and no-PII audit,
+- read-only/degraded operation,
+- explicit schema evolution,
+- Limen/F# authority boundaries for the administrator application,
+- adversarial/property/model-based testing and explicit resource limits.
+
+ROS work-item migration is intentionally pending. Existing WI-0008, WI-0009, WI-0010 and related domain/UI work items are likely impacted, but no completed mapping is claimed until their detailed work-item records are reconciled.
+
+
+
 ## Modifying, superseding, and constraining relationships
 
 - `URLC-001` and `URLC-002` explicitly modify the earlier server-oriented runtime, replay, revision, completion-lock, and response-persistence proposals in `ACR-005`, `VER-003`, and `VER-007`. The work items implement the URL-based/import-side semantics and retain the earlier text only as provenance.
@@ -166,10 +200,12 @@ At extension review time, the repository's installed ROS configuration identifie
 
 ## Coverage verification
 
-- Relevant source files discovered: 13
-- Relevant source files reviewed completely: 13
+- Relevant source files discovered: 14
+- Relevant source files reviewed completely: 14
 - Relevant source files excluded: 0
-- Requirement groups recorded: 86
+- Requirement groups recorded: 126
 - New delivery work items: 9
 - Source appendices added: 12
+- Sources fully migrated to ROS work items: 13
+- Authoritative sources pending ROS work-item reconciliation: 1
 
