@@ -1,7 +1,8 @@
 # Survey engine requirements migration ledger
 
-Status: original and advanced migrations completed; 2026-09-22 administrator extension pending ROS work-item reconciliation  
+Status: requirements-definition migration completed through 2026-09-22 administrator extension  
 Original migration completed: 2026-08-31  
+Latest reconciliation completed: 2026-09-22  
 Authoritative corpus: `input-documents/`  
 Migration work item: WI-0001
 
@@ -13,7 +14,7 @@ Original source content is preserved. Each source received only an appended migr
 
 ## Complete corpus coverage
 
-No file under `input-documents/` is excluded. The original 12-file corpus was reviewed completely on 2026-08-31; the advanced ROS/Ordo/Limen stress-trial extension was added and reviewed on 2026-09-21; the administrator console/storage/analytics/visualization extension was added and reviewed on 2026-09-22, bringing the authoritative corpus to 14 files. The first 13 sources are migrated to ROS work items; the fourteenth source is authoritative and pending work-item reconciliation.
+No file under `input-documents/` is excluded. The original 12-file corpus was reviewed completely on 2026-08-31; the advanced ROS/Ordo/Limen stress-trial extension was added and reviewed on 2026-09-21; the administrator console/storage/analytics/visualization extension was added and reviewed on 2026-09-22, bringing the authoritative corpus to 14 files. All 14 authoritative sources are migrated to ROS work items.
 
 | Authoritative source | Migration status | Requirement groups | ROS work items |
 |---|---|---|---|
@@ -30,7 +31,7 @@ No file under `input-documents/` is excluded. The original 12-file corpus was re
 | `input-documents/survey-group-identity-anonymous-submissions.txt` | requirements-definition completed | ID-001, ID-002, ID-003, ID-004 | WI-0004, WI-0005, WI-0008, WI-0009, WI-0010 |
 | `input-documents/survey-instance-template-versioning-requirements.txt` | requirements-definition completed | VER-001, VER-002, VER-003, VER-004, VER-005, VER-006, VER-007 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007 |
 | `input-documents/survey-engine-advanced-ros-ordo-limen-stress-requirements.txt` | requirements-definition completed | ARX-001 through ARX-014 | WI-0002, WI-0003, WI-0004, WI-0005, WI-0006, WI-0007, WI-0008, WI-0009, WI-0010 |
-| `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt` | authoritative requirements captured; ROS migration pending | ADM-001 through ADM-054 | pending reconciliation |
+| `input-documents/survey-engine-administrator-console-storage-analytics-visualization-requirements.txt` | requirements-definition completed | ADM-001 through ADM-054 | WI-0011 through WI-0020 |
 
 ## Work-item decomposition
 
@@ -45,6 +46,16 @@ No file under `input-documents/` is excluded. The original 12-file corpus was re
 | WI-0008 | Administrator import, aggregation, and report-state persistence |
 | WI-0009 | Reporting contract, privacy, comparisons, and renderers |
 | WI-0010 | Cross-cutting test, performance, security, migration, and acceptance program |
+| WI-0011 | Administrator application state, group management, and Limen UX |
+| WI-0012 | Storage provider contract and GitHub repository provider |
+| WI-0013 | Administrator import, concurrency, durable aggregation, and indexes |
+| WI-0014 | Administrator analytics, comparisons, lineage, and dependency invalidation |
+| WI-0015 | Typed visualization grammar, dashboards, and accessibility |
+| WI-0016 | Report builder, snapshots, exports, configuration packages, and policy packs |
+| WI-0017 | Administrator privacy, security, audit, retention, and deletion lifecycle |
+| WI-0018 | Storage migration, backup, schema evolution, and operational recovery |
+| WI-0019 | Administrator sandbox, synthetic data, advanced analytics extensions, and phase boundary |
+| WI-0020 | Administrator cross-cutting verification, performance, and acceptance program |
 
 ## Requirement accounting rule
 
@@ -197,7 +208,68 @@ It extends the existing administrator persistence and reporting contracts with:
 - operational/storage health diagnostics and localization preview,
 - an end-to-end derived-state invalidation graph from accepted submission through visualization and snapshot eligibility.
 
-ROS work-item migration is intentionally pending. Existing WI-0008, WI-0009, WI-0010 and related domain/UI work items are likely impacted, but no completed mapping is claimed until their detailed work-item records are reconciled.
+ROS work-item reconciliation is complete. ADM-001 through ADM-054 are decomposed across WI-0011 through WI-0020, with reciprocal references in each work-item detail record. WI-0008, WI-0009, and WI-0010 remain the earlier administrator/reporting/cross-cutting baseline and are dependencies rather than duplicate implementations.
+
+
+
+### Administrator extension requirement accounting
+
+| Requirement group | Exact source section | ROS work item(s) |
+|---|---|---|
+| ADM-001 | Administrator Product Boundary and No-PII Contract | WI-0011 |
+| ADM-002 | Administrator State System | WI-0011 |
+| ADM-003 | Storage Provider Abstraction | WI-0012 |
+| ADM-004 | Phase 1 GitHub Repository Storage Provider | WI-0012 |
+| ADM-005 | Canonical Storage Manifest | WI-0012 |
+| ADM-006 | Future Installable Service Storage Option | WI-0012, WI-0018 |
+| ADM-007 | Group Administration | WI-0011 |
+| ADM-008 | Submission Intake and Import Queue | WI-0013 |
+| ADM-009 | Import Idempotency, Concurrency, and Unknown Effects | WI-0013 |
+| ADM-010 | Durable Result and Aggregate Storage Model | WI-0013 |
+| ADM-011 | Incremental Aggregation Engine | WI-0013 |
+| ADM-012 | Query and Analysis Model | WI-0014 |
+| ADM-013 | Statistical and Measurement Analysis | WI-0014 |
+| ADM-014 | Cross-Group, Historical, and Version Comparison | WI-0014 |
+| ADM-015 | Signal Visualization Grammar | WI-0015 |
+| ADM-016 | Visualization Suitability and Anti-Misleading Rules | WI-0015 |
+| ADM-017 | Visualization Accessibility | WI-0015 |
+| ADM-018 | Dashboard System | WI-0015 |
+| ADM-019 | Interactive Exploration and Drill-Down | WI-0014 |
+| ADM-020 | Data-Lineage Explorer | WI-0014, WI-0016 |
+| ADM-021 | Report Builder | WI-0016 |
+| ADM-022 | Report Snapshots and Reproducibility | WI-0016 |
+| ADM-023 | Exports | WI-0016 |
+| ADM-024 | Privacy-Preserving Aggregation and Disclosure Controls | WI-0017 |
+| ADM-025 | Storage Security and Integrity | WI-0012, WI-0017 |
+| ADM-026 | GitHub Rate Limits, Scale, and Performance | WI-0012 |
+| ADM-027 | Rebuildable Indexes and Materialized Views | WI-0013 |
+| ADM-028 | Storage Migration and Provider Portability | WI-0018 |
+| ADM-029 | Backup, Restore, and Disaster Recovery | WI-0018 |
+| ADM-030 | Audit Without PII | WI-0017 |
+| ADM-031 | Administrator UX Information Architecture | WI-0011 |
+| ADM-032 | Search, Filtering, and Saved Analysis | WI-0011 |
+| ADM-033 | Read-Only and Degraded Modes | WI-0011, WI-0018 |
+| ADM-034 | Schema Evolution and Compatibility | WI-0018 |
+| ADM-035 | Limen Boundary for Administrator UI | WI-0011 |
+| ADM-036 | Advanced Stress and Adversarial Test Program | WI-0013, WI-0020 |
+| ADM-037 | Property and Model-Based Tests | WI-0013, WI-0020 |
+| ADM-038 | Performance and Resource Limits | WI-0020 |
+| ADM-039 | Optional Advanced Analytics Extensions | WI-0019 |
+| ADM-040 | Phase Boundaries | WI-0019 |
+| ADM-041 | Change-Impact Preview and Obligation Planning | WI-0014 |
+| ADM-042 | Administrator Sandbox and Simulation Mode | WI-0019 |
+| ADM-043 | Synthetic and Adversarial Survey Data Generator | WI-0019 |
+| ADM-044 | Storage Provider Conformance Suite | WI-0012, WI-0020 |
+| ADM-045 | Data Lifecycle, Retention, Archival, and Deletion Semantics | WI-0017, WI-0018 |
+| ADM-046 | Durable Store as Untrusted Input | WI-0012 |
+| ADM-047 | Portable Configuration Packages | WI-0016 |
+| ADM-048 | Versioned Policy Packs | WI-0016, WI-0017 |
+| ADM-049 | Template Upgrade and Successor-Group Impact Analysis | WI-0014 |
+| ADM-050 | Report and Visualization Regression Verification | WI-0015, WI-0020 |
+| ADM-051 | Definition and State Diffing | WI-0014 |
+| ADM-052 | Reversible Administration, Saved Views, and Capability Explanation | WI-0011, WI-0017 |
+| ADM-053 | Operational Diagnostics and Localization Preview | WI-0011, WI-0018 |
+| ADM-054 | End-to-End Derived-State Invalidation and Dependency Graph | WI-0014, WI-0020 |
 
 
 
@@ -216,8 +288,8 @@ ROS work-item migration is intentionally pending. Existing WI-0008, WI-0009, WI-
 - Relevant source files reviewed completely: 14
 - Relevant source files excluded: 0
 - Requirement groups recorded: 140
-- New delivery work items: 9
+- New delivery work items: 19
 - Source appendices added: 12
-- Sources fully migrated to ROS work items: 13
-- Authoritative sources pending ROS work-item reconciliation: 1
+- Sources fully migrated to ROS work items: 14
+- Authoritative sources pending ROS work-item reconciliation: 0
 
