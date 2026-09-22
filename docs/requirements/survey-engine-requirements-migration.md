@@ -315,6 +315,65 @@ ROS work-item reconciliation is complete. ADM-001 through ADM-077 are decomposed
 
 
 
+
+## 2026-09-22 scoring and closed-ended selector completeness extension
+
+The fifteenth authoritative source, `input-documents/survey-engine-scoring-selector-completeness-requirements.txt`, defines SCS-001 through SCS-019.
+
+It closes the ordinary-survey gap between the existing flexible scoring architecture and the common scoring/selector behaviors authors expect without requiring custom expressions.
+
+The extension adds or makes explicit:
+
+- direct, boolean/map, progress-state, count, median, min/max, percentage/range normalization, and affine scoring,
+- robust/basic-moderate aggregation including mode and trimmed mean,
+- answer-key, quiz, exact-set, any/all/none, multi-select partial-credit, and negative-marking scoring,
+- top-box/top-K/bottom-box/favorable/unfavorable/net-favorable metrics,
+- standard NPS aggregate semantics,
+- difference, ratio, composite index, distance/proximity-to-target, bonus/penalty scoring,
+- ranking/Borda/top-K rank, allocation, pairwise, and best-worst count/difference scoring,
+- versioned percentile/Z/T benchmark transformations,
+- explicit missing/special-state, denominator, coverage, rounding, and provisional/final semantics,
+- `BoundedDecimal` and `BoundedRange` finite answer primitives,
+- generic odd/even Likert scales and semantic ordinal presets,
+- semantic differential, NPS, star/icon rating, slider/range-slider/stepper selectors,
+- explicit single-choice variants (radio, dropdown, searchable, segmented, buttons, cards, image choice),
+- explicit multi-choice variants (checkbox, chips, buttons, cards, image choice),
+- select-exactly/at-least/at-most/between and mutually-exclusive multi-choice constraints,
+- matrix single-choice, matrix multi-choice, matrix Likert, matrix semantic-differential, and matrix numeric-rating composites,
+- forced choice, ranking, allocation/constant-sum, pairwise, best-worst, and hierarchical/cascading selectors,
+- strict accessibility/interaction semantics including no drag-only controls and no accidental default answers,
+- selector-to-scorer compatibility validation,
+- deterministic cardinality/URL-size requirements for every new selector,
+- authoring/preview/test obligations,
+- a concrete web-component handoff catalog while preserving F# as the only application/scoring authority.
+
+No PII capability, free-text collection, contact field, signature, upload, geolocation, or identity field is introduced.
+
+### Scoring/selector completeness requirement accounting
+
+| Requirement group | Exact source section | ROS work item(s) |
+|---|---|---|
+| SCS-001 | Completeness Boundary and No-PII Rule | WI-0003, WI-0004, WI-0007, WI-0010 |
+| SCS-002 | Required Basic Built-In Scoring Catalog | WI-0007 |
+| SCS-003 | Required Moderate Built-In Scoring Catalog | WI-0007 |
+| SCS-004 | Quiz, Answer-Key, and Multi-Select Credit Scoring | WI-0007, WI-0010 |
+| SCS-005 | Likert, Rating, and Common Survey Metric Presets | WI-0007 |
+| SCS-006 | Ranking, Allocation, Pairwise, and Best-Worst Scoring | WI-0007 |
+| SCS-007 | Benchmark and Standardized Moderate Scoring | WI-0007, WI-0010 |
+| SCS-008 | Missing, Special-State, Denominator, and Rounding Semantics | WI-0007, WI-0010 |
+| SCS-009 | Canonical Closed-Ended Answer Primitive Catalog | WI-0002, WI-0004 |
+| SCS-010 | Required Selector and Presentation Catalog | WI-0003, WI-0004 |
+| SCS-011 | Multi-Choice Cardinality and Mutual-Exclusion Selectors | WI-0003, WI-0004, WI-0010 |
+| SCS-012 | Matrix, Grid, and Repeated-Scale Selectors | WI-0003, WI-0004, WI-0007, WI-0010 |
+| SCS-013 | Ranking, Allocation, Pairwise, Best-Worst, and Hierarchical Selectors | WI-0003, WI-0004, WI-0007, WI-0010 |
+| SCS-014 | Selector Accessibility, Interaction, and State Semantics | WI-0003, WI-0004, WI-0010 |
+| SCS-015 | Selector-to-Scorer Compatibility Contract | WI-0003, WI-0007, WI-0010 |
+| SCS-016 | Encoding and Cardinality Requirements for New Selectors | WI-0004, WI-0010 |
+| SCS-017 | Authoring, Preview, Validation, and Test Obligations | WI-0003, WI-0007, WI-0010 |
+| SCS-018 | Web Component Handoff Contract | WI-0003, WI-0004, WI-0010 |
+| SCS-019 | Explicit Non-Goals for This Completeness Pass | WI-0007, WI-0010 |
+
+
 ## Modifying, superseding, and constraining relationships
 
 - `URLC-001` and `URLC-002` explicitly modify the earlier server-oriented runtime, replay, revision, completion-lock, and response-persistence proposals in `ACR-005`, `VER-003`, and `VER-007`. The work items implement the URL-based/import-side semantics and retain the earlier text only as provenance.
@@ -326,12 +385,12 @@ ROS work-item reconciliation is complete. ADM-001 through ADM-077 are decomposed
 
 ## Coverage verification
 
-- Relevant source files discovered: 14
-- Relevant source files reviewed completely: 14
+- Relevant source files discovered: 15
+- Relevant source files reviewed completely: 15
 - Relevant source files excluded: 0
-- Requirement groups recorded: 164
+- Requirement groups recorded: 183
 - New delivery work items: 19
-- Source appendices added: 12
-- Sources fully migrated to ROS work items: 14
+- Source appendices added: 13
+- Sources fully migrated to ROS work items: 15
 - Authoritative sources pending ROS work-item reconciliation: 0
 
