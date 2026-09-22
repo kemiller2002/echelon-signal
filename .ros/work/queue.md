@@ -5,7 +5,7 @@
 | ECHELON-UPGRADE-2026-09-21 | Reconcile current Echelon engineering capabilities | complete | tooling,ordo,ros,limen | high |
 | ROS-INSTALL-1-2-1-main-16-1 | ROS-INSTALL-1-2-1-main-16-1 | complete |  |  |
 | SIGNAL-FRAMEWORK-2026-09-22 | Finalize Echelon Signal current ROS, Ordo SDE, and Limen baseline | complete | framework, migration, ros, ordo, limen | high |
-| SIGNAL-SCORING-SELECTORS-2026-09-22 | Complete scoring and selector requirements catalog | ready | requirements, scoring, selectors, web-components | high |
+| SIGNAL-SCORING-SELECTORS-2026-09-22 | Complete scoring and selector requirements catalog | complete | requirements, scoring, selectors, web-components | high |
 | SIGNAL-VERIFY-2026-09-21 | Align verification with current Echelon capability contracts | complete | ci,ordo,ros,sde | high |
 | WI-0001 | Migrate authoritative survey requirements from input-documents into traceable ROS work items | complete | requirements, migration, survey | high |
 | WI-0002 | Canonical survey domain contracts and F# module boundaries | captured | domain, architecture, survey | high |

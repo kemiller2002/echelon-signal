@@ -4,7 +4,7 @@
   "repository": "echelon-signal",
   "actor": "agent:chatgpt",
   "startedAt": "2026-08-31T18:55:58.931Z",
-  "updatedAt": "2026-09-22T13:16:02.000Z",
+  "updatedAt": "2026-09-22T13:27:59.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -87,13 +87,23 @@
     {
       "id": "SIGNAL-SCORING-SELECTORS-2026-09-22",
       "type": "documentation",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-22T13:16:02.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "input-documents/survey-engine-scoring-selector-completeness-requirements.txt"
+        },
+        {
+          "type": "tests",
+          "path": "docs/requirements/survey-engine-requirements-migration-validation.md"
+        }
+      ],
+      "updatedAt": "2026-09-22T13:27:59.000Z",
       "telemetryExecutionIds": [
         "EXE-20260922T131942076Z-a0f00c95"
-      ]
+      ],
+      "completedAt": "2026-09-22T13:27:59.000Z"
     }
   ]
 }
