@@ -1610,6 +1610,415 @@ BATQ-731: What happens if Aegis fault-event persistence fails while the underlyi
 BATQ-732: What happens if the browser can no longer persist a credential but the current administration has already loaded all required immutable artifacts?
 
 
+
+31. Software Delivery Methodology Reality: Purpose and Scope
+============================================================
+
+BATQ-733: Is the purpose of this assessment to identify the organization's claimed methodology, its actual operating methodology, or both?
+
+BATQ-734: Should methodology be classified at organization, portfolio, department, product, team, project, or multiple levels?
+
+BATQ-735: Can different teams inside the same organization intentionally follow different methodologies?
+
+BATQ-736: Should the assessment support both current-state diagnosis and target-state comparison?
+
+BATQ-737: Should the assessment support consulting diagnosis, internal improvement, longitudinal research, and benchmarking as distinct uses?
+
+BATQ-738: Should methodology identity be scored separately from methodology effectiveness or maturity?
+
+BATQ-739: Should operating model be distinguished from process branding and terminology?
+
+BATQ-740: Should the assessment explicitly detect process theater, where framework terminology is used without corresponding operating behavior?
+
+32. Claimed Methodology Versus Observed Methodology
+===================================================
+
+BATQ-741: Should the assessment collect the organization's self-labeled methodology separately from behavioral evidence?
+
+BATQ-742: Should observed methodology always be inferred from behavior without using the self-label as a scoring input?
+
+BATQ-743: Should the result compute a claimed-versus-observed methodology mismatch or congruence measure?
+
+BATQ-744: Should the classifier support Scrum, Kanban, Scrumban, Waterfall, stage-gate, Lean, continuous-delivery/DevOps-oriented, scaled-agile, projectized hybrid, ad hoc/reactive, and custom hybrid profiles?
+
+BATQ-745: Should multiple methodology signals be allowed to score strongly at the same time?
+
+BATQ-746: Should the primary output be a single classification, a ranked set of archetype similarities, a multidimensional profile, or all three?
+
+BATQ-747: Should Signal support descriptions such as 'Scrum-like cadence with strong Waterfall gating' rather than forcing a pure label?
+
+BATQ-748: Should inconsistent or internally contradictory methodology be an explicit outcome?
+
+BATQ-749: Should leadership-reported methodology be compared with team-reported operating behavior?
+
+BATQ-750: Should governance-level methodology be evaluated separately from team-level delivery methodology?
+
+33. Methodology Classification Dimensions
+=========================================
+
+BATQ-751: Should upfront planning intensity be a primary methodology dimension?
+
+BATQ-752: Should requirements stability versus emergence be a primary methodology dimension?
+
+BATQ-753: Should tolerance for change after work begins be a primary methodology dimension?
+
+BATQ-754: Should iteration/timebox discipline be a primary methodology dimension?
+
+BATQ-755: Should continuous flow versus batch planning be a primary methodology dimension?
+
+BATQ-756: Should release cadence and deployability be a primary methodology dimension?
+
+BATQ-757: Should handoff intensity between roles/functions be a primary methodology dimension?
+
+BATQ-758: Should cross-functional ownership be a primary methodology dimension?
+
+BATQ-759: Should empirical feedback/adaptation frequency be a primary methodology dimension?
+
+BATQ-760: Should work pull versus work push be a primary methodology dimension?
+
+BATQ-761: Should management-directed versus team self-management behavior be a primary methodology dimension?
+
+BATQ-762: Should documentation/signoff heaviness be a primary methodology dimension?
+
+BATQ-763: Should shared quality ownership versus downstream QA ownership be a primary methodology dimension?
+
+BATQ-764: Should test-automation integration be a primary methodology dimension?
+
+BATQ-765: Should deployment-pipeline maturity be a primary methodology dimension?
+
+BATQ-766: Should incident/support interruption pressure be measured separately from methodology?
+
+BATQ-767: Should dependency/coordination overhead be a methodology dimension or contextual modifier?
+
+BATQ-768: Should governance/approval-gate heaviness be a primary methodology dimension?
+
+BATQ-769: Should product discovery orientation versus project execution orientation be a primary methodology dimension?
+
+BATQ-770: Should specialist silos versus shared ownership be a primary methodology dimension?
+
+BATQ-771: Should estimation/commitment style be a primary methodology dimension?
+
+BATQ-772: Should outcome orientation versus task-completion orientation be a primary methodology dimension?
+
+BATQ-773: Should customer/stakeholder feedback-loop proximity be a primary methodology dimension?
+
+BATQ-774: Should technical excellence be scored separately so methodology classification is not confused with engineering maturity?
+
+34. Spider/Radar Profile Design
+===============================
+
+BATQ-775: Should the methodology assessment produce a radar/spider graph as a standard output?
+
+BATQ-776: Which dimensions should be shown on the primary methodology radar graph?
+
+BATQ-777: Should methodology dimensions and role-utilization dimensions use separate radar graphs?
+
+BATQ-778: Should the graph support overlays for observed state, claimed state, and target state?
+
+BATQ-779: Should the graph support organization-level and team-level overlays?
+
+BATQ-780: Should the graph support leadership-versus-team overlays?
+
+BATQ-781: Should the graph support comparison with prior administrations?
+
+BATQ-782: Should sparse-data confidence/coverage be visible on the graph?
+
+BATQ-783: Should privacy thresholds suppress dimensions or cohorts with insufficient data?
+
+BATQ-784: Should every radar dimension have a stable semantic definition, scoring direction, and version?
+
+BATQ-785: Should a textual/table equivalent always accompany the radar graph for accessibility and to reduce visual overinterpretation?
+
+35. Scrum Master Role Utilization
+=================================
+
+BATQ-786: How is the Scrum Master actually used in the organization?
+
+BATQ-787: Is the Scrum Master primarily a facilitator, coach, delivery coordinator, project manager, status reporter, people manager, or escalation point?
+
+BATQ-788: Does the Scrum Master protect team focus and enable self-management, or mainly enforce reporting and ceremonies?
+
+BATQ-789: Does the Scrum Master cause organizational impediments to be addressed, or mainly document and escalate them?
+
+BATQ-790: Does the Scrum Master help the team empirically improve, or mainly schedule and administer meetings?
+
+BATQ-791: Is the Scrum Master held accountable for dates, scope, and individual task assignment in ways that resemble a project manager?
+
+BATQ-792: Does the Scrum Master coach cross-functionality and self-management?
+
+BATQ-793: Is the Scrum Master dedicated to one team or spread across multiple teams?
+
+BATQ-794: Does the Scrum Master simultaneously serve as project manager, Product Owner, QA lead, developer manager, or line manager?
+
+BATQ-795: Is the Scrum Master role full-time, part-time, nominal, rotating, or absent?
+
+BATQ-796: Do retrospectives result in observable changes to team behavior?
+
+BATQ-797: Does the Scrum Master enable the team to make day-to-day decisions or direct those decisions?
+
+BATQ-798: Does the observed Scrum Master role more closely resemble Scrum accountability, facilitation, project coordination, or management control?
+
+36. Quality Assurance Role Utilization
+======================================
+
+BATQ-799: How is QA actually used in the delivery model?
+
+BATQ-800: Is QA embedded in the team, centralized, outsourced, shared across teams, or downstream from development?
+
+BATQ-801: Is QA primarily manual, automated, exploratory, compliance-focused, acceptance-focused, or release-gating?
+
+BATQ-802: Is quality treated as a whole-team responsibility or primarily as QA's responsibility?
+
+BATQ-803: Does development hand completed work to QA as a separate phase?
+
+BATQ-804: Are developers expected to test and verify their own work before QA involvement?
+
+BATQ-805: Is QA involved during discovery/refinement and acceptance-criteria formation?
+
+BATQ-806: Does QA mainly verify completed implementation against previously written specifications?
+
+BATQ-807: Does the organization rely on a distinct testing phase before release?
+
+BATQ-808: Is QA work completed inside the same sprint/flow as development or after development's work is considered complete?
+
+BATQ-809: Are defects discovered and resolved continuously or accumulated toward release/testing phases?
+
+BATQ-810: Does the QA operating model create a downstream gate between development and releasable value?
+
+BATQ-811: Is automated testing part of routine delivery or a separate initiative/backlog?
+
+BATQ-812: Does release require QA signoff from outside the delivery team?
+
+37. Developer Role Utilization
+==============================
+
+BATQ-813: How are developers used in practice?
+
+BATQ-814: Are developers members of stable cross-functional product teams or allocated from specialist/resource pools?
+
+BATQ-815: Do developers own design, implementation, testing, deployment, and support, or primarily coding?
+
+BATQ-816: Are developers moved among projects frequently or kept in long-lived teams?
+
+BATQ-817: Do developers create/adjust their own execution plan or receive task-level plans from managers/coordinators?
+
+BATQ-818: Do developers collaborate directly with product, QA, operations, and stakeholders?
+
+BATQ-819: Do developers participate in discovery, refinement, review, and retrospective improvement?
+
+BATQ-820: How frequently are developers interrupted by support, operational, executive, or unplanned work?
+
+BATQ-821: Is developer work considered done when value is usable or when it is handed to the next function?
+
+BATQ-822: Are developers primarily measured by utilization, completed tasks, velocity, delivery outcomes, quality, or another measure?
+
+BATQ-823: Is code/product ownership collective within the team or partitioned into specialist/component silos?
+
+BATQ-824: Does the developer role resemble cross-functional product ownership or a specialized build phase in a larger gated process?
+
+38. Project Manager Role Utilization
+====================================
+
+BATQ-825: How are project managers used in the organization?
+
+BATQ-826: Is the project manager the central controller of scope, schedule, work assignment, status, and coordination?
+
+BATQ-827: Does a project manager operate in parallel with Scrum accountabilities?
+
+BATQ-828: Does the project manager function overlap with Scrum Master, Product Owner, delivery manager, or program manager responsibilities?
+
+BATQ-829: Are project managers primarily responsible for milestones, dependencies, budgets, and leadership reporting?
+
+BATQ-830: Are project managers involved in daily assignment or prioritization of team work?
+
+BATQ-831: Does project-manager authority indicate a projectized operating model rather than a stable product-team model?
+
+BATQ-832: Are project managers necessary primarily because of cross-team dependencies, governance, vendors, contracts, or organizational structure?
+
+BATQ-833: Does the project manager optimize plan conformance or facilitate adaptation to new evidence?
+
+BATQ-834: Does project-management behavior more closely indicate Waterfall, hybrid/stage-gate, scaled coordination, or portfolio governance?
+
+BATQ-835: Can the assessment distinguish beneficial coordination/governance from team-level command-and-control or methodology drift?
+
+39. Product Owner and Product Management Behavior
+=================================================
+
+BATQ-836: Should Product Owner/product-management behavior be assessed as part of actual methodology classification?
+
+BATQ-837: Who actually controls prioritization: Product Owner, team, project manager, committee, executive leadership, sales, client, or another actor?
+
+BATQ-838: Is backlog ordering continuously adaptable or substantially locked by an upfront project plan?
+
+BATQ-839: Are scope changes incorporated through normal prioritization or treated primarily as exceptions/change requests?
+
+BATQ-840: Is there a genuine product backlog or mainly a project plan decomposed into smaller tasks?
+
+BATQ-841: Does the organization optimize for product/customer outcomes or delivery against fixed scope?
+
+BATQ-842: Are requirements/features refined continuously as evidence emerges or mostly specified before implementation begins?
+
+BATQ-843: Does product/stakeholder feedback arrive continuously or mainly at formal stage gates?
+
+40. Waterfall and Stage-Gate Behavioral Signals
+===============================================
+
+BATQ-844: What specific behaviors should count as Waterfall indicators?
+
+BATQ-845: Should large upfront requirements baselines be a Waterfall/stage-gate signal?
+
+BATQ-846: Should sequential design-build-test-release handoffs be a Waterfall/stage-gate signal?
+
+BATQ-847: Should late QA validation, formal change control, milestone gates, external signoffs, and batch releases contribute to Waterfall/stage-gate similarity?
+
+BATQ-848: Should the assessment distinguish classic Waterfall from modern hybrid/stage-gate delivery?
+
+BATQ-849: Should governance controls be evaluated contextually rather than automatically treated as anti-agile?
+
+BATQ-850: Can teams using Scrum terminology and ceremonies still classify strongly as Waterfall/stage-gate based on actual work flow?
+
+BATQ-851: Should the report support a neutral finding such as 'Scrum-labeled, stage-gated execution profile' rather than relying on framework labels alone?
+
+41. Scrum Behavioral Signals
+============================
+
+BATQ-852: What behaviors should count as strong Scrum signals?
+
+BATQ-853: Should stable cross-functional, self-managing teams be required evidence for strong Scrum similarity?
+
+BATQ-854: Should clear Product Owner, Scrum Master, and Developer accountabilities contribute to Scrum similarity?
+
+BATQ-855: Should consistent Sprint cadence, Sprint Goal, Planning, Daily Scrum, Review, and Retrospective behavior contribute to Scrum similarity?
+
+BATQ-856: Should producing a usable Increment meeting a Definition of Done each Sprint be a strong Scrum signal?
+
+BATQ-857: Should empirical inspection/adaptation and team-controlled execution planning be strong Scrum signals?
+
+BATQ-858: Should the assessment distinguish Scrum fidelity from general agility or engineering quality?
+
+BATQ-859: Can a team use Sprints but omit enough essential Scrum behavior that the observed classification should not be Scrum?
+
+BATQ-860: Should missing core Scrum elements be explained individually in the result rather than collapsed into one score?
+
+42. Kanban and Flow Behavioral Signals
+======================================
+
+BATQ-861: What behaviors should count as strong Kanban/flow signals?
+
+BATQ-862: Should an explicit Definition of Workflow and visible workflow states contribute to Kanban similarity?
+
+BATQ-863: Should explicit WIP control be required evidence for strong Kanban similarity?
+
+BATQ-864: Should pull based on available capacity contribute strongly to Kanban similarity?
+
+BATQ-865: Should active management of aging/blocked work contribute to Kanban similarity?
+
+BATQ-866: Should use of WIP, throughput, work-item age, and cycle time contribute to Kanban similarity?
+
+BATQ-867: Should continual workflow improvement contribute to Kanban similarity?
+
+BATQ-868: Should the assessment distinguish a genuine Kanban system from merely displaying tickets on a board?
+
+BATQ-869: Can a team legitimately show Scrum timebox signals and Kanban flow signals simultaneously?
+
+BATQ-870: Should Scrumban or mixed timebox/flow behavior be represented explicitly rather than forced into Scrum or Kanban?
+
+43. Hybrid, Scaled, and Multi-Layer Operating Models
+====================================================
+
+BATQ-871: Should legitimate hybrid models be represented rather than treated as classification failures?
+
+BATQ-872: How should scaled frameworks be recognized from behavior rather than accepted from self-label?
+
+BATQ-873: Should team-level delivery method, program-level coordination, and portfolio governance be classified separately?
+
+BATQ-874: Can an organization be Scrum-like at the team level while Waterfall/stage-gate at governance level?
+
+BATQ-875: Can an organization be Kanban/flow-oriented operationally while remaining projectized financially and managerially?
+
+BATQ-876: Should the assessment return multiple layer-specific methodology profiles?
+
+BATQ-877: Should a Hybrid classification always identify its dominant component behaviors rather than become a catch-all category?
+
+44. Methodology and Role Scoring Model
+======================================
+
+BATQ-878: Should methodology classification combine dimension scores with explicit behavioral invariants rather than use a single summed score?
+
+BATQ-879: Should role-utilization modules produce separate subscale profiles rather than one role score?
+
+BATQ-880: Should subscales include empirical agility, batch planning, governance heaviness, cross-functional integration, quality ownership, flow discipline, role clarity, delivery autonomy, handoff dependence, and continuous improvement?
+
+BATQ-881: Should observed methodology be calculated only from behavioral subscales and never from the claimed methodology answer?
+
+BATQ-882: Should Signal calculate a methodology-congruence measure between claimed and observed profiles?
+
+BATQ-883: Should Signal calculate role-drift indicators for Scrum Master, QA, developer, project manager, and Product Owner behavior?
+
+BATQ-884: Should the result distinguish 'framework-aligned behavior with weak execution' from 'different operating model'?
+
+BATQ-885: Should the scoring engine expose exact reasons and contributing dimensions for every methodology classification?
+
+BATQ-886: Should every classification carry confidence and coverage?
+
+BATQ-887: Should insufficient or contradictory evidence yield Mixed/Indeterminate rather than a forced methodology label?
+
+45. Methodology Assessment Reports and Visual Outputs
+=====================================================
+
+BATQ-888: What standard outputs should the assessment produce?
+
+BATQ-889: Should outputs include observed methodology profile, claimed-versus-observed comparison, role utilization, radar graph, strengths, friction signals, and improvement opportunities?
+
+BATQ-890: Should methodology dimensions and role-utilization dimensions use separate radar graphs?
+
+BATQ-891: Should aggregate reports include team/department heat maps when privacy thresholds permit?
+
+BATQ-892: Should cross-team inconsistency itself be reportable?
+
+BATQ-893: Should the report surface patterns such as PM-as-Scrum-Master, QA-as-downstream-gate, developer-as-resource-pool, Product-Owner-without-priority-authority, Sprint-without-usable-increment, or ceremonies-plus-phase-gates?
+
+BATQ-894: Should recommendations be driven by observed dimensions rather than the claimed methodology label?
+
+BATQ-895: Should a strong mismatch be reported plainly, for example 'your reported Scrum label does not match the observed stage-gated operating pattern'?
+
+BATQ-896: Should all methodology findings distinguish descriptive diagnosis from evaluative quality judgments?
+
+46. Respondent Perspectives and Multi-Rater Design
+==================================================
+
+BATQ-897: Which roles should answer this assessment: Scrum Masters, QA/test, developers, project managers, Product Owners/product managers, engineering managers, delivery leaders, executives, or other roles?
+
+BATQ-898: Should each role receive a shared core plus a role-specific module?
+
+BATQ-899: Should common mirrored items be used across roles to measure perception differences?
+
+BATQ-900: Should leadership and team versions intentionally ask equivalent questions about the same behaviors?
+
+BATQ-901: Should agreement/disagreement be scored by respondent-role cohort?
+
+BATQ-902: Should reports highlight material leadership-versus-team methodology perception gaps?
+
+BATQ-903: Should anonymous minimum-count thresholds be especially strict for small role cohorts?
+
+BATQ-904: Should this assessment be implemented as a multi-rater battery rather than a single questionnaire?
+
+47. Longitudinal Methodology Change
+===================================
+
+BATQ-905: Should the methodology assessment be repeatable over time?
+
+BATQ-906: Should radar graphs overlay prior and current administrations?
+
+BATQ-907: Should Signal calculate methodology-profile drift over time?
+
+BATQ-908: Should role-utilization change be tracked independently from methodology change?
+
+BATQ-909: Can organizational interventions be referenced as non-PII context for later comparison?
+
+BATQ-910: Should longitudinal analysis distinguish actual operating-behavior changes from changes in terminology/self-label?
+
+
 Discovery Completion Standard
 =============================
 
