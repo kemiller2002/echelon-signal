@@ -1014,3 +1014,12 @@ The original source above is preserved verbatim. Original line references below 
 
 Reciprocal detail: .ros/work/items/WI-0002.md through WI-0010.md
 Complete migration ledger: docs/requirements/survey-engine-requirements-migration.md
+
+---
+
+SHARED ECHELON APPLICATION FOUNDATIONS
+======================================
+
+The cross-cutting requirements in `input-documents/signal-shared-application-foundation-requirements.txt` are normative for all Signal requirements.
+
+They consolidate the obligation to use Aegis for unexpected operational failure, Forma for interactive UI, and Folio for printable/PDF/paginated result artifacts. The existing dedicated Signal Aegis requirements and Signal Results Print Profile remain authoritative specializations and are strengthened, not replaced, by the shared foundation requirements.
