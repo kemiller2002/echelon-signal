@@ -1,0 +1,545 @@
+Signal Standard Results Print Profile Requirements
+=================================================
+
+Status: requirements baseline
+Date: 2026-09-23
+Profile name: Signal Results Print Profile (SRPP)
+Initial profile version: 1.0.0
+Presentation system: Folio
+
+Purpose
+-------
+
+This document defines the standard printable result format for Signal assessments.
+
+Signal owns assessment meaning, scoring, interpretation, privacy, comparability, report data, and report-profile selection. Folio owns reusable document presentation, pagination intent, page geometry, print styling, and renderer capability behavior.
+
+The standard pipeline is:
+
+Assessment
+    -> authoritative result state
+    -> ReportData
+    -> Signal ReportProfile
+    -> Folio document markup
+    -> browser print / deterministic PDF / supported enhanced renderer
+
+The report renderer MUST NOT recreate scoring or assessment business logic.
+
+1. Architectural Ownership
+--------------------------
+
+SRPP-001 MUST keep scoring and interpretation in Signal rather than Folio.
+SRPP-002 MUST keep pagination, print layout, document primitives, and renderer capability behavior in Folio.
+SRPP-003 MUST treat ReportData as format-neutral and independent of PDF.
+SRPP-004 MUST allow the same ReportData to render through multiple report profiles without recalculating scores.
+SRPP-005 MUST allow the same report profile to render to print-friendly HTML and PDF without changing result semantics.
+SRPP-006 MUST NOT allow a Folio component to query raw survey submissions independently.
+SRPP-007 MUST NOT allow a renderer to infer missing scores, categories, recommendations, confidence, or comparability.
+SRPP-008 MUST distinguish content semantics from presentation semantics.
+SRPP-009 MUST version Signal report profiles independently from survey template, scoring-model, result-schema, and Folio package versions.
+SRPP-010 MUST record the Folio package/version and renderer profile used for a formal report snapshot when deterministic export is used.
+
+2. Standard Report Families
+---------------------------
+
+Signal MUST support report profiles for:
+
+- Individual Results
+- Team Results
+- Organizational Results
+- Comparative Results
+- Longitudinal Results
+- Executive Summary
+- Full Technical / Audit Report
+
+SRPP-011 MUST permit an assessment to declare which report families it supports.
+SRPP-012 MUST allow a single result to support more than one report family.
+SRPP-013 MUST NOT expose a report family when required data, privacy, or comparability conditions are not satisfied.
+SRPP-014 MUST allow report-profile variants to control detail without changing authoritative results.
+SRPP-015 SHOULD allow a compact executive report to target approximately two to four pages when the source data can be communicated honestly at that length.
+SRPP-016 MUST allow detailed reports to grow naturally without arbitrary maximum page counts.
+SRPP-017 MUST allow assessment-specific sections to extend the common report structure.
+SRPP-018 MUST preserve common report identity, provenance, integrity, and accessibility sections across assessment-specific extensions.
+
+3. Standard Document Structure
+------------------------------
+
+Unless a profile explicitly excludes a section, the standard full result report order is:
+
+1. Cover
+2. Executive Summary
+3. Results at a Glance
+4. Result Integrity
+5. Dimension Detail
+6. Cross-Dimension Findings
+7. Assessment-Specific Analysis
+8. Decision Support / Possible Actions
+9. Response Distribution
+10. Comparisons / Trends where applicable
+11. Scoring and Methodology
+12. Appendix / Technical Provenance
+
+SRPP-019 MUST preserve this logical reading order in source markup.
+SRPP-020 MUST allow a report profile to omit inapplicable sections without leaving empty pages or empty headings.
+SRPP-021 MUST allow a table of contents for reports whose length or complexity warrants it.
+SRPP-022 SHOULD include a TOC automatically for full technical reports over a configurable length threshold.
+SRPP-023 MUST keep appendix material after the main interpretive content unless an assessment explicitly requires otherwise.
+
+4. Cover Standard
+-----------------
+
+The standard cover MUST be able to display:
+
+- Assessment name
+- Assessment family/category
+- Report family/type
+- Completion or report date
+- Assessment/template version
+- Report profile version
+- Report identifier
+- Organization or white-label branding when configured
+- Optional confidentiality classification
+- Optional subtitle/context statement
+- Optional restrained artwork
+
+SRPP-024 MUST NOT require PII on the cover.
+SRPP-025 MUST NOT place respondent names, email addresses, phone numbers, or other respondent PII in Signal-generated report data.
+SRPP-026 MUST allow an authorized administrator application to add external display identity only outside Signal core when an identified report explicitly permits it.
+SRPP-027 MUST allow cover artwork to degrade safely when backgrounds are disabled.
+SRPP-028 MUST keep essential cover meaning in text rather than artwork.
+
+5. Executive Summary
+--------------------
+
+The executive summary MAY contain:
+
+- Overall result
+- Primary result category
+- Three to five highest-value findings
+- Strongest dimensions
+- Areas requiring attention
+- Material risks or constraints
+- Important caveats
+- Response completeness
+- Confidence/reliability statement where valid
+- Top decision-support actions
+- Comparison summary where valid
+
+SRPP-029 MUST derive semantic findings from authoritative result data or explicit result-analysis outputs, not from layout heuristics.
+SRPP-030 MUST NOT present a recommendation or conclusion unsupported by the report data.
+SRPP-031 MUST display material limitations close to the claims they qualify.
+SRPP-032 SHOULD prefer concise executive language while linking or referring to detailed evidence later in the report.
+
+6. Results at a Glance
+----------------------
+
+SRPP-033 MUST support an overall result presentation when the assessment defines one.
+SRPP-034 MUST support dimension/subscale results.
+SRPP-035 MUST support score bands/categories when defined by the scoring model.
+SRPP-036 MUST support benchmark or percentile display only when an applicable versioned benchmark exists.
+SRPP-037 MUST support previous-period comparison only when semantic comparability has been established.
+SRPP-038 MUST support radar/spider charts where a multidimensional profile benefits from them.
+SRPP-039 MUST provide a textual or tabular equivalent for every radar/spider chart.
+SRPP-040 MUST support bar, range, distribution, and comparison visualizations without making any one chart type mandatory.
+SRPP-041 MUST NOT encode meaning by color alone.
+SRPP-042 MUST remain interpretable in grayscale.
+SRPP-043 MUST label values directly where doing so reduces ambiguity.
+SRPP-044 MUST avoid visual precision that exceeds scoring precision.
+
+7. Result Integrity Block
+-------------------------
+
+Every standard report MUST support a Result Integrity block.
+
+The block MAY include:
+
+- Response completeness
+- Accepted response count
+- Expected response count where meaningful
+- Scoring coverage
+- Section/dimension coverage
+- Confidence/reliability classification
+- Benchmark applicability
+- Comparability status
+- Missing-data status
+- Suppression status
+- Known limitations
+- Material warnings
+- Report status: Draft / Partial / Complete / InsufficientData / Invalid
+
+SRPP-045 MUST separate integrity/coverage/confidence from performance.
+SRPP-046 MUST NOT convert unknown, unavailable, suppressed, or insufficient data into zero.
+SRPP-047 MUST make partial results visibly different from final results.
+SRPP-048 MUST make low-confidence or insufficient-data states visible without requiring the reader to inspect an appendix.
+SRPP-049 MUST make benchmark applicability explicit when benchmark comparisons are shown.
+SRPP-050 MUST make non-comparability explicit rather than silently hiding or fabricating a delta.
+SRPP-051 MUST allow reason codes to be translated into human-readable integrity explanations.
+SRPP-052 SHOULD make the Result Integrity block visually compact but prominent enough to prevent overinterpretation.
+
+8. Dimension Detail Standard
+----------------------------
+
+Each dimension detail block SHOULD be able to contain:
+
+- Dimension name
+- Score/value
+- Category/band
+- Plain-language interpretation
+- What was measured
+- Evidence summary
+- Strengths
+- Risks/gaps
+- Coverage
+- Confidence
+- Comparison
+- Related findings
+- Possible actions
+- Limitations
+
+SRPP-053 MUST support zero, one, or many dimension detail blocks.
+SRPP-054 MUST support dimensions that have categorical or profile outputs rather than scalar scores.
+SRPP-055 MUST NOT require every dimension to have a recommendation.
+SRPP-056 MUST allow evidence summaries without exposing raw respondent answers.
+SRPP-057 MUST preserve dimension ordering from the report definition rather than automatically sorting by score unless explicitly requested.
+SRPP-058 MUST allow page-break preference around dimension boundaries while tolerating natural fragmentation for long dimensions.
+
+9. Cross-Dimension Findings
+---------------------------
+
+SRPP-059 MUST support findings derived from relationships among two or more dimensions.
+SRPP-060 MUST carry the contributing dimension/result identifiers for each cross-dimension finding.
+SRPP-061 MUST distinguish observed pattern, interpretation, and possible implication.
+SRPP-062 MUST allow uncertainty/coverage to qualify a cross-dimension finding.
+SRPP-063 MUST NOT imply causality merely because dimensions correlate or co-occur.
+SRPP-064 SHOULD support assessment-specific contradiction findings, such as a claimed methodology differing materially from observed operating behavior.
+SRPP-065 MUST support findings that say evidence is mixed or indeterminate.
+
+10. Decision Support / Possible Actions
+--------------------------------------
+
+Signal reports SHOULD prefer the structure:
+
+Observation
+    -> Implication
+    -> Possible action
+    -> Evidence required / validation step
+
+SRPP-066 MUST distinguish observations from recommendations or possible actions.
+SRPP-067 MUST allow an assessment to provide multiple possible actions rather than a single prescribed action.
+SRPP-068 MUST support prerequisites, risks, and evidence requirements for an action.
+SRPP-069 MUST NOT let Folio generate domain recommendations.
+SRPP-070 SHOULD expose material tradeoffs when they are present in the authoritative result model.
+SRPP-071 MUST allow a report to state that no defensible action can yet be recommended because evidence is insufficient.
+
+11. Response Distribution
+-------------------------
+
+SRPP-072 MUST support response count.
+SRPP-073 MUST support answer/category distributions when valid for the item type.
+SRPP-074 SHOULD support mean, median, range, quantiles, or variability only when statistically meaningful for the scale.
+SRPP-075 MUST support missing, skipped, N/A, and Don't Know counts as distinct states when the assessment tracks them.
+SRPP-076 MUST expose disagreement/dispersion when it materially changes interpretation.
+SRPP-077 MUST NOT allow an average to conceal a known bimodal or highly divergent response pattern without an accompanying distribution indicator.
+SRPP-078 MUST enforce subgroup privacy/suppression policy before rendering distributions.
+SRPP-079 MUST not render suppressed subgroup values into hidden DOM, accessibility text, metadata, or print-only content.
+
+12. Comparisons and Longitudinal Reporting
+-----------------------------------------
+
+SRPP-080 MUST support prior-period, target, benchmark, cohort, role, and self-versus-others comparisons when the assessment supports them.
+SRPP-081 MUST carry Comparable=true before displaying a numeric delta.
+SRPP-082 MUST surface the comparison baseline identity/version.
+SRPP-083 MUST support a human-readable reason when Comparable=false.
+SRPP-084 MUST distinguish change magnitude from statistical or practical significance.
+SRPP-085 MUST not imply significance unless the result model provides a valid significance/confidence determination.
+SRPP-086 MUST show the relevant time period for longitudinal comparisons.
+SRPP-087 MUST support more than two time points in detailed longitudinal profiles.
+SRPP-088 SHOULD make changed scoring semantics visually distinct from ordinary longitudinal change.
+
+13. Scoring and Methodology Section
+-----------------------------------
+
+The methodology section MUST be able to state:
+
+- Instrument/assessment identifier and version
+- Scoring model version
+- Result schema version
+- Report profile version
+- Score direction
+- Weighting
+- Transformations
+- Reverse scoring
+- Normalization
+- Missing-data treatment
+- N/A and Don't Know treatment
+- Minimum-response rules
+- Confidence/reliability method
+- Benchmark source/version/population/effective period
+- Custom expression/scoring definition identifier when applicable
+- Comparability rules
+- Material limitations
+
+SRPP-089 MUST make enough methodology available to understand what reported values mean.
+SRPP-090 MUST keep technical detail appropriate to the selected report family.
+SRPP-091 MUST allow full technical reports to expose richer lineage without forcing it into executive reports.
+SRPP-092 MUST NOT imply psychometric validation, reliability, normative validity, or causal validity unless supported by explicit evidence.
+SRPP-093 MUST label provisional, experimental, or locally calibrated scoring appropriately.
+
+14. Appendix and Provenance
+---------------------------
+
+SRPP-094 MUST support dimension definitions.
+SRPP-095 MUST support glossary content.
+SRPP-096 MUST support references/citations supplied by the assessment definition.
+SRPP-097 MUST support item-level aggregate results when permitted.
+SRPP-098 MUST support technical provenance.
+SRPP-099 MUST support report snapshot identity.
+SRPP-100 MUST allow the appendix to contain machine-readable verification identifiers without exposing secrets or respondent PII.
+SRPP-101 MUST permit a reader to identify the exact assessment, scoring, report-profile, and benchmark versions that produced a formal report.
+
+15. Report Profile Model
+------------------------
+
+Recommended conceptual model:
+
+SignalReportProfile
+    ProfileId
+    ProfileVersion
+    ReportFamily
+    Audience
+    IncludedSections
+    SectionOrder
+    DetailLevel
+    VisualizationRules
+    ComparisonRules
+    PrivacyRules
+    IntegrityDisplayRules
+    MethodologyDetailLevel
+    BrandingPolicy
+    Localization
+    PageProfile
+    FolioCompositionVersion
+    ExportOptions
+
+SRPP-102 MUST treat a profile version used for a formally issued report as immutable.
+SRPP-103 MUST create a new profile version for a presentation/composition change that could alter the issued document.
+SRPP-104 MAY allow compatible copy edits without changing scoring versions, but issued snapshot reproducibility MUST remain possible.
+SRPP-105 MUST NOT allow report-profile configuration to override privacy suppression.
+SRPP-106 MUST NOT allow report-profile configuration to turn a non-comparable result into a comparison.
+SRPP-107 MUST NOT allow report-profile configuration to change canonical numeric results.
+
+16. Standard Folio Composition Contract
+---------------------------------------
+
+Signal SHOULD construct reports using Folio's reusable document primitives and standard report composition profile.
+
+At minimum the profile requires support for:
+
+- Document root
+- Title/cover page
+- Section
+- Header
+- Footer
+- Page number
+- Artwork layer
+- Callout
+- Figure
+- Table
+- Code/preformatted technical content
+- TOC
+- Note
+- Keep/break intent
+- Columns/sidebar where assessment-specific layouts need them
+
+SRPP-108 MUST NOT implement an independent Signal pagination engine.
+SRPP-109 MUST use Folio capability declarations for renderer-specific features.
+SRPP-110 MUST have a meaningful fallback when repeated headers/footers or total-page counters are unavailable.
+SRPP-111 MUST allow Signal to require a minimum Folio capability profile for a formal export.
+SRPP-112 MUST make required-feature failure explicit rather than silently degrading when strict export mode is selected.
+
+17. Page and Pagination Standard
+--------------------------------
+
+SRPP-113 MUST support US Letter and A4 from the initial standard.
+SRPP-114 SHOULD use a common logical content grid so Letter and A4 variants remain compositionally similar.
+SRPP-115 MUST support portrait body pages.
+SRPP-116 MUST support landscape sections for wide tables/figures where necessary.
+SRPP-117 MUST support a cover without ordinary running header/footer.
+SRPP-118 SHOULD support a restrained running header after the cover.
+SRPP-119 SHOULD support a footer containing report identifier, assessment/report version context, and page number where renderer capability permits.
+SRPP-120 SHOULD support "Page X of Y" when the selected Folio renderer guarantees total-page counters.
+SRPP-121 MUST define a fallback when total-page counters are unavailable.
+SRPP-122 MUST avoid orphaned headings where the renderer permits fragmentation control.
+SRPP-123 MUST keep figure captions with figures where practical.
+SRPP-124 MUST repeat table headers across page breaks where the renderer supports it.
+SRPP-125 MUST avoid clipping or silently dropping oversized tables/figures.
+SRPP-126 MUST permit explicit page breaks before major sections.
+SRPP-127 MUST allow long content to fragment rather than forcing pathological keep-together behavior.
+SRPP-128 MUST treat deterministic pagination as renderer-specific evidence, not a universal browser guarantee.
+
+18. Typography and Visual Standard
+----------------------------------
+
+SRPP-129 MUST use Folio theme tokens rather than hard-coded Signal print styling where a Folio token exists.
+SRPP-130 MUST support Echelon Foundry branding and white-label branding.
+SRPP-131 MUST keep branding separate from result semantics.
+SRPP-132 MUST maintain minimum legible print sizes.
+SRPP-133 MUST maintain sufficient text/background contrast.
+SRPP-134 MUST support grayscale printing without loss of semantic distinctions.
+SRPP-135 MUST pair color distinctions with labels, patterns, shapes, line styles, or direct annotation where needed.
+SRPP-136 MUST avoid decorative density that competes with result interpretation.
+SRPP-137 SHOULD prioritize hierarchy, spacing, typography, and alignment over ornamental effects.
+SRPP-138 MUST allow user/organization typography preferences where they do not invalidate layout or accessibility.
+
+19. Accessibility
+-----------------
+
+SRPP-139 MUST preserve logical DOM/source reading order.
+SRPP-140 MUST use semantic headings and tables.
+SRPP-141 MUST provide text alternatives/descriptions for meaningful charts and figures.
+SRPP-142 MUST provide non-visual equivalents for radar/spider and other chart-only information.
+SRPP-143 MUST not rely on color alone.
+SRPP-144 MUST support zoom/screen inspection of the HTML report.
+SRPP-145 MUST keep links meaningful outside color styling.
+SRPP-146 MUST document PDF accessibility limitations for the chosen renderer.
+SRPP-147 MUST NOT claim PDF/UA or tagged-PDF conformance unless the export path has been separately validated.
+SRPP-148 SHOULD support an enhanced accessible-PDF path later without changing ReportData semantics.
+
+20. Privacy and Security
+------------------------
+
+SRPP-149 MUST carry forward Signal's no-PII survey-core rule.
+SRPP-150 MUST enforce anonymous small-group suppression before rendering.
+SRPP-151 MUST not leak suppressed or private data through CSS, data attributes, metadata, alt text, hidden elements, comments, debug output, or filenames.
+SRPP-152 MUST not embed credentials or storage URLs containing secrets.
+SRPP-153 MUST not require a network request from Folio to render result data.
+SRPP-154 MUST allow a confidentiality classification to be displayed without assuming it provides access control.
+SRPP-155 MUST distinguish document labeling from actual authorization/security enforcement.
+
+21. Formal Report Snapshot
+--------------------------
+
+Recommended snapshot identity:
+
+ReportSnapshot
+    ReportSnapshotId
+    GeneratedAt
+    ReportDataHash
+    ReportProfileId
+    ReportProfileVersion
+    AssessmentIdentifier
+    AssessmentVersion
+    ScoringModelVersion
+    ResultSchemaVersion
+    BenchmarkVersion?
+    FolioVersion
+    RendererProfile
+    RendererName?
+    RendererVersion?
+    Locale
+    ThemeId
+    ThemeVersion?
+    OutputHash?
+
+SRPP-156 SHOULD create a snapshot identity for formally issued PDF reports.
+SRPP-157 MUST allow regeneration to prove semantic equivalence even when byte-for-byte PDF identity is not guaranteed.
+SRPP-158 SHOULD record an output hash when a formal PDF is retained.
+SRPP-159 MUST distinguish report-data changes from renderer-only changes.
+SRPP-160 MUST not claim reproducibility beyond the evidence available for the selected renderer.
+
+22. Export and Sharing
+----------------------
+
+SRPP-161 MUST support print-friendly HTML.
+SRPP-162 MUST support PDF through a declared Folio output path.
+SRPP-163 MUST retain structured JSON report export independently of the print format.
+SRPP-164 MUST not make PDF the canonical report data format.
+SRPP-165 MUST allow a formal PDF to be sent/shared without requiring the recipient to run Signal.
+SRPP-166 SHOULD produce a meaningful filename from non-PII report metadata.
+SRPP-167 MUST sanitize filenames and prevent user-controlled path injection.
+SRPP-168 MUST support locale-aware date/number display without changing canonical stored values.
+
+23. White Label and Theme Behavior
+----------------------------------
+
+SRPP-169 MUST permit organization logo, name, accent, typography, and approved theme tokens to be supplied by the host application.
+SRPP-170 MUST preserve minimum accessibility and integrity requirements under white labeling.
+SRPP-171 MUST not allow a white-label theme to hide Result Integrity, warnings, privacy notices, or methodology limitations required by the profile.
+SRPP-172 MUST retain Signal/Folio provenance in technical metadata when product branding is intentionally suppressed from the reader-facing document, if contract/policy permits.
+SRPP-173 SHOULD support theme/version identity for reproducibility.
+
+24. Testing and Acceptance
+--------------------------
+
+Signal MUST maintain canonical report fixtures covering at least:
+
+- Individual result
+- Team aggregate
+- Organization aggregate
+- Executive summary
+- Full technical report
+- Partial/incomplete group
+- Low-confidence result
+- Insufficient-data result
+- Non-comparable prior result
+- Benchmark comparison
+- Longitudinal comparison
+- Anonymous subgroup suppression
+- Radar/spider profile plus textual equivalent
+- Distribution-heavy report
+- Long dimension detail
+- Wide table requiring landscape
+- A4
+- US Letter
+- Color
+- Grayscale
+- Backgrounds disabled
+- White-label theme
+
+SRPP-174 MUST verify that authoritative numeric and categorical results are unchanged between HTML and PDF render paths.
+SRPP-175 MUST verify that hidden/suppressed data does not appear anywhere in rendered markup or output.
+SRPP-176 MUST verify no required section disappears through pagination.
+SRPP-177 MUST verify no meaningful text is clipped in the deterministic export fixture.
+SRPP-178 MUST verify running-header/footer fallbacks.
+SRPP-179 MUST verify table-header behavior and wide-table handling.
+SRPP-180 MUST verify page-count/page-number behavior at each supported Folio capability level.
+SRPP-181 MUST verify grayscale legibility.
+SRPP-182 MUST verify chart text equivalents.
+SRPP-183 MUST verify report snapshot/version metadata.
+SRPP-184 MUST verify white-label overrides cannot suppress mandatory warnings/integrity information.
+SRPP-185 MUST verify at least one assessment-specific extension without changing the common profile contract.
+
+25. Initial Implementation Sequence
+-----------------------------------
+
+The first implementation SHOULD proceed in this order:
+
+1. Define versioned SignalReportProfile and report snapshot metadata.
+2. Create the common full-report profile.
+3. Create executive-summary and technical-report variants.
+4. Map existing ReportData blocks into the standard profile without rescoring.
+5. Add Result Integrity as a mandatory report block.
+6. Implement Folio-based cover, body, running-content, figure/table, TOC, callout/note, and pagination composition.
+7. Add Letter and A4 fixtures.
+8. Add deterministic PDF fixture(s).
+9. Add grayscale/accessibility/privacy tests.
+10. Add assessment-specific extensions, beginning with the software-delivery/methodology assessment.
+
+26. Core Invariants
+-------------------
+
+1. Signal owns meaning; Folio owns presentation.
+2. Reports never rescore.
+3. Report profiles never weaken privacy.
+4. Missing data is never zero by implication.
+5. Confidence/coverage is never performance.
+6. Comparisons require semantic comparability.
+7. Result Integrity is part of the standard report, not optional decoration.
+8. Print/PDF output must remain understandable without color.
+9. Every chart has a non-chart equivalent where meaning would otherwise be inaccessible.
+10. The same authoritative result can produce different report families without changing its meaning.
+11. A report profile is versioned independently from scoring.
+12. Formally issued reports can identify the inputs and versions that produced them.
+13. Folio renderer capability limits are explicit.
+14. PII is not introduced into Signal result data merely to make a printable report.
+15. Assessment-specific reporting extends rather than forks the common report architecture.
