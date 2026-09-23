@@ -1,0 +1,1038 @@
+ECHELON SIGNAL
+SOFTWARE DELIVERY REALITY ASSESSMENT (SDRA) - V1 DESIGN
+
+Status: Candidate assessment design / pilot instrument
+Version: 0.1.0-draft
+Added: 2026-09-23
+
+Purpose
+=======
+
+The Software Delivery Reality Assessment (SDRA) is a multi-rater assessment battery intended to determine how a software organization actually operates, independently of the methodology label it uses.
+
+Core question:
+
+    "What operating model does the observed behavior resemble?"
+
+The assessment deliberately separates:
+
+1. Claimed methodology
+2. Observed operating behavior
+3. Role utilization
+4. Engineering/delivery maturity
+5. Methodology congruence
+6. Cross-role perception differences
+
+The assessment MUST NOT assume that:
+
+- a team using Scrum terminology actually operates as Scrum,
+- a ticket board establishes Kanban,
+- a project manager makes a team Waterfall,
+- a Scrum Master makes a team Scrum,
+- frequent releases alone make an organization Agile,
+- a methodology classification is an evaluation of whether the organization is good or bad.
+
+The output is descriptive evidence about operating behavior, not certification.
+
+This is an initial instrument design. Thresholds, prototype vectors, item wording, scale structure, and interpretation rules are hypotheses to validate. They MUST be treated as experimental until supported by characterization, pilot data, reliability/validity analysis, and revision evidence.
+
+Reference Basis
+===============
+
+The behavioral model should remain traceable to primary reference material where applicable:
+
+- The Scrum Guide, official current version: November 2020.
+- The Kanban Guide, official current version reviewed for this draft: May 2025.
+- Manifesto for Agile Software Development and its principles.
+
+Scrum evidence used by the assessment includes, among other things:
+
+- cross-functional and self-managing Scrum Teams,
+- Product Owner accountability for Product Backlog ordering,
+- Developer ownership of Sprint planning/adaptation and quality through Definition of Done,
+- Scrum Master responsibility for establishing Scrum and improving team effectiveness,
+- fixed-length Sprints,
+- inspection and adaptation,
+- a usable Increment meeting Definition of Done.
+
+Kanban evidence used by the assessment includes, among other things:
+
+- an explicit Definition of Workflow,
+- active management of items,
+- explicit WIP control,
+- pull based on capacity,
+- management of aging/blocked work,
+- continual workflow improvement,
+- WIP, throughput, work-item age, and cycle-time measures.
+
+The assessment also uses general behavioral dimensions such as handoffs, governance gates, planning commitment, customer feedback, product orientation, and continuous delivery. Those dimensions are diagnostic constructs for SDRA and MUST NOT be misrepresented as official Scrum/Kanban definitions.
+
+Battery Structure
+=================
+
+SDRA should be implemented as a battery rather than one monolithic form.
+
+Battery components:
+
+SDRA-CTX
+    Context and claimed-methodology component.
+    Unscored.
+    Captures non-PII operating context.
+
+SDRA-CORE
+    Core observed-practices instrument.
+    60 behavioral items.
+    Completed by all respondent roles.
+
+Conditional role modules:
+
+SDRA-SM
+    Scrum Master / Agile facilitator utilization
+    8 items
+
+SDRA-QA
+    QA / test utilization
+    8 items
+
+SDRA-DEV
+    Developer utilization
+    8 items
+
+SDRA-PM
+    Project manager / delivery coordinator utilization
+    8 items
+
+SDRA-PROD
+    Product Owner / product-management utilization
+    8 items
+
+A respondent may select more than one role when they actually perform multiple roles. Every selected role module SHOULD be administered so dual-role patterns such as Scrum-Master-plus-Project-Manager can be observed rather than hidden.
+
+Leadership respondents who do not perform one of the role modules complete SDRA-CTX + SDRA-CORE.
+
+No PII
+======
+
+The assessment MUST NOT request:
+
+- name,
+- email,
+- employee ID,
+- manager name,
+- team member names,
+- customer names,
+- free-text descriptions containing identifiable people.
+
+Permitted contextual categories include:
+
+- respondent role category,
+- team-size band,
+- organization-size band,
+- product/project/team scope type,
+- claimed methodology,
+- release-frequency band,
+- tenure-with-team band,
+- industry category if desired and privacy-safe.
+
+Small-role cohorts MUST obey Signal anonymous-reporting thresholds.
+
+Observation Window
+==================
+
+Respondents should answer based on recent normal behavior, not ideal process.
+
+Default instruction:
+
+"Answer based on what usually happened during the last eight weeks. If your team works in iterations, use at least the last three completed iterations when that gives a more representative view. Answer what actually happens, not what the documented process says should happen."
+
+Response Scale
+==============
+
+Core and role items use a five-point behavioral-frequency scale:
+
+0 = Never or almost never
+1 = Rarely
+2 = Sometimes
+3 = Often
+4 = Almost always
+
+Special states:
+
+DontKnow
+NotObserved
+NotApplicable where semantically valid
+Unanswered
+
+Special states MUST NOT collapse to zero.
+
+No agree/disagree wording is preferred for behavioral items because frequency wording makes the requested evidence more concrete.
+
+Context Questions
+=================
+
+CTX-001 Claimed primary delivery methodology
+    Scrum
+    Kanban
+    Scrumban
+    Waterfall
+    Stage-gate
+    Lean
+    XP
+    DevOps / continuous-delivery oriented
+    SAFe or another scaled-agile framework
+    Hybrid / custom
+    Ad hoc / no defined methodology
+    Unsure
+    Other structured label
+
+CTX-002 Other methodology/framework labels the organization uses
+    Multi-select from the same controlled vocabulary.
+
+CTX-003 Scope being assessed
+    One team
+    Multiple teams on one product
+    Product/program
+    Department
+    Portfolio
+    Organization
+
+CTX-004 Respondent role(s)
+    Developer / engineer
+    QA / test
+    Scrum Master / Agile facilitator
+    Project manager / delivery manager
+    Product Owner / product manager
+    Engineering manager
+    Architect
+    Operations / SRE
+    Executive / senior leader
+    Other non-identifying role category
+
+CTX-005 Team structure
+    Long-lived product team
+    Long-lived service/platform team
+    Project team
+    Matrix/resource-pool staffing
+    Temporary cross-functional initiative
+    Mixed
+    Unsure
+
+CTX-006 Typical release-frequency band
+    Multiple times per day
+    Daily
+    Several times per week
+    Weekly
+    Every 2-4 weeks
+    Every 1-3 months
+    Less often
+    Release frequency is not observable to respondent
+
+CTX-007 Team-size band
+    1-5
+    6-10
+    11-20
+    21+
+    Not applicable / multiple teams
+
+CTX-008 Time with this operating group
+    Under 3 months
+    3-6 months
+    6-12 months
+    1-2 years
+    More than 2 years
+
+Core Methodology Dimensions
+===========================
+
+Every primary dimension is scored 0-100.
+
+Important: direction is descriptive. A higher score is NOT automatically "better."
+
+D01 PLAN_COMMITMENT
+    High = more scope/requirements/plan fixed before implementation.
+    Low = more emergent planning.
+
+D02 CHANGE_RESPONSIVENESS
+    High = new evidence can alter priorities/scope through normal operating mechanisms.
+
+D03 TIMEBOX_DISCIPLINE
+    High = consistent short-cycle/timeboxed planning, goal, inspection, and completion behavior.
+
+D04 FLOW_PULL_DISCIPLINE
+    High = explicit workflow, WIP control, pull/capacity signals, and active flow management.
+
+D05 CROSS_FUNCTIONAL_OWNERSHIP
+    High = stable team owns value end-to-end with few specialist handoffs.
+
+D06 HANDOFF_RELIANCE
+    High = work moves through specialist queues/phases before becoming usable.
+
+D07 QUALITY_INTEGRATION
+    High = quality is built into normal team delivery rather than downstream verification.
+
+D08 EXTERNAL_GATING
+    High = progress/release/change depends strongly on approvals outside the delivery team.
+
+D09 EMPIRICAL_LEARNING
+    High = actual outcomes, working software, feedback, and retrospection routinely change plans/process.
+
+D10 TEAM_AUTONOMY
+    High = the team determines execution details and adapts its work locally.
+
+D11 DELIVERY_CONTINUITY
+    High = software can move to production/releasable state frequently without large stabilization batches.
+
+D12 PRODUCT_ORIENTATION
+    High = stable product/value ownership, continuous prioritization, and outcome-based decision making.
+
+Core Items
+==========
+
+D01 - Plan Commitment
+
+CORE-001 Major requirements are expected to be substantially defined before implementation begins.
+CORE-002 Release scope is committed well before the work needed to deliver it is complete.
+CORE-003 Changes discovered after implementation begins normally require formal change approval.
+CORE-004 Design, build, test, and release milestones are managed against an upfront baseline plan.
+CORE-005 Delivery success is judged primarily by conformance to the original scope/schedule plan.
+
+D02 - Change Responsiveness
+
+CORE-006 New customer or operational evidence can change upcoming priorities through the normal process.
+CORE-007 The team can clarify or renegotiate planned scope when it learns something important.
+CORE-008 Findings from implementation regularly change what the team plans to do next.
+CORE-009 Stakeholder feedback can alter priorities without waiting for a major project phase boundary.
+CORE-010 Planning is revisited often enough that newly learned information can materially affect near-term work.
+
+D03 - Timebox Discipline
+
+CORE-011 Work is organized in consistent short iterations or timeboxes.
+CORE-012 Each iteration has a shared outcome or goal rather than only a collection of assigned tasks.
+CORE-013 Planning, inspection/review, and improvement happen on a consistent iteration cadence.
+CORE-014 The team aims to produce usable, integrated work by the end of each iteration.
+CORE-015 Work that has not met the team's completion/quality criteria is not counted as finished merely because the iteration ended.
+
+D04 - Flow/Pull Discipline
+
+CORE-016 The team has an explicit shared definition of how work moves from started to finished.
+CORE-017 The amount of work in progress is explicitly controlled.
+CORE-018 New work is normally started when capacity becomes available rather than simply when it is assigned.
+CORE-019 The team uses flow evidence such as cycle time, throughput, work-item age, or equivalent measures.
+CORE-020 Aging, blocked, or stalled work is actively reviewed and managed.
+
+D05 - Cross-Functional Ownership
+
+CORE-021 The stable delivery team collectively has most skills needed to turn an idea into usable software.
+CORE-022 Product, development, and quality work happens collaboratively rather than as separate sequential departments.
+CORE-023 People are generally kept with a stable team rather than reassigned among projects whenever demand changes.
+CORE-024 The team remains responsible for work until it is usable/releasable rather than stopping at a specialist handoff.
+CORE-025 Dependencies on people outside the team are exceptions rather than the normal path for completing ordinary work.
+
+D06 - Handoff Reliance
+
+CORE-026 Work commonly waits in queues between analysis, development, QA, security, operations, or release functions.
+CORE-027 One function completes an artifact or phase and formally hands it to another function to continue.
+CORE-028 Development work is commonly considered complete before downstream testing begins.
+CORE-029 A separate release or operations function must normally take ownership before software can be delivered.
+CORE-030 Progress is commonly tracked by completion of functional phases such as requirements, development, testing, and release.
+
+D07 - Quality Integration
+
+CORE-031 Completion/quality expectations are known before implementation is considered finished.
+CORE-032 Developers routinely verify their own work rather than relying on QA to discover ordinary defects.
+CORE-033 QA/test expertise participates early enough to influence examples, acceptance criteria, or design.
+CORE-034 Automated tests and other quality checks run as part of the routine delivery pipeline.
+CORE-035 Defects found during delivery are normally resolved within the same working flow rather than accumulated for a later test/fix phase.
+
+D08 - External Gating
+
+CORE-036 Work commonly requires approval outside the delivery team before it can move to the next major stage.
+CORE-037 Releases commonly require formal signoff, a release board, or a comparable external gate.
+CORE-038 Material scope changes normally require approval from management/governance outside the team/product owner.
+CORE-039 Formal phase or milestone gates determine when the team may proceed.
+CORE-040 Functional signoffs are required before work is considered complete even when the delivery team believes it is usable.
+
+D09 - Empirical Learning
+
+CORE-041 Stakeholders regularly inspect working software or actual outcomes rather than relying primarily on status reports.
+CORE-042 Retrospectives or equivalent improvement reviews result in observable changes to how the team works.
+CORE-043 Delivery/product decisions use evidence from actual results rather than only forecasts and plan completion.
+CORE-044 The team intentionally runs small experiments or incremental changes to reduce uncertainty.
+CORE-045 When results differ from assumptions, plans or working methods are changed promptly.
+
+D10 - Team Autonomy
+
+CORE-046 The team decides how to perform the work needed to achieve its near-term goal.
+CORE-047 Developers/team members participate directly in selecting and planning the work they can complete.
+CORE-048 Day-to-day work is not primarily assigned person-by-person by a manager or coordinator.
+CORE-049 The team can make ordinary technical and execution tradeoffs without seeking external approval.
+CORE-050 Team members can reorganize their work when conditions change without waiting for a manager to rewrite the task plan.
+
+D11 - Delivery Continuity
+
+CORE-051 Completed software can be released independently of a large scheduled batch when the organization chooses to do so.
+CORE-052 Build/test/deployment automation supports moving changes toward production routinely.
+CORE-053 The team integrates changes continuously enough to avoid long-lived stabilization periods.
+CORE-054 A separate code-freeze/regression phase is not normally required to make a release safe.
+CORE-055 Production/user feedback can reach the team soon enough to influence subsequent delivery decisions.
+
+D12 - Product Orientation
+
+CORE-056 Teams are organized around persistent products/services/value streams more than temporary projects.
+CORE-057 A clearly accountable product decision-maker can continuously reorder upcoming work.
+CORE-058 Success is discussed in terms of customer/business outcomes in addition to scope and schedule delivery.
+CORE-059 Discovery and delivery interact continuously rather than discovery ending before delivery begins.
+CORE-060 Funding/planning/ownership supports continued product evolution after an individual project or release ends.
+
+Role Modules
+============
+
+SDRA-SM - Scrum Master / Agile Facilitator
+
+SM-001 The Scrum Master/facilitator coaches the team to manage its own work.
+    subscale: Enablement
+
+SM-002 The Scrum Master/facilitator helps the organization remove impediments the team cannot remove itself.
+    subscale: Enablement
+
+SM-003 Retrospective learning is turned into concrete changes with help from the Scrum Master/facilitator.
+    subscale: Improvement
+
+SM-004 The Scrum Master/facilitator helps stakeholders and the team improve collaboration rather than acting mainly as a status intermediary.
+    subscale: Improvement
+
+SM-005 The Scrum Master/facilitator spends substantial effort scheduling ceremonies, collecting status, and maintaining process administration.
+    subscale: CeremonyAdministration
+
+SM-006 The Scrum Master/facilitator is held responsible for enforcing delivery dates or individual task completion.
+    subscale: ProjectControlSubstitution
+
+SM-007 The Scrum Master/facilitator assigns work or directs day-to-day execution.
+    subscale: ProjectControlSubstitution
+
+SM-008 The Scrum Master/facilitator simultaneously performs a project-manager or line-manager role for the same team's ordinary delivery work.
+    subscale: RoleOverlap
+
+SDRA-QA - QA / Test
+
+QA-001 QA/test specialists participate before implementation is complete.
+    subscale: EmbeddedQuality
+
+QA-002 QA/test expertise helps shape acceptance criteria, examples, test strategy, or design.
+    subscale: EmbeddedQuality
+
+QA-003 Quality is treated as the responsibility of the whole delivery team.
+    subscale: SharedOwnership
+
+QA-004 Routine regression/verification is substantially automated and part of normal delivery.
+    subscale: AutomationIntegration
+
+QA-005 Completed development normally waits for a QA phase or QA queue before it can progress.
+    subscale: DownstreamGate
+
+QA-006 QA approval outside the development team is normally required before release.
+    subscale: DownstreamGate
+
+QA-007 QA is expected to discover defects that developers could reasonably have detected before handoff.
+    subscale: QualitySpecialization
+
+QA-008 Testing occurs primarily after the planned development work for a feature/release is complete.
+    subscale: LateTesting
+
+SDRA-DEV - Developer
+
+DEV-001 Developers help decide how much work the team can take on and how it will be implemented.
+    subscale: SelfManagement
+
+DEV-002 Developers collaborate directly with product and QA/test rather than communicating primarily through coordinators.
+    subscale: CrossFunctionalCollaboration
+
+DEV-003 Developers remain responsible for work through verification and usable/releasable state.
+    subscale: EndToEndOwnership
+
+DEV-004 Developers routinely participate in production/support learning for the software they build.
+    subscale: EndToEndOwnership
+
+DEV-005 Developers are frequently reassigned among projects according to utilization or resource demand.
+    subscale: ResourcePoolBehavior
+
+DEV-006 Developer work is considered complete when coding is finished and the item is handed to another function.
+    subscale: HandoffSpecialization
+
+DEV-007 Daily tasks are commonly assigned to individual developers by someone outside the developer group.
+    subscale: DirectedExecution
+
+DEV-008 Developers participate in discovery/refinement and can influence scope or solution choices before coding begins.
+    subscale: ProductCollaboration
+
+SDRA-PM - Project Manager / Delivery Coordinator
+
+PM-001 The project manager primarily coordinates dependencies, external commitments, budget, or governance without directing the team's daily execution.
+    subscale: CoordinationGovernance
+
+PM-002 The project manager helps remove cross-team/organizational constraints that the delivery team cannot resolve itself.
+    subscale: CoordinationGovernance
+
+PM-003 The project manager is the central owner of detailed scope, schedule, and delivery-plan conformance.
+    subscale: PlanControl
+
+PM-004 The project manager assigns or redistributes day-to-day work among team members.
+    subscale: TeamControl
+
+PM-005 Material changes to planned work normally require project-manager approval or escalation.
+    subscale: PlanControl
+
+PM-006 Team status primarily flows upward through the project manager rather than being visible from working results/flow.
+    subscale: StatusIntermediation
+
+PM-007 The project manager performs responsibilities the organization also describes as Scrum Master responsibilities.
+    subscale: RoleOverlap
+
+PM-008 The project manager's role is mainly necessary because delivery crosses many organizational, vendor, governance, or contractual boundaries.
+    subscale: DependencyCoordination
+
+SDRA-PROD - Product Owner / Product Management
+
+PROD-001 A clearly accountable product decision-maker can reorder the backlog when evidence changes.
+    subscale: PriorityAuthority
+
+PROD-002 Stakeholders who want priority changes normally work through that accountable product decision-maker rather than assigning work directly to the team.
+    subscale: PriorityAuthority
+
+PROD-003 Product decisions are tied to customer/user/business outcomes rather than only project scope completion.
+    subscale: OutcomeOrientation
+
+PROD-004 Product/stakeholder feedback is gathered frequently enough to alter upcoming work.
+    subscale: FeedbackLoop
+
+PROD-005 The product decision-maker is expected to obtain committee/management approval for ordinary backlog reprioritization.
+    subscale: ConstrainedAuthority
+
+PROD-006 The backlog mainly represents execution of a scope already committed in a project plan.
+    subscale: ProjectPlanDominance
+
+PROD-007 Discovery of customer/problem/solution evidence continues while delivery is underway.
+    subscale: ContinuousDiscovery
+
+PROD-008 The product role has authority over priority but does not assign developers' detailed execution tasks.
+    subscale: ProductTeamBoundary
+
+Scoring
+=======
+
+1. Item scoring
+
+Frequency values map directly:
+
+Never          = 0
+Rarely         = 1
+Sometimes      = 2
+Often          = 3
+AlmostAlways   = 4
+
+Special states are excluded from numeric means.
+
+2. Individual dimension score
+
+For each D01-D12:
+
+    DimensionScore = mean(answered item values) / 4 * 100
+
+At least 3 of the 5 dimension items MUST have a numeric answer for the dimension to be Available.
+
+3. Cohort aggregation
+
+First compute respondent-level dimension scores.
+
+Then compute role-cohort scores.
+
+For organizational/team methodology classification, the default SHOULD give equal weight to each sufficiently represented role cohort rather than allowing the largest role population to dominate the result.
+
+Example:
+
+    Developer cohort = 40 people
+    QA cohort = 7 people
+    PM cohort = 4 people
+    Product cohort = 5 people
+
+The default organization profile is the mean of available role-cohort profiles, not the raw mean of all 56 respondents.
+
+A configurable alternative may be allowed, but the aggregation policy MUST be explicit and versioned.
+
+4. Privacy
+
+Role-cohort reporting is suppressed below the configured anonymous minimum.
+
+Overall classification may use all anonymous contributions when the overall privacy threshold is satisfied, but MUST NOT expose suppressed role-level cells through totals/differences.
+
+5. Coverage
+
+Report separately:
+
+- ItemCoverage
+- DimensionCoverage
+- RoleCohortCoverage
+- RespondentCount
+- SuppressedCohortCount
+
+Do not call a simple coverage percentage statistical confidence.
+
+6. Dispersion / perception disagreement
+
+For each dimension, calculate cross-role dispersion when privacy thresholds permit.
+
+High dispersion SHOULD produce a perception-gap finding rather than being silently averaged away.
+
+Methodology Archetype Classifier
+================================
+
+Claimed methodology is NOT an input to this classifier.
+
+Classification is based on D01-D12.
+
+Initial prototype vectors are hypotheses for pilot testing, not validated norms.
+
+Dimension order:
+
+D01 Plan Commitment
+D02 Change Responsiveness
+D03 Timebox Discipline
+D04 Flow/Pull Discipline
+D05 Cross-Functional Ownership
+D06 Handoff Reliance
+D07 Quality Integration
+D08 External Gating
+D09 Empirical Learning
+D10 Team Autonomy
+D11 Delivery Continuity
+D12 Product Orientation
+
+Prototype vectors (0-100):
+
+ScrumLike
+    [35, 80, 90, 45, 90, 20, 85, 20, 90, 85, 70, 90]
+
+KanbanLike
+    [25, 90, 25, 95, 75, 25, 80, 20, 90, 80, 90, 85]
+
+ScrumbanLike
+    [30, 90, 75, 90, 85, 20, 85, 20, 90, 85, 90, 90]
+
+WaterfallLike
+    [95, 20, 10, 10, 25, 90, 25, 90, 20, 20, 15, 25]
+
+StageGateHybrid
+    [80, 45, 55, 30, 45, 70, 50, 80, 45, 40, 35, 50]
+
+ContinuousProductFlow
+    [25, 95, 55, 85, 90, 15, 95, 15, 95, 90, 100, 100]
+
+ProjectizedIterative
+    [75, 50, 75, 35, 50, 65, 55, 70, 55, 40, 45, 40]
+
+ReactiveInterruptDriven
+    [20, 85, 15, 25, 45, 55, 35, 25, 30, 35, 50, 30]
+
+Similarity:
+
+    Similarity(archetype)
+      = 100 - weightedMean(abs(observedDimension - archetypeDimension))
+
+Initial v1 uses equal dimension weights unless pilot evidence supports another weighting.
+
+The output MUST preserve all archetype similarities rather than only the top label.
+
+Classification interpretation (pilot thresholds)
+=================================================
+
+Strong single-profile evidence:
+    highest similarity >= 75
+    AND margin over second highest >= 8
+
+Primary-with-secondary influence:
+    highest similarity >= 68
+    AND margin over second highest >= 5
+
+Hybrid:
+    top two similarities >= 65
+    AND absolute margin < 5
+
+Mixed / Indeterminate:
+    insufficient coverage
+    OR highest similarity < 65
+    OR profile contains material contradictions that violate the chosen archetype's required signals
+
+These thresholds MUST be versioned and treated as experimental.
+
+Archetype Required Signals
+==========================
+
+Prototype similarity alone is insufficient.
+
+Strong ScrumLike classification also requires, initially:
+
+- D03 Timebox Discipline >= 60
+- D05 Cross-Functional Ownership >= 55
+- D09 Empirical Learning >= 60
+- D10 Team Autonomy >= 55
+- CORE-014 and CORE-015 coverage sufficient to evaluate usable-completed iteration behavior
+
+Strong KanbanLike classification also requires, initially:
+
+- D04 Flow/Pull Discipline >= 60
+- CORE-016, CORE-017, CORE-018 covered
+- evidence of explicit WIP control, not merely a visual board
+
+Strong WaterfallLike classification does not require every practice, but high similarity should normally be supported by multiple independent signals across plan commitment, handoff reliance, and/or external gating.
+
+If similarity is high but required signals fail, return:
+
+    ArchetypeResemblanceWithMissingCoreSignals
+
+rather than falsely asserting strong framework alignment.
+
+Claimed-versus-Observed Congruence
+=================================
+
+Claimed methodology is compared only after observed classification.
+
+Example statuses:
+
+Aligned
+    Claimed family corresponds to highest observed archetype and observed evidence is strong.
+
+PartiallyAligned
+    Claimed family is among strong observed influences but another profile is equally/near-equally present.
+
+BehavioralMismatch
+    A different archetype is strongly supported and the claimed family is not among the dominant observed profiles.
+
+Indeterminate
+    Observed evidence is insufficient or mixed.
+
+Do not use accusatory language.
+
+Preferred example:
+
+    "The organization identifies this team as Scrum. Observed practices show a stronger stage-gated/projectized profile, particularly in handoffs, approval gates, and plan control."
+
+Avoid:
+
+    "You are not really Agile."
+
+Diagnostic Pattern Flags
+========================
+
+These are derived descriptive patterns, not methodology classifications.
+
+SCRUM_TERMINOLOGY_STAGE_GATED_EXECUTION
+    Claimed Scrum/Agile
+    AND D03 Timebox Discipline >= 60
+    AND D06 Handoff Reliance >= 60
+    AND D08 External Gating >= 60
+
+KANBAN_BOARD_WITHOUT_FLOW_CONTROL
+    Claimed Kanban
+    AND CORE-016 high
+    AND (CORE-017 low OR CORE-018 low)
+    AND D04 Flow/Pull Discipline < 55
+
+PROJECTIZED_AGILE
+    Claimed Agile/Scrum/Scaled Agile
+    AND D01 Plan Commitment >= 65
+    AND D08 External Gating >= 60
+    AND D12 Product Orientation < 50
+
+QA_GATED_DELIVERY
+    D06 Handoff Reliance >= 60
+    AND D07 Quality Integration < 50
+    AND QA DownstreamGate high where QA module evidence is available
+
+RESOURCE_POOL_DEVELOPMENT
+    D05 Cross-Functional Ownership < 50
+    AND DEV ResourcePoolBehavior high where developer evidence is available
+
+SCRUM_MASTER_AS_PROJECT_CONTROL
+    SM ProjectControlSubstitution high
+    OR SM RoleOverlap high combined with low D10 Team Autonomy
+
+PRODUCT_OWNER_WITHOUT_PRIORITY_AUTHORITY
+    PROD PriorityAuthority low
+    AND PROD ConstrainedAuthority high
+
+CEREMONIES_WITHOUT_EMPIRICISM
+    D03 Timebox Discipline >= 60
+    AND D09 Empirical Learning < 45
+
+FLOW_WITHOUT_PRODUCT_ORIENTATION
+    D04 Flow/Pull Discipline >= 65
+    AND D12 Product Orientation < 45
+
+INTERRUPT_DRIVEN_PSEUDO_RESPONSIVENESS
+    D02 Change Responsiveness high
+    BUT D04 Flow/Pull Discipline low
+    AND D09 Empirical Learning low
+    AND unplanned-work evidence high when available
+
+Role Utilization Results
+========================
+
+Role modules do NOT produce one simplistic good/bad score.
+
+Scrum Master profile:
+- Enablement
+- Improvement
+- CeremonyAdministration
+- ProjectControlSubstitution
+- RoleOverlap
+
+QA profile:
+- EmbeddedQuality
+- SharedOwnership
+- AutomationIntegration
+- DownstreamGate
+- QualitySpecialization
+- LateTesting
+
+Developer profile:
+- SelfManagement
+- CrossFunctionalCollaboration
+- EndToEndOwnership
+- ResourcePoolBehavior
+- HandoffSpecialization
+- DirectedExecution
+- ProductCollaboration
+
+Project Manager profile:
+- CoordinationGovernance
+- PlanControl
+- TeamControl
+- StatusIntermediation
+- RoleOverlap
+- DependencyCoordination
+
+Product profile:
+- PriorityAuthority
+- OutcomeOrientation
+- FeedbackLoop
+- ConstrainedAuthority
+- ProjectPlanDominance
+- ContinuousDiscovery
+- ProductTeamBoundary
+
+High values have meaning only in the named subscale. For example, high PM CoordinationGovernance is not inherently contradictory to Agile delivery, while high PM TeamControl combined with low TeamAutonomy is a materially different operating signal.
+
+Radar / Spider Graph Output
+===========================
+
+Primary graph: Operating Model Profile
+
+Recommended 10 axes for readability:
+
+1. Plan Commitment
+2. Change Responsiveness
+3. Timebox Discipline
+4. Flow/Pull Discipline
+5. Cross-Functional Ownership
+6. Handoff Reliance
+7. External Gating
+8. Empirical Learning
+9. Team Autonomy
+10. Product Orientation
+
+Quality Integration and Delivery Continuity SHOULD appear as adjacent metric cards or on an optional extended 12-axis profile.
+
+Supported overlays:
+
+- Observed current profile
+- Prior administration
+- Target profile, when explicitly configured
+- Leadership cohort versus delivery-team cohort
+- Selected archetype prototype for explanation
+
+Do NOT manufacture a "claimed methodology radar" unless the respondent actually supplied dimension-level claimed-state answers. A single claimed label is not enough data to create a claimed radar polygon.
+
+Every radar chart MUST include:
+
+- accessible table equivalent,
+- textual dimension explanation,
+- visible numeric values,
+- coverage/suppression state,
+- no color-only encoding,
+- mobile-readable alternative,
+- explanation that the shape is descriptive and axes are not uniformly "higher is better."
+
+Secondary output: Role Utilization
+
+Preferred initial rendering:
+- small-multiple role profile charts or horizontal bars,
+- not one misleading composite role radar.
+
+A role radar MAY be offered where all displayed axes are semantically comparable and the textual/table equivalent remains primary for accessibility.
+
+Report Structure
+================
+
+1. Methodology Summary
+    Claimed methodology
+    Observed top archetype similarities
+    Congruence status
+    Evidence coverage
+
+2. Operating Model Radar
+
+3. What drives this result?
+    Top contributing dimensions
+    Required framework signals present/missing
+    Pattern flags
+
+4. Role Utilization
+    Scrum Master
+    QA
+    Developer
+    Project Manager
+    Product
+
+5. Perception Gaps
+    Leadership vs team
+    Role cohort differences
+    Only where privacy thresholds permit
+
+6. Delivery Characteristics
+    Quality integration
+    Delivery continuity
+    Cross-functional ownership
+    Handoff/gating
+
+7. Improvement Opportunities
+    Generated from dimensions/patterns, not from claimed labels.
+
+8. Methodology / Limitations
+    Version
+    scoring model
+    sample/coverage
+    privacy suppression
+    experimental/validated status
+    known limitations
+
+Recommendation Principles
+=========================
+
+Recommendations MUST target observable constraints.
+
+Example:
+
+Instead of:
+    "Adopt Scrum."
+
+Prefer:
+    "Quality work currently enters a downstream queue after development. If shorter feedback cycles are desired, test bringing QA/test design into refinement and moving verification into the team's normal completion criteria."
+
+Instead of:
+    "Remove project managers."
+
+Prefer:
+    "The project-management role is providing cross-team dependency coordination but also assigning daily team work. Consider separating governance/dependency coordination from team execution decisions and test whether the team can own the latter."
+
+The assessment MUST NOT assume one methodology is universally superior.
+
+Psychometric / Validation Plan
+==============================
+
+Before treating SDRA as a validated instrument:
+
+1. Expert content review
+    Include practitioners experienced in Scrum, Kanban/flow, Waterfall/stage-gate, product delivery, QA, engineering leadership, and project management.
+
+2. Cognitive interviews
+    Verify respondents interpret behavior items consistently across roles.
+
+3. Pilot administration
+    Use organizations/teams with diverse known operating patterns.
+
+4. Reliability analysis
+    Analyze candidate dimensions only where internal consistency is theoretically appropriate.
+    Do not use Cronbach's alpha as automatic proof of validity.
+
+5. Structural analysis
+    Test whether the proposed 12-dimension structure is supported.
+    Revise items/dimensions if empirical structure differs.
+
+6. Known-groups / convergent evidence
+    Compare profiles with independently characterized operating environments without using the methodology self-label as ground truth.
+
+7. Inter-rater analysis
+    Study role-cohort agreement/disagreement.
+
+8. Classification calibration
+    Re-estimate prototype vectors and thresholds from evidence.
+    Do not freeze the pilot vectors merely because they are implemented.
+
+9. Fairness / invariance review
+    Test wording and scale behavior across role categories, organization sizes, languages, and relevant administration contexts.
+
+10. Longitudinal sensitivity
+    Determine whether the instrument detects genuine operating-model change rather than terminology change.
+
+Versioning
+==========
+
+The following MUST be independently versioned:
+
+- ItemBankVersion
+- DimensionModelVersion
+- RoleModelVersion
+- ArchetypePrototypeVersion
+- ClassificationRuleVersion
+- PatternFlagRuleVersion
+- ReportDefinitionVersion
+
+A later scoring/classification model MUST NOT silently rewrite an original formal result.
+
+Re-analysis under a newer model is a separately labeled derived interpretation.
+
+Signal Architecture Requirements Exercised
+==========================================
+
+SDRA is intentionally a difficult Signal battery.
+
+It exercises:
+
+- multi-assessment battery composition,
+- conditional role modules,
+- non-PII role cohorting,
+- multi-rater aggregation,
+- privacy thresholding,
+- incremental aggregation,
+- custom/built-in scoring,
+- derived classifications,
+- multiple simultaneous result shapes,
+- claimed-versus-observed comparison,
+- lineage/explainability,
+- semantic compatibility,
+- radar visualization,
+- accessible visualization equivalents,
+- longitudinal comparison,
+- report snapshots,
+- analysis across respondent-role cohorts.
+
+F#/Ordo owns:
+- item/domain meaning,
+- scoring,
+- dimension aggregation,
+- archetype similarity,
+- pattern flags,
+- coverage,
+- privacy eligibility,
+- comparison/congruence semantics.
+
+Limen owns only browser mechanisms/rendering.
+
+Aegis handles unexpected operational failures at external boundaries and does not replace typed assessment/domain outcomes.
+
+Open Validation Status
+======================
+
+V1 is a candidate instrument.
+
+The initial item bank, prototype vectors, thresholds, and diagnostic flags MUST be labeled Experimental until empirical validation establishes what should be retained, modified, split, merged, or removed.
