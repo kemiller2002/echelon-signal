@@ -1,0 +1,628 @@
+ECHELON SIGNAL
+AEGIS INSTALLATION AND USAGE REQUIREMENTS
+Version: 1.0
+Status: Required
+Date: 2026-09-23
+
+Purpose
+=======
+
+This document makes Aegis installation, configuration, architectural use, testing,
+and acceptance explicit for Echelon Signal.
+
+It supplements and strengthens:
+
+- ARX-015 - Required Aegis Operational-Fault Integration
+- ADM-077 - Required Aegis Integration and Operational Fault Boundaries
+
+Aegis is the standard operational-fault mechanism for Signal. Package presence by
+itself does not satisfy these requirements.
+
+Normative terms
+===============
+
+MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are normative.
+
+AER-001 - Core package is mandatory
+===================================
+
+Every deployable Signal .NET/F# host that can encounter unexpected operational
+failure MUST reference:
+
+- EchelonFoundry.Aegis.Core
+
+The dependency MUST be installed through the repository's normal deterministic
+.NET dependency mechanism.
+
+A fresh checkout MUST be able to restore the package without manual local package
+copying.
+
+AER-002 - GitHub integration package is mandatory where GitHub is called
+=========================================================================
+
+Any Signal project or integration assembly that directly calls the GitHub API and
+translates GitHub operational failures MUST reference and use:
+
+- EchelonFoundry.Aegis.Integration.GitHub
+
+Signal MUST use the Aegis GitHub failure model/translation where applicable rather
+than independently reclassifying raw GitHub exceptions at every call site.
+
+AER-003 - GitHub store package is conditional
+=============================================
+
+If Signal persists Aegis lifecycle/fault events to GitHub, it MUST reference and
+use:
+
+- EchelonFoundry.Aegis.Store.GitHub
+
+Signal MUST NOT invent a competing GitHub persistence format for Aegis events.
+
+If Signal does not persist Aegis events to GitHub, this package MUST NOT be added
+solely for consistency.
+
+AER-004 - Dependency versions are deterministic
+===============================================
+
+Aegis package versions MUST be pinned according to Signal's dependency/versioning
+policy.
+
+Floating wildcard versions are prohibited.
+
+Aegis upgrades MUST be deliberate changes with build and test evidence.
+
+All Signal projects that consume the same Aegis package SHOULD use the same
+approved version unless an explicit compatibility reason is recorded.
+
+AER-005 - Installation is machine-verifiable
+============================================
+
+CI MUST verify that required Aegis package references exist in the projects that
+own operational boundaries.
+
+A build MUST fail when:
+
+- a required Aegis package is absent,
+- package restore fails,
+- incompatible Aegis versions are introduced without an approved exception, or
+- the application references Aegis but the required integration assembly for an
+  owned external boundary is missing.
+
+AER-006 - Configure Aegis once at startup
+=========================================
+
+Each Signal host MUST configure Aegis once during bootstrap/startup.
+
+Configuration MUST be supplied explicitly to the code that needs it. Signal MUST
+NOT introduce an ambient mutable singleton merely to make Aegis globally
+reachable.
+
+The normal construction path SHOULD use the public Aegis configuration API rather
+than manually constructing internal configuration records.
+
+AER-007 - Validate configuration before use
+============================================
+
+Signal MUST validate Aegis bootstrap configuration before the host relies on it.
+
+Invalid required configuration MUST produce an explicit startup failure or typed
+degraded-startup state according to the host's declared policy.
+
+Signal MUST NOT silently continue with an invalid Aegis configuration.
+
+AER-008 - Application identity is stable
+========================================
+
+Aegis configuration MUST use a stable Signal application/host identity.
+
+Where a build/application version is available it SHOULD be supplied to Aegis so
+fault evidence can be associated with the executing version.
+
+AER-009 - Sinks are explicitly declared
+========================================
+
+Every host MUST explicitly declare its Aegis sinks.
+
+Sink choice MUST be appropriate to the host and environment.
+
+Tests MUST use deterministic replaceable sinks such as the Aegis collector sink.
+
+Production code MUST NOT depend on parsing console output as an operational fault
+store.
+
+AER-010 - Sink failure cannot corrupt authoritative state
+=========================================================
+
+A failure in an Aegis sink MUST NOT corrupt Signal's canonical survey, response,
+scoring, reporting, administration, or storage state.
+
+If a sink is configured as required and failure must block an operation, that
+policy MUST be explicit and tested.
+
+Otherwise Aegis sink degradation MUST remain diagnostically visible without
+silently changing the authoritative domain result.
+
+AER-011 - Maintain an operational-boundary declaration
+======================================================
+
+Signal SHOULD maintain the then-current Aegis boundary declaration artifact, such
+as:
+
+- aegis-boundaries.json
+
+or the current equivalent defined by Aegis.
+
+The declaration SHOULD identify, at minimum:
+
+- boundary identifier,
+- owning project/module,
+- external dependency,
+- operation name,
+- expected typed domain outcomes,
+- unexpected operational failure classifier/translation,
+- retry safety/idempotency classification,
+- unknown-effect risk,
+- privacy classification expectations,
+- presentation behavior,
+- test/evidence location.
+
+The declaration MUST remain reviewable and version controlled.
+
+AER-012 - Aegis is applied at architectural boundaries
+======================================================
+
+Aegis MUST be used where failure originates outside the authoritative Signal
+domain model.
+
+Applicable boundaries include, as they exist:
+
+- GitHub API/network operations,
+- storage-provider reads and writes,
+- template-registry access,
+- browser interop,
+- file import/export,
+- clipboard interop,
+- download generation/delivery,
+- backup and restore,
+- migration I/O,
+- future HTTP/service providers,
+- filesystem access,
+- database access,
+- external service calls,
+- other process or platform boundaries.
+
+AER-013 - Capture boundary operations with Aegis
+================================================
+
+Unexpected operational failure at a synchronous boundary MUST use the current
+Aegis capture API or an approved Aegis abstraction built on it.
+
+Asynchronous boundaries MUST use the current asynchronous capture equivalent.
+
+True top-level process/application boundaries MAY use the Aegis guard mechanism
+when they are genuinely the last line of defense.
+
+Widespread bare try/with or catch-all exception handling that bypasses Aegis is
+prohibited.
+
+AER-014 - Domain outcomes do not become Aegis faults
+====================================================
+
+Aegis MUST NOT replace expected Signal or Ordo outcomes.
+
+Expected outcomes remain represented by Signal's typed domain/state model,
+including examples such as:
+
+- validation failure,
+- illegal transition,
+- duplicate accepted submission,
+- privacy suppression,
+- unsupported capability,
+- missing evidence,
+- NotComparable,
+- quarantined artifact,
+- dataset sealed,
+- incomplete group,
+- policy refusal,
+- expected scoring state,
+- expected template incompatibility,
+- other outcomes already representable by discriminated unions, capabilities,
+  obligations, or transition results.
+
+AER-015 - Programming defects fail loudly
+=========================================
+
+Programming defects MUST NOT be normalized into ordinary recoverable operational
+faults.
+
+Aegis policy for programming defects MUST be preserved.
+
+Signal MUST NOT add catch-all logic whose purpose is to make programming defects
+appear recoverable.
+
+AER-016 - Each boundary has a stable operation name
+===================================================
+
+Every Aegis scope MUST use a stable, meaningful operation name.
+
+Operation names SHOULD describe the business/architectural boundary rather than an
+implementation detail.
+
+Renaming operation identifiers that are used by diagnostics or evidence SHOULD be
+treated as a compatibility-affecting change.
+
+AER-017 - Fault codes are stable and machine-readable
+=====================================================
+
+Signal-specific Aegis fault codes MUST be stable and machine-readable.
+
+Placeholder fault codes are prohibited in production.
+
+Fault codes SHOULD permit grouping by subsystem and operation without requiring
+the parsing of human-readable messages.
+
+AER-018 - Typed integrations translate once
+===========================================
+
+When an integration already exposes a typed failure model, Signal SHOULD define a
+single Aegis translation mapping for that integration rather than duplicating
+classification logic at each call site.
+
+A translation mapping MUST deterministically define the applicable Aegis
+properties required by the current Aegis model.
+
+AER-019 - User messages and diagnostic details are separate
+===========================================================
+
+User-facing presentation MUST use Aegis presentation intent/structure or the
+current standard Aegis presentation mechanism.
+
+Raw exception messages, stack traces, provider response bodies, tokens, and
+internal diagnostic details MUST NOT be rendered directly to respondents or
+administrators as user messages.
+
+Limen/Forma presentation code MUST NOT invent a competing operational-fault
+taxonomy.
+
+AER-020 - Standard fault UI components are used when available
+==============================================================
+
+Where the Echelon UI component set provides standard Aegis fault/error components,
+Signal MUST use them for consistent presentation unless a documented accessibility
+or product requirement requires a different rendering.
+
+Rendering components MUST remain presentation-only. They MUST NOT decide whether a
+failure is a domain outcome, an Aegis fault, recoverable, retryable, or legal as a
+state transition.
+
+AER-021 - Fault presentation is accessible
+==========================================
+
+User-visible Aegis fault presentation MUST satisfy Signal accessibility
+requirements.
+
+At minimum it MUST:
+
+- provide meaningful text independent of color,
+- preserve keyboard and screen-reader access,
+- avoid focus loss during fault appearance/recovery,
+- avoid uncontrolled repeated announcements,
+- expose retry/recovery actions only when they are actually legal,
+- remain usable at supported mobile widths.
+
+AER-022 - Privacy and secret redaction are mandatory
+====================================================
+
+Aegis context, lifecycle events, diagnostics, sinks, exported evidence, and
+presentation data MUST obey Signal's no-PII and no-secret requirements.
+
+Signal MUST NOT place the following into unredacted Aegis context or output:
+
+- GitHub tokens,
+- provider credentials,
+- secrets,
+- PII,
+- raw respondent URLs when they contain or can reveal response state,
+- raw survey answer payloads,
+- hidden/suppressed report values,
+- sensitive configuration,
+- authentication headers,
+- private keys,
+- session credentials.
+
+Signal MUST use the applicable Aegis privacy classification/redaction mechanisms.
+
+AER-023 - Data minimization applies to fault context
+====================================================
+
+Fault context MUST contain only the information needed to classify, reconcile,
+diagnose, or present the operational failure.
+
+"Useful for debugging" by itself is not sufficient justification for copying
+survey response state into fault context.
+
+AER-024 - Recovery remains subordinate to Ordo/SDE
+==================================================
+
+Aegis MAY identify or propose a recovery action.
+
+Aegis MUST NOT independently authorize a Signal domain state transition.
+
+Ordo/SDE remains the authority deciding whether a state transition is legal.
+
+Recovery that changes authoritative Signal state MUST pass through the applicable
+legal transition/capability/obligation rules.
+
+AER-025 - Retry requires proven safety
+======================================
+
+Aegis retry/recovery MUST occur only when the operation is known to be safe to
+retry.
+
+Retry classification MUST consider:
+
+- idempotency,
+- provider semantics,
+- whether the original request may have reached the remote system,
+- whether a duplicate side effect is possible,
+- whether the operation changes canonical state.
+
+AER-026 - Unknown-effect writes remain unknown
+==============================================
+
+A failed write whose remote outcome cannot be determined MUST preserve Signal's
+unknown-effect semantics.
+
+It MUST become or retain OutcomeUnknown (or the then-current equivalent) and create
+or reuse the appropriate reconciliation obligation.
+
+Aegis MUST NOT transform an uncertain write into a blind retry or a false success.
+
+AER-027 - Recovery actions are capability-aware
+===============================================
+
+A retry, reconnect, reload, restore, re-import, re-fetch, reconcile, or other
+recovery action MUST only be offered when the current state and capability model
+permits it.
+
+The UI MUST NOT show a recovery action merely because Aegis classified a fault as
+potentially recoverable.
+
+AER-028 - Cancellation is not an operational fault
+==================================================
+
+Expected cancellation/abandonment behavior MUST follow Aegis guidance and MUST NOT
+generate misleading operational fault evidence.
+
+AER-029 - Repeated faults are controlled
+========================================
+
+Repeated transient failures MUST NOT create uncontrolled:
+
+- toast storms,
+- screen-reader announcement storms,
+- duplicate lifecycle events beyond policy,
+- infinite retry loops,
+- runaway GitHub writes,
+- unbounded browser memory growth.
+
+Deduplication, suppression, backoff, or escalation behavior MUST preserve evidence
+needed for diagnosis while protecting the user and system.
+
+AER-030 - WASM/browser compatibility is proven
+==============================================
+
+Any Aegis API used in the F# WASM/browser path MUST be proven compatible with the
+supported browser/WASM target.
+
+The browser build MUST NOT rely on a sink or API requiring unavailable platform
+capabilities.
+
+Browser-specific sinks/adapters MUST be replaceable and MUST preserve the same
+fault semantics as other hosts.
+
+AER-031 - Offline and degraded browser behavior is explicit
+===========================================================
+
+When the browser is offline or loses connectivity, Signal MUST distinguish:
+
+- an expected offline/deferred state, when the domain explicitly supports it,
+  from
+- an unexpected operational failure, when the requested operation requires the
+  unavailable boundary.
+
+Fault handling MUST not destroy locally authoritative in-progress survey state.
+
+AER-032 - GitHub failure classes are tested
+===========================================
+
+Where Signal calls GitHub, tests MUST cover the failure classes exposed by the
+current Aegis GitHub integration, including applicable cases such as:
+
+- authentication failure,
+- authorization failure,
+- not found,
+- rate limiting,
+- timeout/network failure,
+- malformed/unexpected response,
+- transient provider failure,
+- uncertain write outcome.
+
+The test suite MUST assert deterministic translation into Signal/Aegis behavior.
+
+AER-033 - Boundary tests use collector sinks
+============================================
+
+Tests MUST use Aegis replaceable/collector sinks or the then-current deterministic
+testing mechanism.
+
+Tests MUST NOT require a real console, filesystem, GitHub repository, or production
+sink merely to prove that an operational fault was captured.
+
+AER-034 - Every declared boundary has fault-path evidence
+=========================================================
+
+Each declared operational boundary MUST have automated evidence proving:
+
+- the boundary actually passes through Aegis,
+- the expected classifier or translation is used,
+- the fault code is stable,
+- sensitive context is redacted,
+- the resulting user/presentation intent is appropriate where applicable,
+- domain outcomes bypass Aegis,
+- programming defects are not silently swallowed,
+- recovery authorization remains outside Aegis,
+- sink failure does not corrupt authoritative state.
+
+AER-035 - Happy-path behavior is unchanged
+==========================================
+
+Adding Aegis MUST NOT change the successful domain result of an operation merely
+because the operation is now guarded.
+
+Tests MUST prove both success and fault paths.
+
+AER-036 - CI detects Aegis bypasses
+===================================
+
+The repository SHOULD include architecture/static checks that detect likely Aegis
+bypasses at declared boundaries.
+
+Checks SHOULD flag, as practical:
+
+- new bare try/with or catch-all handling around declared boundaries,
+- direct GitHub/provider exception classification outside approved translators,
+- new parallel fault frameworks,
+- direct rendering of raw exceptions,
+- undeclared external boundaries,
+- production use of test/collector sinks.
+
+Exceptions MUST be explicit and reviewable.
+
+AER-037 - Aegis integration is part of Definition of Done
+=========================================================
+
+A work item that adds or changes an operational boundary is not complete until:
+
+- the boundary declaration is updated,
+- the applicable Aegis package/reference is present,
+- configuration needs are addressed,
+- capture/translation is implemented,
+- privacy classification is reviewed,
+- recovery/unknown-effect behavior is defined,
+- user presentation is defined when applicable,
+- tests exist,
+- CI passes,
+- ROS/Ordo traceability evidence points to the implementation and tests.
+
+AER-038 - Agent instructions must enforce Aegis use
+===================================================
+
+Signal's agent/developer guidance MUST state that new operational boundaries use
+Aegis and that expected domain outcomes remain typed domain outcomes.
+
+Agent instructions SHOULD direct implementers to the current Aegis integration
+guide before introducing or changing Aegis usage.
+
+Generated code MUST NOT introduce a second operational fault abstraction merely to
+avoid using Aegis.
+
+AER-039 - Aegis documentation is a dependency of the integration
+=================================================================
+
+When Aegis public integration guidance changes in a way that affects Signal,
+Signal MUST review this requirement set and its boundary declarations.
+
+Signal SHOULD record the Aegis documentation/version used when performing a
+material integration upgrade.
+
+AER-040 - Upgrade validation
+============================
+
+An Aegis version upgrade MUST run, at minimum:
+
+- package restore,
+- compile/build,
+- unit tests,
+- boundary fault-path tests,
+- redaction/privacy tests,
+- GitHub translation tests where applicable,
+- WASM/browser build/tests for client-side usage,
+- architecture checks,
+- representative recovery/reconciliation tests.
+
+AER-041 - Removal is a governed architectural change
+====================================================
+
+Aegis MUST NOT be removed from a boundary solely as a local refactor.
+
+Removing or replacing Aegis requires an explicit architecture decision and updated
+requirements/evidence because Aegis is the standard Signal operational-fault
+mechanism.
+
+AER-042 - Acceptance gate
+=========================
+
+Aegis integration is accepted only when all applicable conditions are true:
+
+1. Required package references are present and restore deterministically.
+2. Aegis config is created once and validated.
+3. Declared operational boundaries use Aegis.
+4. Expected domain outcomes remain outside Aegis.
+5. Programming defects still fail loudly.
+6. GitHub failures use the standard translation where applicable.
+7. Unknown-effect writes preserve reconciliation semantics.
+8. Recovery remains authorized by Ordo/SDE.
+9. Fault context is redacted and contains no PII/secrets.
+10. Presentation uses Aegis intent and standard UI components where available.
+11. Fault UI is accessible and mobile-safe.
+12. Tests use replaceable/collector sinks.
+13. Sink/degraded behavior cannot corrupt canonical state.
+14. CI and architecture checks pass.
+15. ROS traceability links requirements to implementation and evidence.
+
+A package reference without actual boundary use FAILS this gate.
+
+A boundary wrapped in Aegis without privacy, unknown-effect, recovery, and testing
+evidence also FAILS this gate.
+
+Reference installation commands
+===============================
+
+These commands are informational examples for .NET projects and do not replace the
+normative dependency/version policy above:
+
+    dotnet add package EchelonFoundry.Aegis.Core
+
+For projects that directly call GitHub and use the standard Aegis translation:
+
+    dotnet add package EchelonFoundry.Aegis.Integration.GitHub
+
+Only when GitHub is selected as the Aegis event store:
+
+    dotnet add package EchelonFoundry.Aegis.Store.GitHub
+
+Reference implementation pattern
+================================
+
+Signal implementations SHOULD follow the current Aegis integration guide:
+
+- configure once,
+- validate bootstrap configuration,
+- identify architectural boundaries rather than catching exceptions broadly,
+- use capture/captureAsync at operational boundaries,
+- use guard/guardAsync only at true top-level entry points,
+- translate typed integration failures once,
+- use collector sinks for tests,
+- redact sensitive context before it can reach sinks or presentation.
+
+Traceability
+============
+
+This document expands, without superseding:
+
+- ARX-015
+- ADM-077
+
+If a conflict appears, the stricter safety/privacy/traceability requirement applies
+until the conflict is resolved through ROS/Ordo governance.
