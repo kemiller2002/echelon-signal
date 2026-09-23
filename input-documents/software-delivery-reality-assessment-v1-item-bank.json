@@ -1,0 +1,1211 @@
+{
+  "artifactType": "sdra-item-bank-draft",
+  "canonicalSurveyTemplate": false,
+  "warning": "Draft authoring artifact. Convert through Signal publication/canonicalization once the canonical serialized SurveyTemplate format is implemented. Pilot scoring and classification are experimental.",
+  "assessment": {
+    "id": "SDRA",
+    "title": "Software Delivery Reality Assessment",
+    "version": "0.1.0-draft",
+    "observationWindow": "Last eight weeks; if iteration-based, use at least the last three completed iterations when more representative.",
+    "piiPolicy": "No PII",
+    "batteryComponents": [
+      "SDRA-CTX",
+      "SDRA-CORE",
+      "SDRA-SM",
+      "SDRA-QA",
+      "SDRA-DEV",
+      "SDRA-PM",
+      "SDRA-PROD"
+    ]
+  },
+  "responseScale": {
+    "type": "Ordinal",
+    "values": [
+      {
+        "value": 0,
+        "label": "Never or almost never"
+      },
+      {
+        "value": 1,
+        "label": "Rarely"
+      },
+      {
+        "value": 2,
+        "label": "Sometimes"
+      },
+      {
+        "value": 3,
+        "label": "Often"
+      },
+      {
+        "value": 4,
+        "label": "Almost always"
+      }
+    ],
+    "specialStates": [
+      "DontKnow",
+      "NotObserved",
+      "NotApplicable",
+      "Unanswered"
+    ]
+  },
+  "dimensions": [
+    {
+      "id": "D01",
+      "key": "PLAN_COMMITMENT",
+      "label": "Plan Commitment",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D02",
+      "key": "CHANGE_RESPONSIVENESS",
+      "label": "Change Responsiveness",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D03",
+      "key": "TIMEBOX_DISCIPLINE",
+      "label": "Timebox Discipline",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D04",
+      "key": "FLOW_PULL_DISCIPLINE",
+      "label": "Flow/Pull Discipline",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D05",
+      "key": "CROSS_FUNCTIONAL_OWNERSHIP",
+      "label": "Cross-Functional Ownership",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D06",
+      "key": "HANDOFF_RELIANCE",
+      "label": "Handoff Reliance",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D07",
+      "key": "QUALITY_INTEGRATION",
+      "label": "Quality Integration",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D08",
+      "key": "EXTERNAL_GATING",
+      "label": "External Gating",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D09",
+      "key": "EMPIRICAL_LEARNING",
+      "label": "Empirical Learning",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D10",
+      "key": "TEAM_AUTONOMY",
+      "label": "Team Autonomy",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D11",
+      "key": "DELIVERY_CONTINUITY",
+      "label": "Delivery Continuity",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    },
+    {
+      "id": "D12",
+      "key": "PRODUCT_ORIENTATION",
+      "label": "Product Orientation",
+      "itemCount": 5,
+      "range": [
+        0,
+        100
+      ],
+      "higherIs": "More of the named trait; not inherently better"
+    }
+  ],
+  "contextQuestions": [
+    {
+      "id": "CTX-001",
+      "prompt": "Claimed primary delivery methodology",
+      "answerType": "SingleChoice",
+      "options": [
+        "Scrum",
+        "Kanban",
+        "Scrumban",
+        "Waterfall",
+        "Stage-gate",
+        "Lean",
+        "XP",
+        "DevOps / continuous-delivery oriented",
+        "SAFe or another scaled-agile framework",
+        "Hybrid / custom",
+        "Ad hoc / no defined methodology",
+        "Unsure",
+        "Other structured label"
+      ]
+    },
+    {
+      "id": "CTX-002",
+      "prompt": "Other methodology/framework labels the organization uses",
+      "answerType": "MultiChoice"
+    },
+    {
+      "id": "CTX-003",
+      "prompt": "Scope being assessed",
+      "answerType": "SingleChoice",
+      "options": [
+        "One team",
+        "Multiple teams on one product",
+        "Product/program",
+        "Department",
+        "Portfolio",
+        "Organization"
+      ]
+    },
+    {
+      "id": "CTX-004",
+      "prompt": "Respondent role(s)",
+      "answerType": "MultiChoice",
+      "options": [
+        "Developer / engineer",
+        "QA / test",
+        "Scrum Master / Agile facilitator",
+        "Project manager / delivery manager",
+        "Product Owner / product manager",
+        "Engineering manager",
+        "Architect",
+        "Operations / SRE",
+        "Executive / senior leader",
+        "Other non-identifying role category"
+      ]
+    },
+    {
+      "id": "CTX-005",
+      "prompt": "Team structure",
+      "answerType": "SingleChoice",
+      "options": [
+        "Long-lived product team",
+        "Long-lived service/platform team",
+        "Project team",
+        "Matrix/resource-pool staffing",
+        "Temporary cross-functional initiative",
+        "Mixed",
+        "Unsure"
+      ]
+    },
+    {
+      "id": "CTX-006",
+      "prompt": "Typical release-frequency band",
+      "answerType": "SingleChoice",
+      "options": [
+        "Multiple times per day",
+        "Daily",
+        "Several times per week",
+        "Weekly",
+        "Every 2-4 weeks",
+        "Every 1-3 months",
+        "Less often",
+        "Not observable"
+      ]
+    },
+    {
+      "id": "CTX-007",
+      "prompt": "Team-size band",
+      "answerType": "SingleChoice",
+      "options": [
+        "1-5",
+        "6-10",
+        "11-20",
+        "21+",
+        "Not applicable / multiple teams"
+      ]
+    },
+    {
+      "id": "CTX-008",
+      "prompt": "Time with this operating group",
+      "answerType": "SingleChoice",
+      "options": [
+        "Under 3 months",
+        "3-6 months",
+        "6-12 months",
+        "1-2 years",
+        "More than 2 years"
+      ]
+    }
+  ],
+  "coreItems": [
+    {
+      "id": "CORE-001",
+      "dimension": "D01",
+      "prompt": "Major requirements are expected to be substantially defined before implementation begins.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-002",
+      "dimension": "D01",
+      "prompt": "Release scope is committed well before the work needed to deliver it is complete.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-003",
+      "dimension": "D01",
+      "prompt": "Changes discovered after implementation begins normally require formal change approval.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-004",
+      "dimension": "D01",
+      "prompt": "Design, build, test, and release milestones are managed against an upfront baseline plan.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-005",
+      "dimension": "D01",
+      "prompt": "Delivery success is judged primarily by conformance to the original scope/schedule plan.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-006",
+      "dimension": "D02",
+      "prompt": "New customer or operational evidence can change upcoming priorities through the normal process.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-007",
+      "dimension": "D02",
+      "prompt": "The team can clarify or renegotiate planned scope when it learns something important.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-008",
+      "dimension": "D02",
+      "prompt": "Findings from implementation regularly change what the team plans to do next.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-009",
+      "dimension": "D02",
+      "prompt": "Stakeholder feedback can alter priorities without waiting for a major project phase boundary.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-010",
+      "dimension": "D02",
+      "prompt": "Planning is revisited often enough that newly learned information can materially affect near-term work.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-011",
+      "dimension": "D03",
+      "prompt": "Work is organized in consistent short iterations or timeboxes.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-012",
+      "dimension": "D03",
+      "prompt": "Each iteration has a shared outcome or goal rather than only a collection of assigned tasks.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-013",
+      "dimension": "D03",
+      "prompt": "Planning, inspection/review, and improvement happen on a consistent iteration cadence.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-014",
+      "dimension": "D03",
+      "prompt": "The team aims to produce usable, integrated work by the end of each iteration.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-015",
+      "dimension": "D03",
+      "prompt": "Work that has not met the team's completion/quality criteria is not counted as finished merely because the iteration ended.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-016",
+      "dimension": "D04",
+      "prompt": "The team has an explicit shared definition of how work moves from started to finished.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-017",
+      "dimension": "D04",
+      "prompt": "The amount of work in progress is explicitly controlled.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-018",
+      "dimension": "D04",
+      "prompt": "New work is normally started when capacity becomes available rather than simply when it is assigned.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-019",
+      "dimension": "D04",
+      "prompt": "The team uses flow evidence such as cycle time, throughput, work-item age, or equivalent measures.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-020",
+      "dimension": "D04",
+      "prompt": "Aging, blocked, or stalled work is actively reviewed and managed.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-021",
+      "dimension": "D05",
+      "prompt": "The stable delivery team collectively has most skills needed to turn an idea into usable software.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-022",
+      "dimension": "D05",
+      "prompt": "Product, development, and quality work happens collaboratively rather than as separate sequential departments.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-023",
+      "dimension": "D05",
+      "prompt": "People are generally kept with a stable team rather than reassigned among projects whenever demand changes.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-024",
+      "dimension": "D05",
+      "prompt": "The team remains responsible for work until it is usable/releasable rather than stopping at a specialist handoff.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-025",
+      "dimension": "D05",
+      "prompt": "Dependencies on people outside the team are exceptions rather than the normal path for completing ordinary work.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-026",
+      "dimension": "D06",
+      "prompt": "Work commonly waits in queues between analysis, development, QA, security, operations, or release functions.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-027",
+      "dimension": "D06",
+      "prompt": "One function completes an artifact or phase and formally hands it to another function to continue.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-028",
+      "dimension": "D06",
+      "prompt": "Development work is commonly considered complete before downstream testing begins.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-029",
+      "dimension": "D06",
+      "prompt": "A separate release or operations function must normally take ownership before software can be delivered.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-030",
+      "dimension": "D06",
+      "prompt": "Progress is commonly tracked by completion of functional phases such as requirements, development, testing, and release.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-031",
+      "dimension": "D07",
+      "prompt": "Completion/quality expectations are known before implementation is considered finished.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-032",
+      "dimension": "D07",
+      "prompt": "Developers routinely verify their own work rather than relying on QA to discover ordinary defects.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-033",
+      "dimension": "D07",
+      "prompt": "QA/test expertise participates early enough to influence examples, acceptance criteria, or design.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-034",
+      "dimension": "D07",
+      "prompt": "Automated tests and other quality checks run as part of the routine delivery pipeline.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-035",
+      "dimension": "D07",
+      "prompt": "Defects found during delivery are normally resolved within the same working flow rather than accumulated for a later test/fix phase.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-036",
+      "dimension": "D08",
+      "prompt": "Work commonly requires approval outside the delivery team before it can move to the next major stage.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-037",
+      "dimension": "D08",
+      "prompt": "Releases commonly require formal signoff, a release board, or a comparable external gate.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-038",
+      "dimension": "D08",
+      "prompt": "Material scope changes normally require approval from management/governance outside the team/product owner.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-039",
+      "dimension": "D08",
+      "prompt": "Formal phase or milestone gates determine when the team may proceed.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-040",
+      "dimension": "D08",
+      "prompt": "Functional signoffs are required before work is considered complete even when the delivery team believes it is usable.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-041",
+      "dimension": "D09",
+      "prompt": "Stakeholders regularly inspect working software or actual outcomes rather than relying primarily on status reports.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-042",
+      "dimension": "D09",
+      "prompt": "Retrospectives or equivalent improvement reviews result in observable changes to how the team works.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-043",
+      "dimension": "D09",
+      "prompt": "Delivery/product decisions use evidence from actual results rather than only forecasts and plan completion.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-044",
+      "dimension": "D09",
+      "prompt": "The team intentionally runs small experiments or incremental changes to reduce uncertainty.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-045",
+      "dimension": "D09",
+      "prompt": "When results differ from assumptions, plans or working methods are changed promptly.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-046",
+      "dimension": "D10",
+      "prompt": "The team decides how to perform the work needed to achieve its near-term goal.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-047",
+      "dimension": "D10",
+      "prompt": "Developers/team members participate directly in selecting and planning the work they can complete.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-048",
+      "dimension": "D10",
+      "prompt": "Day-to-day work is not primarily assigned person-by-person by a manager or coordinator.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-049",
+      "dimension": "D10",
+      "prompt": "The team can make ordinary technical and execution tradeoffs without seeking external approval.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-050",
+      "dimension": "D10",
+      "prompt": "Team members can reorganize their work when conditions change without waiting for a manager to rewrite the task plan.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-051",
+      "dimension": "D11",
+      "prompt": "Completed software can be released independently of a large scheduled batch when the organization chooses to do so.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-052",
+      "dimension": "D11",
+      "prompt": "Build/test/deployment automation supports moving changes toward production routinely.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-053",
+      "dimension": "D11",
+      "prompt": "The team integrates changes continuously enough to avoid long-lived stabilization periods.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-054",
+      "dimension": "D11",
+      "prompt": "A separate code-freeze/regression phase is not normally required to make a release safe.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-055",
+      "dimension": "D11",
+      "prompt": "Production/user feedback can reach the team soon enough to influence subsequent delivery decisions.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-056",
+      "dimension": "D12",
+      "prompt": "Teams are organized around persistent products/services/value streams more than temporary projects.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-057",
+      "dimension": "D12",
+      "prompt": "A clearly accountable product decision-maker can continuously reorder upcoming work.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-058",
+      "dimension": "D12",
+      "prompt": "Success is discussed in terms of customer/business outcomes in addition to scope and schedule delivery.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-059",
+      "dimension": "D12",
+      "prompt": "Discovery and delivery interact continuously rather than discovery ending before delivery begins.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    },
+    {
+      "id": "CORE-060",
+      "dimension": "D12",
+      "prompt": "Funding/planning/ownership supports continued product evolution after an individual project or release ends.",
+      "answerType": "OrdinalFrequency5",
+      "required": true
+    }
+  ],
+  "roleModules": {
+    "SDRA-SM": [
+      {
+        "id": "SM-001",
+        "subscale": "Enablement",
+        "prompt": "The Scrum Master/facilitator coaches the team to manage its own work.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "SM-002",
+        "subscale": "Enablement",
+        "prompt": "The Scrum Master/facilitator helps the organization remove impediments the team cannot remove itself.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "SM-003",
+        "subscale": "Improvement",
+        "prompt": "Retrospective learning is turned into concrete changes with help from the Scrum Master/facilitator.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "SM-004",
+        "subscale": "Improvement",
+        "prompt": "The Scrum Master/facilitator helps stakeholders and the team improve collaboration rather than acting mainly as a status intermediary.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "SM-005",
+        "subscale": "CeremonyAdministration",
+        "prompt": "The Scrum Master/facilitator spends substantial effort scheduling ceremonies, collecting status, and maintaining process administration.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "SM-006",
+        "subscale": "ProjectControlSubstitution",
+        "prompt": "The Scrum Master/facilitator is held responsible for enforcing delivery dates or individual task completion.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "SM-007",
+        "subscale": "ProjectControlSubstitution",
+        "prompt": "The Scrum Master/facilitator assigns work or directs day-to-day execution.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "SM-008",
+        "subscale": "RoleOverlap",
+        "prompt": "The Scrum Master/facilitator simultaneously performs a project-manager or line-manager role for the same team's ordinary delivery work.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      }
+    ],
+    "SDRA-QA": [
+      {
+        "id": "QA-001",
+        "subscale": "EmbeddedQuality",
+        "prompt": "QA/test specialists participate before implementation is complete.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "QA-002",
+        "subscale": "EmbeddedQuality",
+        "prompt": "QA/test expertise helps shape acceptance criteria, examples, test strategy, or design.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "QA-003",
+        "subscale": "SharedOwnership",
+        "prompt": "Quality is treated as the responsibility of the whole delivery team.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "QA-004",
+        "subscale": "AutomationIntegration",
+        "prompt": "Routine regression/verification is substantially automated and part of normal delivery.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "QA-005",
+        "subscale": "DownstreamGate",
+        "prompt": "Completed development normally waits for a QA phase or QA queue before it can progress.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "QA-006",
+        "subscale": "DownstreamGate",
+        "prompt": "QA approval outside the development team is normally required before release.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "QA-007",
+        "subscale": "QualitySpecialization",
+        "prompt": "QA is expected to discover defects that developers could reasonably have detected before handoff.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "QA-008",
+        "subscale": "LateTesting",
+        "prompt": "Testing occurs primarily after the planned development work for a feature/release is complete.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      }
+    ],
+    "SDRA-DEV": [
+      {
+        "id": "DEV-001",
+        "subscale": "SelfManagement",
+        "prompt": "Developers help decide how much work the team can take on and how it will be implemented.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "DEV-002",
+        "subscale": "CrossFunctionalCollaboration",
+        "prompt": "Developers collaborate directly with product and QA/test rather than communicating primarily through coordinators.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "DEV-003",
+        "subscale": "EndToEndOwnership",
+        "prompt": "Developers remain responsible for work through verification and usable/releasable state.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "DEV-004",
+        "subscale": "EndToEndOwnership",
+        "prompt": "Developers routinely participate in production/support learning for the software they build.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "DEV-005",
+        "subscale": "ResourcePoolBehavior",
+        "prompt": "Developers are frequently reassigned among projects according to utilization or resource demand.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "DEV-006",
+        "subscale": "HandoffSpecialization",
+        "prompt": "Developer work is considered complete when coding is finished and the item is handed to another function.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "DEV-007",
+        "subscale": "DirectedExecution",
+        "prompt": "Daily tasks are commonly assigned to individual developers by someone outside the developer group.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "DEV-008",
+        "subscale": "ProductCollaboration",
+        "prompt": "Developers participate in discovery/refinement and can influence scope or solution choices before coding begins.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      }
+    ],
+    "SDRA-PM": [
+      {
+        "id": "PM-001",
+        "subscale": "CoordinationGovernance",
+        "prompt": "The project manager primarily coordinates dependencies, external commitments, budget, or governance without directing the team's daily execution.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PM-002",
+        "subscale": "CoordinationGovernance",
+        "prompt": "The project manager helps remove cross-team/organizational constraints that the delivery team cannot resolve itself.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PM-003",
+        "subscale": "PlanControl",
+        "prompt": "The project manager is the central owner of detailed scope, schedule, and delivery-plan conformance.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PM-004",
+        "subscale": "TeamControl",
+        "prompt": "The project manager assigns or redistributes day-to-day work among team members.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PM-005",
+        "subscale": "PlanControl",
+        "prompt": "Material changes to planned work normally require project-manager approval or escalation.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PM-006",
+        "subscale": "StatusIntermediation",
+        "prompt": "Team status primarily flows upward through the project manager rather than being visible from working results/flow.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PM-007",
+        "subscale": "RoleOverlap",
+        "prompt": "The project manager performs responsibilities the organization also describes as Scrum Master responsibilities.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PM-008",
+        "subscale": "DependencyCoordination",
+        "prompt": "The project manager's role is mainly necessary because delivery crosses many organizational, vendor, governance, or contractual boundaries.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      }
+    ],
+    "SDRA-PROD": [
+      {
+        "id": "PROD-001",
+        "subscale": "PriorityAuthority",
+        "prompt": "A clearly accountable product decision-maker can reorder the backlog when evidence changes.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PROD-002",
+        "subscale": "PriorityAuthority",
+        "prompt": "Stakeholders who want priority changes normally work through that accountable product decision-maker rather than assigning work directly to the team.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PROD-003",
+        "subscale": "OutcomeOrientation",
+        "prompt": "Product decisions are tied to customer/user/business outcomes rather than only project scope completion.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PROD-004",
+        "subscale": "FeedbackLoop",
+        "prompt": "Product/stakeholder feedback is gathered frequently enough to alter upcoming work.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PROD-005",
+        "subscale": "ConstrainedAuthority",
+        "prompt": "The product decision-maker is expected to obtain committee/management approval for ordinary backlog reprioritization.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PROD-006",
+        "subscale": "ProjectPlanDominance",
+        "prompt": "The backlog mainly represents execution of a scope already committed in a project plan.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PROD-007",
+        "subscale": "ContinuousDiscovery",
+        "prompt": "Discovery of customer/problem/solution evidence continues while delivery is underway.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      },
+      {
+        "id": "PROD-008",
+        "subscale": "ProductTeamBoundary",
+        "prompt": "The product role has authority over priority but does not assign developers' detailed execution tasks.",
+        "answerType": "OrdinalFrequency5",
+        "required": true
+      }
+    ]
+  },
+  "scoring": {
+    "dimensionFormula": "mean(numeric item values) / 4 * 100",
+    "minimumNumericItemsPerDimension": 3,
+    "claimedMethodologyAffectsObservedClassification": false,
+    "organizationAggregationDefault": "Equal weight across privacy-eligible role cohorts after respondent-level scoring",
+    "reportCoverageSeparately": [
+      "ItemCoverage",
+      "DimensionCoverage",
+      "RoleCohortCoverage",
+      "RespondentCount",
+      "SuppressedCohortCount"
+    ]
+  },
+  "archetypeDimensionOrder": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "D10",
+    "D11",
+    "D12"
+  ],
+  "archetypes": {
+    "ScrumLike": [
+      35,
+      80,
+      90,
+      45,
+      90,
+      20,
+      85,
+      20,
+      90,
+      85,
+      70,
+      90
+    ],
+    "KanbanLike": [
+      25,
+      90,
+      25,
+      95,
+      75,
+      25,
+      80,
+      20,
+      90,
+      80,
+      90,
+      85
+    ],
+    "ScrumbanLike": [
+      30,
+      90,
+      75,
+      90,
+      85,
+      20,
+      85,
+      20,
+      90,
+      85,
+      90,
+      90
+    ],
+    "WaterfallLike": [
+      95,
+      20,
+      10,
+      10,
+      25,
+      90,
+      25,
+      90,
+      20,
+      20,
+      15,
+      25
+    ],
+    "StageGateHybrid": [
+      80,
+      45,
+      55,
+      30,
+      45,
+      70,
+      50,
+      80,
+      45,
+      40,
+      35,
+      50
+    ],
+    "ContinuousProductFlow": [
+      25,
+      95,
+      55,
+      85,
+      90,
+      15,
+      95,
+      15,
+      95,
+      90,
+      100,
+      100
+    ],
+    "ProjectizedIterative": [
+      75,
+      50,
+      75,
+      35,
+      50,
+      65,
+      55,
+      70,
+      55,
+      40,
+      45,
+      40
+    ],
+    "ReactiveInterruptDriven": [
+      20,
+      85,
+      15,
+      25,
+      45,
+      55,
+      35,
+      25,
+      30,
+      35,
+      50,
+      30
+    ]
+  },
+  "similarity": "100 - weightedMean(abs(observedDimension - archetypeDimension)); equal weights in pilot",
+  "pilotClassificationRules": {
+    "strongSingleProfile": {
+      "minimumTopSimilarity": 75,
+      "minimumMarginOverSecond": 8
+    },
+    "primaryWithSecondaryInfluence": {
+      "minimumTopSimilarity": 68,
+      "minimumMarginOverSecond": 5
+    },
+    "hybrid": {
+      "minimumTopTwoSimilarity": 65,
+      "maximumMargin": 5
+    },
+    "mixedIndeterminate": {
+      "maximumTopSimilarityExclusive": 65
+    }
+  },
+  "requiredSignals": {
+    "ScrumLike": [
+      "D03 >= 60",
+      "D05 >= 55",
+      "D09 >= 60",
+      "D10 >= 55",
+      "CORE-014 covered",
+      "CORE-015 covered"
+    ],
+    "KanbanLike": [
+      "D04 >= 60",
+      "CORE-016 covered",
+      "CORE-017 covered",
+      "CORE-018 covered"
+    ]
+  },
+  "visualization": {
+    "primaryRadarAxes": [
+      "D01",
+      "D02",
+      "D03",
+      "D04",
+      "D05",
+      "D06",
+      "D08",
+      "D09",
+      "D10",
+      "D12"
+    ],
+    "supportingMetrics": [
+      "D07",
+      "D11"
+    ],
+    "requiredAccessibleEquivalent": true,
+    "note": "Axes are descriptive and are not uniformly 'higher is better'."
+  },
+  "sourceBasis": [
+    "Scrum Guide (November 2020)",
+    "The Kanban Guide (May 2025)",
+    "Manifesto for Agile Software Development and Principles"
+  ],
+  "validationStatus": "Experimental; requires expert content review, cognitive interviews, pilot data, structural/reliability analysis, classification calibration, fairness/invariance review, and longitudinal sensitivity testing."
+}
